@@ -1,0 +1,7 @@
+.bannerCard {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bannerCard:hover {
+  transform: translateY(-2px);
+}

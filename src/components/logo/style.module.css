@@ -1,0 +1,11 @@
+.logoContainer {
+  user-select: none;
+}
+
+.badge {
+  transition: transform 0.2s ease;
+}
+
+.badge:hover {
+  transform: scale(1.05);
+}
