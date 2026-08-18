@@ -10,12 +10,20 @@ export const HeroSlider = () => {
     if (!heroSlides || heroSlides.length === 0) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 5000);
+    }, 5500);
     return () => clearInterval(timer);
   }, [heroSlides]);
 
   if (!heroSlides || heroSlides.length === 0) return null;
   const slide = heroSlides[currentSlide];
+
+  const handleNext = () => {
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+  };
+
+  const handlePrev = () => {
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+  };
 
   const handleCta = () => {
     if (slide.category) {
@@ -25,69 +33,64 @@ export const HeroSlider = () => {
   };
 
   return (
-    <section className="px-4 mb-4">
-      <div className={`relative bg-gradient-to-br from-[#073b27] via-[#0b4f35] to-[#136f46] rounded-3xl overflow-hidden shadow-xl border-2 border-[#d4af37] text-white p-5 min-h-[220px] flex flex-col justify-between ${styles.heroContainer}`}>
-        <div className="absolute -right-8 -top-8 w-40 h-40 bg-[#d4af37]/10 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -left-8 -bottom-8 w-40 h-40 bg-[#fef08a]/10 rounded-full blur-2xl pointer-events-none" />
+    <section className={`px-4 pt-3 pb-1 ${styles.sliderSection}`}>
+      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-[#d4af37]/60 min-h-[190px] flex flex-col justify-between text-white p-5 bg-gradient-to-l from-[#063822]/90 via-[#0a462c]/85 to-[#042a1b]/95">
+        <div
+          className="absolute inset-0 bg-cover bg-center -z-10 opacity-30 mix-blend-luminosity scale-105 transition-transform duration-700"
+          style={{
+            backgroundImage: `url('https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=800')`
+          }}
+        />
 
-        <div className="relative z-10">
-          <span className="inline-flex items-center gap-1 bg-[#d4af37] text-[#073b27] text-[10px] font-black px-2.5 py-1 rounded-full mb-2 shadow-sm border border-white">
-            <i className="fa-solid fa-certificate text-[9px]" />
-            <span>{slide.tag}</span>
+        <div className="relative z-10 flex flex-col items-start space-y-1.5">
+          <span className="bg-[#fef08a] text-[#073822] text-[10px] font-black px-3 py-0.5 rounded-full shadow-sm">
+            فروش ویژه طلا رایس
           </span>
-          <h2 className="text-lg sm:text-xl font-black text-[#fef08a] leading-tight mb-2">
+          <h2 className="text-base sm:text-lg font-black text-white leading-snug drop-shadow">
             {slide.title}
           </h2>
-          <p className="text-xs text-[#d1fae5] leading-relaxed max-w-[280px] font-medium">
+          <p className="text-[11px] text-[#e2e8f0] font-medium leading-relaxed drop-shadow max-w-[260px]">
             {slide.description}
           </p>
         </div>
 
-        <div className="relative z-10 flex items-center justify-between mt-4 pt-2 border-t border-[#d4af37]/30">
+        <div className="relative z-10 flex items-center justify-between mt-3 pt-2">
           <button
             onClick={handleCta}
-            className="bg-gradient-to-r from-[#d4af37] to-[#fef08a] hover:from-[#fef08a] hover:to-[#d4af37] text-[#073b27] font-black text-xs px-4 py-2 rounded-xl shadow-lg active:scale-95 transition-all flex items-center gap-1.5 border border-[#073b27]/30"
+            className="bg-[#fef08a] hover:bg-[#fde047] text-[#073822] font-black text-xs px-4 py-2 rounded-xl shadow-md flex items-center gap-2 active:scale-95 transition-all"
           >
-            <span>{slide.ctaText}</span>
-            <i className="fa-solid fa-arrow-left text-xs" />
+            <span>مشاهده تخفیف‌های امروز</span>
+            <i className="fa-solid fa-arrow-left text-[11px]" />
           </button>
 
-          <div className="flex items-center gap-1.5">
-            {heroSlides.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setCurrentSlide(idx)}
-                className={`h-2 rounded-full transition-all ${
-                  idx === currentSlide
-                    ? 'w-6 bg-[#fef08a] border border-[#073b27]'
-                    : 'w-2 bg-white/40 hover:bg-white/70'
-                }`}
-                aria-label={`اسلاید ${idx + 1}`}
-              />
-            ))}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePrev}
+              className="w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-xs"
+            >
+              <i className="fa-solid fa-chevron-right text-[10px]" />
+            </button>
+            <div className="flex items-center gap-1">
+              {heroSlides.map((_, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={`cursor-pointer transition-all ${
+                    currentSlide === idx
+                      ? 'w-4 h-1.5 bg-[#fef08a] rounded-full'
+                      : 'w-1.5 h-1.5 bg-white/50 rounded-full'
+                  }`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={handleNext}
+              className="w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-xs"
+            >
+              <i className="fa-solid fa-chevron-left text-[10px]" />
+            </button>
           </div>
         </div>
-
-        <button
-          onClick={() =>
-            setCurrentSlide((prev) =>
-              prev === 0 ? heroSlides.length - 1 : prev - 1
-            )
-          }
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 text-[#fef08a] rounded-full p-2 backdrop-blur-sm transition-all text-xs"
-          aria-label="اسلاید قبلی"
-        >
-          <i className="fa-solid fa-chevron-right" />
-        </button>
-        <button
-          onClick={() =>
-            setCurrentSlide((prev) => (prev + 1) % heroSlides.length)
-          }
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/70 text-[#fef08a] rounded-full p-2 backdrop-blur-sm transition-all text-xs"
-          aria-label="اسلاید بعدی"
-        >
-          <i className="fa-solid fa-chevron-left" />
-        </button>
       </div>
     </section>
   );

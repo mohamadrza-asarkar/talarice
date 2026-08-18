@@ -13,10 +13,25 @@ export const CatalogPage = () => {
     sortBy,
     setSortBy,
     searchQuery,
-    setSearchQuery,
     addToCart,
-    setSelectedProduct
+    setSelectedProduct,
+    setIsSearchOpen
   } = useApp();
+
+  const weightOptions = [
+    { label: 'همه وزن‌ها', value: 'all' },
+    { label: '۵ کیلو', value: '5' },
+    { label: '۱۰ کیلو', value: '10' },
+    { label: '۲۰ کیلو', value: '20' },
+    { label: '۵۰ کیلو', value: '50' }
+  ];
+
+  const sortOptions = [
+    { label: 'پرفروش‌ترین', value: 'popular' },
+    { label: 'ارزان‌ترین', value: 'price-low' },
+    { label: 'گران‌ترین', value: 'price-high' },
+    { label: 'بالاترین امتیاز', value: 'rating' }
+  ];
 
   const filtered = useMemo(() => {
     let result = [...products];
@@ -28,7 +43,7 @@ export const CatalogPage = () => {
     if (selectedWeightFilter !== 'all') {
       const weightNum = Number(selectedWeightFilter);
       result = result.filter(
-        (p) => p.weight === weightNum || p.weightOptions.includes(weightNum)
+        (p) => p.weight === weightNum || (p.weightOptions && p.weightOptions.includes(weightNum))
       );
     }
 
@@ -38,8 +53,7 @@ export const CatalogPage = () => {
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.description.toLowerCase().includes(q) ||
-          p.farmer.toLowerCase().includes(q) ||
-          p.origin.toLowerCase().includes(q)
+          (p.farmer && p.farmer.toLowerCase().includes(q))
       );
     }
 
@@ -49,15 +63,30 @@ export const CatalogPage = () => {
       result.sort((a, b) => b.price - a.price);
     } else if (sortBy === 'rating') {
       result.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'weight') {
-      result.sort((a, b) => a.weight - b.weight);
     }
 
     return result;
   }, [products, selectedCategory, selectedWeightFilter, searchQuery, sortBy]);
 
   return (
-    <div className={`px-4 py-3 pb-24 space-y-4 animate-fade-in ${styles.catalogWrapper}`}>
+    <div className={`px-4 py-3 pb-24 space-y-3.5 animate-fade-in ${styles.catalogWrapper}`}>
+      <div className="bg-[#063822] text-white p-4 rounded-3xl shadow-xl border-2 border-[#d4af37]/60">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="bg-[#fef08a] text-[#073822] text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm">
+            شالیزارهای کامفیروز فارس
+          </span>
+          <span className="text-[11px] text-[#fef08a] font-black">
+            {filtered.length.toLocaleString('fa-IR')} گونی برنج
+          </span>
+        </div>
+        <h2 className="text-base font-black text-white">
+          فهرست گونی‌های برنج معطر کامفیروزی
+        </h2>
+        <p className="text-xs text-[#a7f3d0] mt-1 font-normal">
+          عرضه مستقیم در کیسه‌های پارچه‌ای نخی سفید با گارانتی اصالت و عطر
+        </p>
+      </div>
+
       <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         {categories.map((cat) => {
           const isSelected = selectedCategory === cat.id;
@@ -65,81 +94,84 @@ export const CatalogPage = () => {
             <button
               key={cat.id}
               onClick={() => setSelectedCategory(cat.id)}
-              className={`px-3 py-2 rounded-xl text-xs font-black shrink-0 transition-all border flex items-center gap-1.5 ${
+              className={`whitespace-nowrap px-3.5 py-2 rounded-2xl text-xs font-black transition-all border shrink-0 flex items-center gap-1.5 cursor-pointer ${
                 isSelected
-                  ? 'bg-gradient-to-r from-[#073b27] to-[#136f46] text-[#fef08a] border-[#d4af37] shadow-md'
-                  : 'bg-white text-[#073b27] border-[#d4af37]/30 hover:border-[#d4af37]'
+                  ? 'bg-[#fef08a] text-[#073822] border-[#d4af37] shadow-md scale-102'
+                  : 'bg-[#063822] text-[#d1fae5] border-[#d4af37]/40 hover:border-[#d4af37] hover:bg-[#0a4d30]'
               }`}
             >
-              <i className={`${cat.iconClass} text-xs`} />
+              {cat.iconClass && <i className={`${cat.iconClass} text-[11px]`} />}
               <span>{cat.name}</span>
             </button>
           );
         })}
       </div>
 
-      <div className="flex justify-between items-center bg-[#f0fdf4] p-2.5 rounded-2xl border-2 border-[#d4af37]/40 mb-4 text-xs">
-        <div className="flex items-center gap-1.5">
-          <i className="fa-solid fa-arrow-down-short-wide text-[#073b27]" />
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="bg-white border border-[#d4af37]/40 rounded-lg px-2 py-1 text-xs font-black text-[#073b27] outline-none"
-          >
-            <option value="popular">محبوب‌ترین</option>
-            <option value="rating">بیشترین امتیاز</option>
-            <option value="price-low">ارزان‌ترین کیسه</option>
-            <option value="price-high">گران‌ترین کیسه</option>
-            <option value="weight">بر اساس وزن</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-1.5">
-          <i className="fa-solid fa-scale-balanced text-[#073b27]" />
-          <select
-            value={selectedWeightFilter}
-            onChange={(e) => setSelectedWeightFilter(e.target.value)}
-            className="bg-white border border-[#d4af37]/40 rounded-lg px-2 py-1 text-xs font-black text-[#073b27] outline-none"
-          >
-            <option value="all">همه وزن‌ها</option>
-            <option value="5">۵ کیلویی</option>
-            <option value="10">۱۰ کیلویی</option>
-            <option value="20">۲۰ کیلویی</option>
-            <option value="50">۵۰ کیلویی</option>
-          </select>
-        </div>
+      <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {weightOptions.map((opt) => {
+          const isSelected = selectedWeightFilter === opt.value;
+          return (
+            <button
+              key={opt.value}
+              onClick={() => setSelectedWeightFilter(opt.value)}
+              className={`whitespace-nowrap px-3 py-1 rounded-xl text-[11px] font-bold transition-all border shrink-0 cursor-pointer ${
+                isSelected
+                  ? 'bg-[#d4af37] text-[#042a1b] border-[#fef08a] font-black shadow-sm'
+                  : 'bg-[#042a1b] text-[#a7f3d0] border-[#d4af37]/30 hover:border-[#d4af37]'
+              }`}
+            >
+              {opt.label}
+            </button>
+          );
+        })}
       </div>
 
-      {searchQuery && (
-        <div className="flex justify-between items-center bg-[#fefce8] p-2.5 rounded-xl border border-[#d4af37] text-xs">
-          <span className="text-[#073b27] font-bold">
-            نتایج جستجو برای: <strong className="font-black">«{searchQuery}»</strong>
-          </span>
-          <button
-            onClick={() => setSearchQuery('')}
-            className="text-red-600 hover:text-red-800 font-bold"
-          >
-            حذف فیلتر
-          </button>
+      <div className="flex items-center justify-between px-1 text-xs">
+        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-1">
+          {sortOptions.map((opt) => {
+            const isSelected = sortBy === opt.value;
+            return (
+              <button
+                key={opt.value}
+                onClick={() => setSortBy(opt.value)}
+                className={`text-[10px] px-2.5 py-1 rounded-lg font-bold transition-colors whitespace-nowrap cursor-pointer ${
+                  isSelected
+                    ? 'bg-[#fef08a] text-[#073822] font-black'
+                    : 'text-[#d1fae5] hover:text-[#fef08a]'
+                }`}
+              >
+                {opt.label}
+              </button>
+            );
+          })}
         </div>
-      )}
+
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          className="text-[#fef08a] hover:text-[#d4af37] text-xs font-bold flex items-center gap-1 shrink-0 p-1 cursor-pointer"
+        >
+          <i className="fa-solid fa-magnifying-glass text-xs" />
+          <span>جستجو</span>
+        </button>
+      </div>
 
       {filtered.length === 0 ? (
-        <div className="bg-white rounded-2xl p-8 text-center text-[#073b27] border-2 border-[#d4af37]/40 shadow-sm">
-          <i className="fa-solid fa-magnifying-glass-slash text-5xl text-[#d4af37] mb-3" />
-          <h4 className="text-base font-black text-[#073b27] mb-1">
-            هیچ گونی برنجی با این مشخصات یافت نشد
+        <div className="bg-[#063822] rounded-3xl p-8 text-center border-2 border-[#d4af37]/40 text-white my-6">
+          <div className="w-14 h-14 rounded-full bg-[#042a1b] border-2 border-[#d4af37] flex items-center justify-center mx-auto mb-3 text-[#fef08a] text-xl">
+            <i className="fa-solid fa-wheat-awn-circle-exclamation" />
+          </div>
+          <h4 className="text-sm font-black text-[#fef08a] mb-1">
+            موردی با این فیلترها یافت نشد
           </h4>
-          <p className="text-xs text-[#1e3a29] font-medium mb-3">
-            فیلترها را تغییر داده یا دسته‌بندی دیگری را امتحان کنید.
+          <p className="text-xs text-[#a7f3d0] mb-4">
+            می‌توانید فیلتر وزن یا دسته‌بندی را تغییر دهید تا تمام محصولات نمایش داده شوند.
           </p>
           <button
             onClick={() => {
               setSelectedCategory('all');
               setSelectedWeightFilter('all');
-              setSearchQuery('');
             }}
-            className="bg-[#073b27] text-[#fef08a] text-xs font-black px-4 py-2 rounded-xl border border-[#d4af37]"
+            className="bg-[#fef08a] text-[#073822] text-xs font-black px-4 py-2 rounded-xl shadow-md hover:bg-[#fde047] transition-all"
           >
             نمایش همه محصولات
           </button>
@@ -149,11 +181,11 @@ export const CatalogPage = () => {
           {filtered.map((product) => (
             <div
               key={product.id}
-              className="bg-white rounded-2xl p-3 border-2 border-[#d4af37]/30 hover:border-[#d4af37] shadow-sm hover:shadow-md transition-all flex flex-col justify-between group"
+              className="bg-white rounded-2xl p-3 shadow-md flex flex-col justify-between border-2 border-[#d4af37]/40 relative group"
             >
               <div>
                 <div
-                  className="relative h-36 rounded-xl overflow-hidden mb-2 bg-[#f0fdf4] cursor-pointer border border-[#d4af37]/30"
+                  className="relative h-36 rounded-xl overflow-hidden mb-2 bg-[#f8fafc] cursor-pointer"
                   onClick={() => setSelectedProduct(product)}
                 >
                   <img
@@ -161,56 +193,56 @@ export const CatalogPage = () => {
                     alt={product.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
-                  <span className="absolute top-2 right-2 bg-[#073b27] text-[#fef08a] text-[10px] font-black px-2 py-0.5 rounded-full border border-[#d4af37]">
-                    {product.weight.toLocaleString('fa-IR')} کیلو
+                  <span className="absolute top-1.5 right-1.5 bg-[#073822] text-[#fef08a] text-[9px] font-black px-2 py-0.5 rounded-md border border-[#d4af37]">
+                    گونی سفید {product.weight}k
                   </span>
-                  {product.isDeal && (
-                    <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-md shadow-sm">
-                      تخفیف ویژه
-                    </span>
-                  )}
+                  <span className="absolute top-1.5 left-1.5 bg-[#16a34a] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                    <i className="fa-solid fa-leaf text-[8px]" /> معطر
+                  </span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       addToCart(product);
                     }}
-                    className="absolute bottom-2 left-2 bg-gradient-to-r from-[#073b27] to-[#136f46] hover:from-[#d4af37] hover:to-[#fef08a] hover:text-[#073b27] text-white w-9 h-9 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all border border-[#d4af37]"
-                    title="افزودن کیسه به سبد"
+                    className="absolute bottom-1.5 left-1.5 bg-[#073822] text-[#fef08a] w-8 h-8 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-all border border-[#d4af37] hover:bg-[#0a4d30]"
+                    aria-label="افزودن سریع"
                   >
-                    <i className="fa-solid fa-plus text-[#fef08a] hover:text-[#073b27]" />
+                    <i className="fa-solid fa-plus text-xs" />
                   </button>
                 </div>
 
                 <h4
                   onClick={() => setSelectedProduct(product)}
-                  className="font-black text-xs text-[#073b27] line-clamp-2 cursor-pointer hover:text-[#136f46] mb-1.5 leading-snug"
+                  className="font-black text-xs text-[#073822] line-clamp-2 cursor-pointer hover:text-[#136f46] mb-1 leading-snug min-h-[32px]"
                 >
                   {product.name}
                 </h4>
 
-                <div className="flex items-center gap-1 mb-2 text-xs">
-                  <i className="fa-solid fa-star text-[#d4af37] text-xs" />
-                  <span className="font-extrabold text-[#073b27]">
-                    {product.rating.toLocaleString('fa-IR')}
-                  </span>
-                  <span className="text-[10px] text-gray-400">
-                    ({product.reviewCount.toLocaleString('fa-IR')})
-                  </span>
-                </div>
+                <p className="text-[10px] text-gray-500 line-clamp-2 mb-2">
+                  {product.description}
+                </p>
               </div>
 
-              <div className="pt-2 border-t border-[#d4af37]/20 flex flex-col items-end">
-                {product.oldPrice && (
-                  <span className="text-[11px] text-gray-400 line-through font-bold">
-                    {product.oldPrice.toLocaleString('fa-IR')}
-                  </span>
-                )}
-                <div className="flex items-center gap-1">
-                  <span className="text-sm font-black text-[#073b27]">
-                    {product.price.toLocaleString('fa-IR')}
-                  </span>
-                  <span className="text-[10px] font-bold text-[#b45309]">تومان</span>
+              <div>
+                <div className="space-y-0.5 mb-2">
+                  {product.oldPrice && (
+                    <div className="text-[10px] text-gray-400 line-through text-left font-bold">
+                      {product.oldPrice.toLocaleString('fa-IR')}
+                    </div>
+                  )}
+                  <div className="text-xs font-black text-[#073822] text-left flex items-center justify-end gap-1">
+                    <span>{product.price.toLocaleString('fa-IR')}</span>
+                    <span className="text-[10px] text-gray-500 font-normal">تومان</span>
+                  </div>
                 </div>
+
+                <button
+                  onClick={() => addToCart(product)}
+                  className="w-full bg-[#073822] hover:bg-[#0a4d30] text-[#fef08a] text-xs font-black py-2 rounded-xl flex items-center justify-center gap-1.5 shadow active:scale-95 transition-all border border-[#d4af37]"
+                >
+                  <i className="fa-solid fa-cart-plus text-xs" />
+                  <span>افزودن به سبد</span>
+                </button>
               </div>
             </div>
           ))}

@@ -4,21 +4,21 @@ import { TrustBar } from '../../components/trustBar';
 import { AmazingDeals } from '../../components/amazingDeals';
 import { Categories } from '../../components/categories';
 import { BestSellers } from '../../components/bestSellers';
-import { PromoBanners } from '../../components/promoBanners';
 import { BrandStory } from '../../components/brandStory';
+import { CustomerReviews } from '../../components/customerReviews';
 import { Footer } from '../../components/footer';
 import styles from './style.module.css';
 
 export const HomePage = () => {
   return (
-    <div className={`pb-20 ${styles.homeWrapper}`}>
+    <div className={`pb-12 ${styles.homeWrapper}`}>
       <HeroSlider />
       <TrustBar />
       <AmazingDeals />
       <Categories />
       <BestSellers />
-      <PromoBanners />
       <BrandStory />
+      <CustomerReviews />
       <Footer />
     </div>
   );

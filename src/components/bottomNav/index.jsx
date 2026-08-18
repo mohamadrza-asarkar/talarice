@@ -5,71 +5,70 @@ import styles from './style.module.css';
 export const BottomNav = () => {
   const { activeTab, setActiveTab, cartCount, setIsCartOpen } = useApp();
 
-  const navItems = [
-    {
-      id: 'home',
-      label: 'خانه',
-      iconClass: 'fa-solid fa-house'
-    },
-    {
-      id: 'catalog',
-      label: 'محصولات',
-      iconClass: 'fa-solid fa-wheat-awn'
-    },
-    {
-      id: 'recipes',
-      label: 'طرز پخت',
-      iconClass: 'fa-solid fa-book-open'
-    },
-    {
-      id: 'profile',
-      label: 'پروفایل',
-      iconClass: 'fa-solid fa-user'
-    }
-  ];
-
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t-2 border-[#d4af37]/30 shadow-lg ${styles.bottomNav}`}>
-      <div className="max-w-md mx-auto flex justify-around items-center py-2 px-2">
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
-              className={`flex flex-col items-center justify-center w-16 py-1 rounded-xl transition-all ${
-                isActive
-                  ? 'text-[#073b27] font-black scale-105'
-                  : 'text-gray-400 hover:text-[#073b27]'
-              }`}
-            >
-              <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all ${
-                  isActive
-                    ? 'bg-gradient-to-tr from-[#073b27] to-[#136f46] text-[#fef08a] shadow-md border border-[#d4af37]'
-                    : 'text-gray-500'
-                }`}
-              >
-                <i className={`${item.iconClass} text-sm`} />
-              </div>
-              <span className="text-[10px] mt-1 font-bold">{item.label}</span>
-            </button>
-          );
-        })}
+    <nav className={`fixed bottom-0 left-0 right-0 z-40 bg-[#042a1b] border-t-2 border-[#d4af37]/50 shadow-2xl ${styles.bottomNav}`}>
+      <div className="max-w-md mx-auto grid grid-cols-5 items-center py-2 px-1 text-center">
+        <button
+          onClick={() => setActiveTab('home')}
+          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'home'
+              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
+              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          }`}
+        >
+          <i className="fa-solid fa-house text-sm" />
+          <span className="text-[10px] mt-0.5 font-black">خانه</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('catalog')}
+          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'catalog'
+              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
+              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          }`}
+        >
+          <i className="fa-solid fa-table-cells-large text-sm" />
+          <span className="text-[10px] mt-0.5 font-bold">دسته‌بندی</span>
+        </button>
 
         <button
           onClick={() => setIsCartOpen(true)}
-          className="flex flex-col items-center justify-center w-16 py-1 text-gray-500 hover:text-[#073b27] transition-all"
+          className="flex flex-col items-center justify-center py-1 rounded-xl text-[#d1fae5] hover:text-[#fef08a] relative cursor-pointer"
         >
-          <div className="relative w-9 h-9 rounded-xl flex items-center justify-center bg-[#f0fdf4] text-[#073b27] border border-[#d4af37]/40 shadow-sm">
+          <div className="relative">
             <i className="fa-solid fa-cart-shopping text-sm" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-[#d4af37] text-[#073b27] text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center border border-white">
+              <span className="absolute -top-2 -right-2.5 bg-[#fef08a] text-[#073822] font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-[#042a1b]">
                 {cartCount.toLocaleString('fa-IR')}
               </span>
             )}
           </div>
-          <span className="text-[10px] mt-1 font-bold">سبد خرید</span>
+          <span className="text-[10px] mt-0.5 font-bold">سبد خرید</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('blog')}
+          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'blog'
+              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
+              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          }`}
+        >
+          <i className="fa-solid fa-book-open text-sm" />
+          <span className="text-[10px] mt-0.5 font-bold">بلاگ و آموزش</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
+            activeTab === 'profile'
+              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
+              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          }`}
+        >
+          <i className="fa-solid fa-user text-sm" />
+          <span className="text-[10px] mt-0.5 font-bold">پروفایل</span>
         </button>
       </div>
     </nav>

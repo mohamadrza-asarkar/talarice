@@ -3,18 +3,22 @@
 
 :root {
   --font-vazir: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --color-primary: #073b27;
+  --color-forest: #042a1b;
+  --color-primary: #073822;
+  --color-emerald: #0d5336;
   --color-gold: #d4af37;
   --color-gold-light: #fef08a;
+  --color-gold-dark: #b45309;
 }
 
 body {
   font-family: var(--font-vazir);
   direction: rtl;
   text-align: right;
-  background-color: #f8fafc;
+  background-color: #042a1b;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
 }
 
 .dir-ltr {
@@ -34,4 +38,16 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.25s ease-out forwards;
+}
+
+.gold-glow {
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.45);
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

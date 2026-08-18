@@ -5,7 +5,7 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [products] = useState(data.products || []);
-  const [recipes] = useState(data.recipes || []);
+  const [articles] = useState(data.articles || []);
   const [reviews] = useState(data.reviews || []);
   const [coupons] = useState(data.coupons || []);
   const [categories] = useState(data.categories || []);
@@ -21,8 +21,10 @@ export const AppProvider = ({ children }) => {
   const [sortBy, setSortBy] = useState('popular');
 
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedArticle, setSelectedArticle] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [cart, setCart] = useState(() => {
     try {
@@ -105,40 +107,41 @@ export const AppProvider = ({ children }) => {
     } catch {}
   }, [orders]);
 
-  const addToCart = (product, weightKg = product.weight, quantity = 1) => {
-    setCart((prev) => {
-      const existingIndex = prev.findIndex(
-        (item) => item.product.id === product.id && item.weightKg === weightKg
+  const addToCart = (product, weightKg = null, quantity = 1) => {
+    const selectedWeight = weightKg || product.weight;
+    setCart((prevCart) => {
+      const existingIndex = prevCart.findIndex(
+        (item) => item.product.id === product.id && item.weightKg === selectedWeight
       );
       if (existingIndex > -1) {
-        const next = [...prev];
-        next[existingIndex].quantity += quantity;
-        return next;
+        const newCart = [...prevCart];
+        newCart[existingIndex].quantity += quantity;
+        return newCart;
+      } else {
+        return [...prevCart, { product, weightKg: selectedWeight, quantity }];
       }
-      return [...prev, { product, weightKg, quantity }];
     });
-    setIsCartOpen(true);
   };
 
-  const removeFromCart = (productId, weightKg) => {
-    setCart((prev) =>
-      prev.filter(
-        (item) => !(item.product.id === productId && item.weightKg === weightKg)
+  const updateCartQuantity = (productId, weightKg, newQuantity) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId, weightKg);
+      return;
+    }
+    setCart((prevCart) =>
+      prevCart.map((item) =>
+        item.product.id === productId && item.weightKg === weightKg
+          ? { ...item, quantity: newQuantity }
+          : item
       )
     );
   };
 
-  const updateQuantity = (productId, weightKg, delta) => {
-    setCart((prev) =>
-      prev
-        .map((item) => {
-          if (item.product.id === productId && item.weightKg === weightKg) {
-            const nextQty = item.quantity + delta;
-            return nextQty > 0 ? { ...item, quantity: nextQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean)
+  const removeFromCart = (productId, weightKg) => {
+    setCart((prevCart) =>
+      prevCart.filter(
+        (item) => !(item.product.id === productId && item.weightKg === weightKg)
+      )
     );
   };
 
@@ -152,68 +155,81 @@ export const AppProvider = ({ children }) => {
       (c) => c.code.toLowerCase() === code.trim().toLowerCase()
     );
     if (!found) {
-      return { success: false, message: 'کد تخفیف وارد شده معتبر نمی‌باشد.' };
+      return { success: false, message: 'کد تخفیف نامعتبر است.' };
     }
-    const currentSubtotal = cart.reduce((sum, item) => {
-      const unitPrice =
-        item.weightKg === item.product.weight
-          ? item.product.price
-          : Math.round((item.product.price / item.product.weight) * item.weightKg);
-      return sum + unitPrice * item.quantity;
-    }, 0);
-
-    if (found.minSpend && currentSubtotal < found.minSpend) {
+    if (found.minSpend && cartTotalAmount < found.minSpend) {
       return {
         success: false,
-        message: `این کد تخفیف برای سفارش‌های بالای ${found.minSpend.toLocaleString('fa-IR')} تومان است.`
+        message: `این کد برای خریدهای بالای ${found.minSpend.toLocaleString('fa-IR')} تومان فعال می‌شود.`
       };
     }
     setAppliedCoupon(found);
-    return {
-      success: true,
-      message: `کد تخفیف ${found.discountPercent}٪ با موفقیت اعمال شد.`
-    };
+    return { success: true, message: `کد تخفیف ${found.discountPercent}٪ با موفقیت اعمال شد.` };
   };
 
   const removeCoupon = () => {
     setAppliedCoupon(null);
   };
 
-  const addOrder = (orderData) => {
+  const cartTotalAmount = cart.reduce((sum, item) => {
+    const unitPrice = (item.product.price / item.product.weight) * item.weightKg;
+    return sum + unitPrice * item.quantity;
+  }, 0);
+
+  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
+
+  const discountAmount = appliedCoupon
+    ? Math.round((cartTotalAmount * appliedCoupon.discountPercent) / 100)
+    : 0;
+
+  const shippingFee = cartTotalAmount > 1000000 || cartTotalAmount === 0 ? 0 : 45000;
+
+  const finalAmount = Math.max(0, cartTotalAmount - discountAmount + shippingFee);
+
+  const createOrder = (orderData) => {
     const newOrder = {
-      ...orderData,
       id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: new Date().toLocaleDateString('fa-IR'),
+      date: new Intl.DateTimeFormat('fa-IR').format(new Date()),
+      items: [...cart],
+      totalAmount: cartTotalAmount,
+      discountAmount,
+      shippingFee,
+      finalAmount,
+      status: 'processing',
       trackingCode: `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`,
-      status: 'processing'
+      ...orderData
     };
     setOrders((prev) => [newOrder, ...prev]);
     clearCart();
     return newOrder;
   };
 
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const filteredProducts = products.filter((p) => {
+    const matchesSearch =
+      searchQuery.trim() === '' ||
+      p.name.includes(searchQuery) ||
+      p.description.includes(searchQuery);
 
-  const cartSubtotal = cart.reduce((sum, item) => {
-    const unitPrice =
-      item.weightKg === item.product.weight
-        ? item.product.price
-        : Math.round((item.product.price / item.product.weight) * item.weightKg);
-    return sum + unitPrice * item.quantity;
-  }, 0);
+    const matchesCategory =
+      selectedCategory === 'all' || p.category === selectedCategory;
 
-  const discountAmount = appliedCoupon
-    ? Math.round((cartSubtotal * appliedCoupon.discountPercent) / 100)
-    : 0;
+    const matchesWeight =
+      selectedWeightFilter === 'all' ||
+      p.weight.toString() === selectedWeightFilter;
 
-  const shippingFee = cartSubtotal >= 2000000 || cartSubtotal === 0 ? 0 : 49000;
-  const finalTotal = cartSubtotal - discountAmount + shippingFee;
+    return matchesSearch && matchesCategory && matchesWeight;
+  }).sort((a, b) => {
+    if (sortBy === 'price-low') return a.price - b.price;
+    if (sortBy === 'price-high') return b.price - a.price;
+    if (sortBy === 'rating') return b.rating - a.rating;
+    return (b.reviewCount || 0) - (a.reviewCount || 0);
+  });
 
   return (
     <AppContext.Provider
       value={{
         products,
-        recipes,
+        articles,
         reviews,
         coupons,
         categories,
@@ -231,28 +247,33 @@ export const AppProvider = ({ children }) => {
         setSelectedWeightFilter,
         sortBy,
         setSortBy,
+        filteredProducts,
         selectedProduct,
         setSelectedProduct,
+        selectedArticle,
+        setSelectedArticle,
         isCartOpen,
         setIsCartOpen,
         isCheckoutOpen,
         setIsCheckoutOpen,
+        isSearchOpen,
+        setIsSearchOpen,
         cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
+        cartCount,
+        cartTotalAmount,
+        discountAmount,
+        shippingFee,
+        finalAmount,
         appliedCoupon,
+        addToCart,
+        updateCartQuantity,
+        removeFromCart,
+        clearCart,
         applyCoupon,
         removeCoupon,
         orders,
-        addOrder,
-        addresses,
-        cartCount,
-        cartSubtotal,
-        discountAmount,
-        shippingFee,
-        finalTotal
+        createOrder,
+        addresses
       }}
     >
       {children}
