@@ -1,19 +1,21 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const Search = () => {
-  const { searchQuery, setIsSearchOpen } = useApp();
+  const { searchQuery } = useApp();
+  const navigate = useNavigate();
 
-  const handleOpenModal = () => {
-    setIsSearchOpen(true);
+  const handleOpenSearchPage = () => {
+    navigate('/search');
   };
 
   return (
     <div className={`relative w-full ${styles.searchWrapper}`}>
       <button
         type="button"
-        onClick={handleOpenModal}
+        onClick={handleOpenSearchPage}
         className="w-full bg-white text-xs font-bold text-[#073822] pr-4 pl-10 py-3 rounded-full border-2 border-[#d4af37] shadow-md flex items-center justify-between text-right cursor-pointer hover:border-[#b45309] transition-all"
       >
         <span className={searchQuery ? 'text-[#073822]' : 'text-gray-400'}>

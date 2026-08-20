@@ -1,0 +1,7 @@
+.searchPage {
+  /* Full screen handling is done via Tailwind's fixed inset-0 h-full */
+}
+
+.resultsList {
+  /* Let it scroll naturally */
+}

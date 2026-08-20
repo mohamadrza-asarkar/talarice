@@ -1,15 +1,29 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const BottomNav = () => {
-  const { activeTab, setActiveTab, cartCount, setIsCartOpen } = useApp();
+  const { cartCount, setIsCartOpen } = useApp();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/') return 'home';
+    if (path === '/catalog') return 'catalog';
+    if (path === '/blog') return 'blog';
+    if (path === '/profile') return 'profile';
+    return '';
+  };
+
+  const activeTab = getActiveTab();
 
   return (
     <nav className={`fixed bottom-0 left-0 right-0 z-40 bg-[#042a1b] border-t-2 border-[#d4af37]/50 shadow-2xl ${styles.bottomNav}`}>
       <div className="max-w-md mx-auto grid grid-cols-5 items-center py-2 px-1 text-center">
         <button
-          onClick={() => setActiveTab('home')}
+          onClick={() => navigate('/')}
           className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'home'
               ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
@@ -21,7 +35,7 @@ export const BottomNav = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('catalog')}
+          onClick={() => navigate('/catalog')}
           className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'catalog'
               ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
@@ -48,7 +62,7 @@ export const BottomNav = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('blog')}
+          onClick={() => navigate('/blog')}
           className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'blog'
               ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
@@ -60,7 +74,7 @@ export const BottomNav = () => {
         </button>
 
         <button
-          onClick={() => setActiveTab('profile')}
+          onClick={() => navigate('/profile')}
           className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
             activeTab === 'profile'
               ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'

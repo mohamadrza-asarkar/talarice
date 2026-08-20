@@ -27,17 +27,17 @@ export const ProductDetailModal = () => {
     : null;
 
   return (
-    <div className={`fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 ${styles.modalOverlay}`}>
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border-2 border-[#d4af37] animate-fade-in relative text-[#073b27]">
+    <div className={`fixed inset-0 z-[60] overflow-y-auto bg-[#f8fafc] flex flex-col items-center justify-start ${styles.modalOverlay} animate-slide-up`}>
+      <div className="bg-white w-full max-w-md min-h-screen shadow-2xl relative text-[#073b27] flex flex-col">
         <button
           onClick={() => setSelectedProduct(null)}
-          className="absolute top-3 left-3 bg-[#073b27]/80 hover:bg-[#073b27] text-[#fef08a] rounded-full p-2 z-20 shadow-md backdrop-blur-md transition-all border border-[#d4af37]"
-          aria-label="بستن"
+          className="absolute top-3 right-3 bg-white hover:bg-gray-100 text-[#073b27] rounded-full p-2 z-20 shadow-md transition-all border-2 border-[#d4af37]"
+          aria-label="بازگشت"
         >
-          <i className="fa-solid fa-xmark text-lg" />
+          <i className="fa-solid fa-arrow-right text-lg" />
         </button>
 
-        <div className="relative h-64 bg-[#f0fdf4] border-b-2 border-[#d4af37]/30">
+        <div className="relative h-72 bg-[#f0fdf4] border-b-2 border-[#d4af37]/30">
           <img
             src={selectedProduct.image}
             alt={selectedProduct.name}
@@ -55,7 +55,7 @@ export const ProductDetailModal = () => {
           </div>
         </div>
 
-        <div className="p-4 space-y-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 space-y-4 flex-1 overflow-y-auto bg-white">
           <div className="flex items-center gap-3 text-xs">
             <div className="flex items-center gap-1 bg-[#fef08a] px-2.5 py-1 rounded-lg text-[#073b27] font-black border border-[#d4af37]">
               <i className="fa-solid fa-star text-xs text-[#b45309]" />
@@ -64,9 +64,6 @@ export const ProductDetailModal = () => {
                 ({selectedProduct.reviewCount} نظر مشتریان)
               </span>
             </div>
-            <span className="text-green-700 bg-green-50 px-2.5 py-1 rounded-lg font-bold border border-green-200">
-              موجود در انبار شالیزار
-            </span>
           </div>
 
           <div>

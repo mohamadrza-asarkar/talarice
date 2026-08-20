@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import data from '../api/data.json';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
+  const navigate = useNavigate();
   const [products] = useState(data.products || []);
   const [articles] = useState(data.articles || []);
   const [reviews] = useState(data.reviews || []);
@@ -14,17 +16,20 @@ export const AppProvider = ({ children }) => {
   const [brandStory] = useState(data.brandStory || {});
   const [testTips] = useState(data.testTips || []);
 
-  const [activeTab, setActiveTab] = useState('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedWeightFilter, setSelectedWeightFilter] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
 
+  const setActiveTab = (tab) => {
+    if (tab === 'home') navigate('/');
+    else navigate(`/${tab}`);
+  };
+
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedArticle, setSelectedArticle] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const [cart, setCart] = useState(() => {
     try {
@@ -225,6 +230,19 @@ export const AppProvider = ({ children }) => {
     return (b.reviewCount || 0) - (a.reviewCount || 0);
   });
 
+  const getActiveTab = () => {
+    if (typeof window === 'undefined') return 'home';
+    const path = window.location.pathname;
+    if (path === '/') return 'home';
+    if (path === '/catalog') return 'catalog';
+    if (path === '/blog') return 'blog';
+    if (path === '/profile') return 'profile';
+    if (path === '/search') return 'search';
+    return '';
+  };
+
+  const activeTab = getActiveTab();
+
   return (
     <AppContext.Provider
       value={{
@@ -256,8 +274,6 @@ export const AppProvider = ({ children }) => {
         setIsCartOpen,
         isCheckoutOpen,
         setIsCheckoutOpen,
-        isSearchOpen,
-        setIsSearchOpen,
         cart,
         cartCount,
         cartTotalAmount,

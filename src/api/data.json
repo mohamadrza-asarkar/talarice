@@ -315,7 +315,8 @@
       "title": "برنج کامفیروزی اصل؛ عطر ماندگار شیراز",
       "description": "عرضه در گونی‌های پارچه‌ای سفید نخی درجه یک، سورت و الک شده با دستگاه مدرن",
       "ctaText": "خرید گونی سفید ۱۰k",
-      "category": "premium"
+      "category": "premium",
+      "image": "/src/assets/images/white_rice_sack_1_1786553716616.jpg"
     },
     {
       "id": 2,
@@ -323,7 +324,8 @@
       "title": "پک ۲۰ کیلویی اقتصادی با ارسال رایگان",
       "description": "دو کیسه ۱۰ کیلویی سفید پارچه‌ای با تخفیف ویژه و ارسال سریع به سراسر کشور",
       "ctaText": "مشاهده پک اقتصادی",
-      "category": "economic"
+      "category": "economic",
+      "image": "/src/assets/images/white_rice_sack_2_1786553744148.jpg"
     },
     {
       "id": 3,
@@ -331,7 +333,26 @@
       "title": "کیسه ۵ کیلویی ممتاز؛ پخت مجلسی",
       "description": "انتخاب عالی برای ارزیابی کیفیت و ری‌کردن برنج اصیل کامفیروز فارس",
       "ctaText": "سفارش کیسه ۵k",
-      "category": "premium"
+      "category": "premium",
+      "image": "https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      "id": 4,
+      "tag": "برنج نیم‌دانه",
+      "title": "بهترین انتخاب برای آش و شله‌زرد",
+      "description": "برنج نیم‌دانه کامفیروز با عطر فوق‌العاده و قیمت استثنایی",
+      "ctaText": "مشاهده نیم‌دانه",
+      "category": "half",
+      "image": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=800"
+    },
+    {
+      "id": 5,
+      "tag": "عمده فروشی",
+      "title": "فروش ویژه برای رستوران‌ها",
+      "description": "تامین برنج کامفیروز ویژه رستوران‌ها، هتل‌ها و ارگان‌ها",
+      "ctaText": "خرید عمده",
+      "category": "wholesale",
+      "image": "/src/assets/images/white_rice_sack_3_1786553768867.jpg"
     }
   ],
   "brandStory": {
