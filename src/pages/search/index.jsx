@@ -35,7 +35,15 @@ export const SearchPage = () => {
   });
 
   const handleClose = () => {
-    navigate(-1); // Go back to the previous page
+    setSearchQuery('');
+    navigate(-1);
+    
+    // Fallback if navigate(-1) doesn't change the page
+    setTimeout(() => {
+      if (window.location.pathname === '/search') {
+        navigate('/');
+      }
+    }, 100);
   };
 
   return (
@@ -85,11 +93,8 @@ export const SearchPage = () => {
           </div>
         ) : (
           <div className={`p-4 ${styles.resultsList}`}>
-            <div className="flex items-center justify-between px-1 text-[11px] text-gray-500 font-bold mb-3">
+            <div className="flex items-center px-1 text-[11px] text-gray-500 font-bold mb-3">
               <span>نتایج جستجو برای «{searchQuery}»</span>
-              <span className="text-[#073822] font-black bg-[#fef08a] px-2 py-0.5 rounded-md border border-[#d4af37]">
-                {filteredResults.length.toLocaleString('fa-IR')} نتیجه
-              </span>
             </div>
 
             {filteredResults.length === 0 ? (
