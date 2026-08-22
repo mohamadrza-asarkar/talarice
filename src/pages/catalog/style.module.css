@@ -1,3 +1,106 @@
 .catalogWrapper {
-  user-select: none;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 6rem;
+  animation: fadeIn 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+.headerCard {
+  background-color: #063822;
+  color: white;
+  padding: 1rem;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(212, 175, 55, 0.6);
+}
+.headerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.375rem;
+}
+.locationBadge {
+  background-color: #fef08a;
+  color: #073822;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0.125rem 0.625rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+.countBadge {
+  font-size: 11px;
+  color: #fef08a;
+  font-weight: 900;
+}
+.title {
+  font-size: 1rem;
+  font-weight: 900;
+  color: white;
+}
+.subtitle {
+  font-size: 0.75rem;
+  color: #a7f3d0;
+  margin-top: 0.25rem;
+  font-weight: 400;
+}
+.searchRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 0.25rem;
+}
+.searchButton {
+  color: #fef08a;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  background-color: #063822;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.4);
+  transition: all 150ms;
+}
+.searchButton:hover {
+  color: #d4af37;
+}
+.emptyState {
+  background-color: #063822;
+  border-radius: 1.5rem;
+  padding: 2rem;
+  text-align: center;
+  border: 2px solid rgba(212, 175, 55, 0.4);
+  color: white;
+  margin: 1.5rem 0;
+}
+.emptyIcon {
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 9999px;
+  background-color: #042a1b;
+  border: 2px solid #d4af37;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.75rem auto;
+  color: #fef08a;
+  font-size: 1.25rem;
+}
+.emptyTitle {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #fef08a;
+  margin-bottom: 0.25rem;
+}
+.gridContainer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
 }

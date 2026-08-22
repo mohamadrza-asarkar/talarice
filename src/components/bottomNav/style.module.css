@@ -1,3 +1,89 @@
 .bottomNav {
-  user-select: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  background-color: #042a1b;
+  border-top: 2px solid rgba(212, 175, 55, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.navContainer {
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  align-items: center;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  text-align: center;
+}
+
+.navButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0.75rem;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  cursor: pointer;
+  position: relative;
+  background: transparent;
+  border: none;
+}
+
+.navButtonSelected {
+  background-color: #fef08a;
+  color: #073822;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.navButtonUnselected {
+  color: #d1fae5;
+}
+
+.navButtonUnselected:hover {
+  color: #fef08a;
+}
+
+.iconContainer {
+  position: relative;
+}
+
+.badge {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.625rem;
+  background-color: #fef08a;
+  color: #073822;
+  font-weight: 900;
+  font-size: 9px;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #042a1b;
+}
+
+.label {
+  font-size: 10px;
+  margin-top: 0.125rem;
+}
+
+.labelBold {
+  font-weight: 700;
+}
+
+.labelBlack {
+  font-weight: 900;
 }

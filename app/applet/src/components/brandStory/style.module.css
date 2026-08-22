@@ -1,0 +1,85 @@
+.section {
+  padding: 0 1rem;
+  margin: 0.75rem 0;
+}
+
+.storyCard {
+  background-color: #063822;
+  border-radius: 1.5rem;
+  padding: 1.25rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 2px solid rgba(212, 175, 55, 0.6);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #fef08a;
+  line-height: 1.25;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1rem;
+  }
+}
+
+.checkIcon {
+  font-size: 1.125rem;
+  color: #fef08a;
+  flex-shrink: 0;
+}
+
+.description {
+  font-size: 0.75rem;
+  color: #d1fae5;
+  line-height: 1.625;
+  text-align: justify;
+  margin-bottom: 1rem;
+  font-weight: 400;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
+  text-align: center;
+}
+
+.featureItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.featureBordered {
+  border-left: 1px solid rgba(212, 175, 55, 0.3);
+  border-right: 1px solid rgba(212, 175, 55, 0.3);
+  padding: 0 0.25rem;
+}
+
+.featureValue {
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #fef08a;
+}
+
+.featureLabel {
+  font-size: 10px;
+  color: #a7f3d0;
+  font-weight: 500;
+  margin-top: 0.125rem;
+}

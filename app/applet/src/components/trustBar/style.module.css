@@ -1,0 +1,141 @@
+.section {
+  padding: 0.5rem 1rem;
+}
+
+.trustGrid {
+  background-color: #f0fdf4;
+  border: 2px solid rgba(212, 175, 55, 0.5);
+  border-radius: 1rem;
+  padding: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.trustButton {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 0.25rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+
+.trustButton:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.iconWrapper {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background-color: #073822;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+  color: #fef08a;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  border: 1px solid #d4af37;
+}
+
+.icon {
+  font-size: 1rem;
+}
+
+.title {
+  font-size: 10px;
+  font-weight: 900;
+  color: #073822;
+  line-height: 1.25;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContainer {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  max-width: 24rem;
+  width: 100%;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 2px solid #d4af37;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+  padding-bottom: 0.75rem;
+}
+
+.modalIconWrapper {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: #073822;
+  color: #fef08a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #d4af37;
+}
+
+.modalIcon {
+  font-size: 1.125rem;
+}
+
+.modalTitle {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #073822;
+}
+
+.modalDescription {
+  font-size: 0.75rem;
+  color: #1e3a29;
+  line-height: 1.625;
+  margin-bottom: 1rem;
+  text-align: justify;
+  font-weight: 500;
+}
+
+.closeButton {
+  width: 100%;
+  background-color: #073822;
+  color: #fef08a;
+  font-size: 0.75rem;
+  font-weight: 900;
+  padding: 0.625rem 0;
+  border-radius: 0.75rem;
+  transition: background-color 0.2s;
+  border: 1px solid #d4af37;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  background-color: #0a4d2f;
+}

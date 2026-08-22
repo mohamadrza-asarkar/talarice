@@ -1,4 +1,176 @@
-.heroContainer {
+.sliderSection {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.25rem;
+}
+
+.sliderContainer {
   position: relative;
+  border-radius: 1.5rem;
   overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 2px solid rgba(212, 175, 55, 0.6);
+  min-height: 190px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+  padding: 1.25rem;
+  background-color: #042a1b;
+}
+
+.bgImage {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  opacity: 0.6;
+  animation: fadeIn 0.5s ease-in-out;
+  transition-property: transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 700ms;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 0.6; }
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 10;
+  background-image: linear-gradient(to left, rgba(6, 56, 34, 0.8), rgba(10, 70, 44, 0.7), rgba(4, 42, 27, 0.9));
+}
+
+.contentContainer {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.375rem;
+}
+
+.badge {
+  background-color: #fef08a;
+  color: #073822;
+  font-size: 10px;
+  font-weight: 900;
+  padding: 0.125rem 0.75rem;
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.title {
+  font-size: 1rem;
+  font-weight: 900;
+  color: white;
+  line-height: 1.375;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1.125rem;
+  }
+}
+
+.description {
+  font-size: 11px;
+  color: #e2e8f0;
+  font-weight: 500;
+  line-height: 1.625;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+  max-width: 260px;
+}
+
+.controlsContainer {
+  position: relative;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.ctaButton {
+  background-color: #fef08a;
+  color: #073822;
+  font-weight: 900;
+  font-size: 0.75rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+.ctaButton:hover {
+  background-color: #fde047;
+}
+
+.ctaButton:active {
+  transform: scale(0.95);
+}
+
+.navigationContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.navButton {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0.4);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  transition-property: all;
+}
+
+.navButton:hover {
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.dotsContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dotActive {
+  cursor: pointer;
+  transition-property: all;
+  width: 1rem;
+  height: 0.375rem;
+  background-color: #fef08a;
+  border-radius: 9999px;
+}
+
+.dotInactive {
+  cursor: pointer;
+  transition-property: all;
+  width: 0.375rem;
+  height: 0.375rem;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 9999px;
 }

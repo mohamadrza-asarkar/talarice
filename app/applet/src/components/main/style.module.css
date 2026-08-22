@@ -1,0 +1,13 @@
+.mainWrapper {
+  width: 100%;
+}
+
+.normalMode {
+  min-height: calc(100vh - 140px);
+  background-color: #f8fafc;
+}
+
+.searchMode {
+  height: 100vh;
+  background-color: #f8fafc;
+}

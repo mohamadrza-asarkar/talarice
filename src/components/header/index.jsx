@@ -1,22 +1,22 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Logo } from '../logo';
-import { Search } from '../search';
+import { SearchBar } from '../searchBar';
 import styles from './style.module.css';
 
 export const Header = () => {
   const navigate = useNavigate();
 
   return (
-    <header className={`bg-[#042a1b] px-4 pt-3 pb-3 border-b-2 border-[#d4af37]/40 shadow-lg ${styles.headerContainer}`}>
-      <div className="max-w-md mx-auto flex flex-col items-center space-y-3">
+    <header className={styles.header}>
+      <div className={styles.container}>
         <div
           onClick={() => navigate('/')}
-          className="cursor-pointer"
+          className={styles.logoWrapper}
         >
           <Logo variant="circle" />
         </div>
-        <Search />
+        <SearchBar />
       </div>
     </header>
   );

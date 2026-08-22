@@ -6,23 +6,31 @@ import { CatalogPage } from '../../pages/catalog';
 import { BlogPage } from '../../pages/blog';
 import { ProfilePage } from '../../pages/profile';
 import { SearchPage } from '../../pages/search';
+import { ProductPage } from '../../pages/product';
+import { AuthPage } from '../../pages/auth';
 import styles from './style.module.css';
 
 export const Main = () => {
-  const { activeTab } = useApp();
+  const { activeTab, isAuthenticated } = useApp();
   const location = useLocation();
   const isSearchPage = location.pathname === '/search';
+  const isProductPage = location.pathname.startsWith('/product/');
+
+  const useFullHeight = isSearchPage || isProductPage;
 
   return (
-    <main className={`${!isSearchPage ? 'min-h-[calc(100vh-140px)] ' + styles.mainContainer : 'h-screen'}`}>
+    <main className={`${!useFullHeight ? styles.minHeight + ' ' + styles.mainContainer : styles.fullHeight}`}>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/catalog" element={<CatalogPage />} />
         <Route path="/blog" element={<BlogPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/profile" element={isAuthenticated ? <ProfilePage /> : <Navigate to="/auth" replace />} />
+        <Route path="/auth" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/profile" replace />} />
         <Route path="/search" element={<SearchPage />} />
+        <Route path="/product/:id" element={<ProductPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
   );
 };
+

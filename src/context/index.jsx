@@ -100,6 +100,21 @@ export const AppProvider = ({ children }) => {
     }
   ]);
 
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return localStorage.getItem('tala_auth') === 'true';
+  });
+
+  const login = () => {
+    setIsAuthenticated(true);
+    localStorage.setItem('tala_auth', 'true');
+  };
+
+  const logout = () => {
+    setIsAuthenticated(false);
+    localStorage.removeItem('tala_auth');
+    navigate('/');
+  };
+
   useEffect(() => {
     try {
       localStorage.setItem('tala_cart', JSON.stringify(cart));
@@ -289,7 +304,10 @@ export const AppProvider = ({ children }) => {
         removeCoupon,
         orders,
         createOrder,
-        addresses
+        addresses,
+        isAuthenticated,
+        login,
+        logout
       }}
     >
       {children}

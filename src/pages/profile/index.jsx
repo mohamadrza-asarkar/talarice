@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const ProfilePage = () => {
-  const { orders, addresses } = useApp();
+  const { orders, addresses, logout } = useApp();
   const [activeSubTab, setActiveSubTab] = useState('orders');
 
   const [wholesaleForm, setWholesaleForm] = useState({
@@ -34,116 +34,94 @@ export const ProfilePage = () => {
   };
 
   return (
-    <div className={`px-4 py-3 pb-24 space-y-4 animate-fade-in ${styles.profileWrapper}`}>
-      <div className="bg-gradient-to-br from-[#073b27] via-[#0b4f35] to-[#136f46] text-white p-4 rounded-2xl shadow-md border-2 border-[#d4af37] flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-14 h-14 bg-[#d4af37] text-[#073b27] rounded-full flex items-center justify-center font-black text-2xl shadow-md border-2 border-white">
-            M
+    <div className={styles.profileWrapper}>
+      <div className={styles.headerCard}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+          <div className={styles.userInfo}>
+            <div className={styles.avatar}>
+              M
+            </div>
+            <div>
+              <h2 className={styles.userName}>محمد رضایی</h2>
+              <p className={styles.userPhone}>
+                ۰۹۱۷ ۱۲۳ ۴۵۶۷
+              </p>
+              <span className={styles.userBadge}>
+                مشتری طلایی
+              </span>
+            </div>
           </div>
-          <div>
-            <h2 className="text-base font-black text-[#fef08a]">محمد رضایی</h2>
-            <p className="text-xs text-[#d1fae5] dir-ltr text-right font-bold">
-              ۰۹۱۷ ۱۲۳ ۴۵۶۷
-            </p>
-            <span className="text-[10px] bg-[#d4af37] text-[#073b27] font-black px-2 py-0.5 rounded-full mt-1 inline-block border border-white">
-              مشتری طلایی
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-[#0b4f35]/90 backdrop-blur-md p-2.5 rounded-xl text-center border border-[#d4af37]">
-          <span className="text-[10px] text-[#d1fae5] block font-bold">
-            امتیاز طلا:
-          </span>
-          <span className="text-sm font-black text-[#fef08a]">۲۵۰ امتیاز</span>
+          <button 
+            onClick={logout}
+            style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: 'bold' }}
+          >
+            <i className="fa-solid fa-arrow-right-from-bracket" style={{ marginLeft: '0.5rem' }} />
+            خروج
+          </button>
         </div>
       </div>
 
-      <div className="flex bg-[#f0fdf4] p-1 rounded-xl border-2 border-[#d4af37]/40 text-xs font-black">
+      <div className={styles.tabsContainer}>
         <button
           onClick={() => setActiveSubTab('orders')}
-          className={`flex-1 py-2 rounded-lg transition-all ${
-            activeSubTab === 'orders'
-              ? 'bg-[#073b27] text-[#fef08a] shadow-sm'
-              : 'text-[#073b27]'
+          className={`${styles.tabBtn} ${
+            activeSubTab === 'orders' ? styles.tabActive : styles.tabInactive
           }`}
         >
           سفارش‌ها
         </button>
         <button
           onClick={() => setActiveSubTab('addresses')}
-          className={`flex-1 py-2 rounded-lg transition-all ${
-            activeSubTab === 'addresses'
-              ? 'bg-[#073b27] text-[#fef08a] shadow-sm'
-              : 'text-[#073b27]'
+          className={`${styles.tabBtn} ${
+            activeSubTab === 'addresses' ? styles.tabActive : styles.tabInactive
           }`}
         >
           آدرس‌ها
         </button>
-        <button
-          onClick={() => setActiveSubTab('wholesale')}
-          className={`flex-1 py-2 rounded-lg transition-all ${
-            activeSubTab === 'wholesale'
-              ? 'bg-[#073b27] text-[#fef08a] shadow-sm'
-              : 'text-[#073b27]'
-          }`}
-        >
-          سفارش عمده
-        </button>
-        <button
-          onClick={() => setActiveSubTab('support')}
-          className={`flex-1 py-2 rounded-lg transition-all ${
-            activeSubTab === 'support'
-              ? 'bg-[#073b27] text-[#fef08a] shadow-sm'
-              : 'text-[#073b27]'
-          }`}
-        >
-          پشتیبانی
-        </button>
       </div>
 
       {activeSubTab === 'orders' && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-black text-[#073b27]">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <h3 className={styles.sectionTitle}>
             تاریخچه سفارش‌های شما:
           </h3>
           {orders.length === 0 ? (
-            <div className="bg-white p-6 rounded-2xl text-center text-[#073b27] border-2 border-[#d4af37]/30">
-              <i className="fa-solid fa-file-invoice text-4xl text-[#d4af37] mb-2" />
-              <p className="text-xs font-bold">هنوز هیچ سفارشی ثبت نکرده‌اید.</p>
+            <div className={styles.emptyState}>
+              <i className="fa-solid fa-file-invoice" style={{ fontSize: '2.25rem', color: '#d4af37', marginBottom: '0.5rem' }} />
+              <p style={{ fontSize: '0.75rem', fontWeight: 700 }}>هنوز هیچ سفارشی ثبت نکرده‌اید.</p>
             </div>
           ) : (
             orders.map((ord) => (
               <div
                 key={ord.id}
-                className="bg-white p-3.5 rounded-2xl border-2 border-[#d4af37]/40 shadow-sm space-y-2 text-xs"
+                className={styles.card}
               >
-                <div className="flex justify-between items-center border-b border-[#d4af37]/20 pb-2">
-                  <span className="font-mono font-black text-[#073b27]">
+                <div className={`${styles.row} ${styles.rowBorder}`}>
+                  <span className={styles.monoText}>
                     {ord.id}
                   </span>
-                  <span className="bg-[#f0fdf4] text-[#073b27] font-black px-2 py-0.5 rounded-full text-[10px] border border-[#d4af37]">
+                  <span className={styles.badgeStatus}>
                     در حال پردازش و بسته‌بندی
                   </span>
                 </div>
 
-                <div className="flex justify-between text-[#1e3a29] font-medium">
+                <div className={`${styles.row} ${styles.mediumText}`}>
                   <span>تاریخ ثبت: {ord.date}</span>
                   <span>
                     کد پیگیری:{' '}
-                    <strong className="font-mono text-[#073b27]">
+                    <strong className={styles.monoText}>
                       {ord.trackingCode}
                     </strong>
                   </span>
                 </div>
 
-                <div className="text-[#073b27] font-black">
+                <div className={styles.boldText}>
                   تعداد اقلام: {ord.items.length} کیسه برنج
                 </div>
 
-                <div className="flex justify-between items-center pt-2 border-t border-[#d4af37]/20 font-black">
+                <div className={styles.totalRow}>
                   <span>مبلغ کل:</span>
-                  <span className="text-sm font-black text-[#073b27]">
+                  <span className={styles.totalValue}>
                     {ord.finalAmount.toLocaleString('fa-IR')} تومان
                   </span>
                 </div>
@@ -154,25 +132,25 @@ export const ProfilePage = () => {
       )}
 
       {activeSubTab === 'addresses' && (
-        <div className="space-y-3">
-          <h3 className="text-xs font-black text-[#073b27]">آدرس‌های ثبت شده:</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <h3 className={styles.sectionTitle}>آدرس‌های ثبت شده:</h3>
           {addresses.map((addr) => (
             <div
               key={addr.id}
-              className="bg-white p-3.5 rounded-2xl border-2 border-[#d4af37]/40 shadow-sm space-y-1.5 text-xs"
+              className={styles.card}
             >
-              <div className="flex justify-between items-center">
-                <span className="font-black text-[#073b27]">{addr.title}</span>
+              <div className={styles.row}>
+                <span className={styles.boldText}>{addr.title}</span>
                 {addr.isDefault && (
-                  <span className="bg-[#fef08a] text-[#073b27] text-[10px] font-black px-2 py-0.5 rounded-full border border-[#d4af37]">
+                  <span className={styles.badgeDefault}>
                     پیش‌فرض
                   </span>
                 )}
               </div>
-              <p className="text-[#1e3a29] leading-relaxed font-medium">
+              <p className={styles.addressDesc}>
                 {addr.fullAddress}
               </p>
-              <div className="text-[11px] text-[#b45309] font-black">
+              <div className={styles.addressContact}>
                 گیرنده: {addr.recipientName} ({addr.phone})
               </div>
             </div>
@@ -181,24 +159,24 @@ export const ProfilePage = () => {
       )}
 
       {activeSubTab === 'wholesale' && (
-        <div className="bg-white p-4 rounded-2xl border-2 border-[#d4af37]/40 shadow-sm space-y-3">
+        <div className={styles.card}>
           <div>
-            <h3 className="text-sm font-black text-[#073b27] mb-1">
+            <h3 className={styles.sectionTitle}>
               درخواست خرید عمده (رستوران، تالار، ارگان)
             </h3>
-            <p className="text-xs text-[#1e3a29] font-medium">
+            <p className={styles.mediumText}>
               برای سفارش‌های بالای ۱۰۰ کیلوگرم، قیمت ویژه شالیزار و فاکتور رسمی صادر می‌شود.
             </p>
           </div>
 
           {wholesaleSuccess ? (
-            <div className="bg-[#f0fdf4] text-[#073b27] border border-[#d4af37] p-3 rounded-xl text-xs font-black text-center">
+            <div className={styles.emptyState}>
               درخواست شما با موفقیت ثبت شد. کارشناسان طلا رایس به زودی با شما تماس خواهند گرفت.
             </div>
           ) : (
-            <form onSubmit={handleWholesaleSubmit} className="space-y-3 text-xs">
-              <div>
-                <label className="block text-[#073b27] font-black mb-1">
+            <form onSubmit={handleWholesaleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>
                   نام کسب‌وکار / ارگان:
                 </label>
                 <input
@@ -212,13 +190,13 @@ export const ProfilePage = () => {
                     })
                   }
                   placeholder="مثلاً: رستوران سنتی شیراز"
-                  className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
+                  className={styles.input}
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-[#073b27] font-black mb-1">
+              <div className={styles.grid2}>
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>
                     نام رابط:
                   </label>
                   <input
@@ -231,11 +209,11 @@ export const ProfilePage = () => {
                         contactName: e.target.value
                       })
                     }
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
+                    className={styles.input}
                   />
                 </div>
-                <div>
-                  <label className="block text-[#073b27] font-black mb-1">
+                <div className={styles.inputGroup}>
+                  <label className={styles.label}>
                     شماره تماس:
                   </label>
                   <input
@@ -248,13 +226,13 @@ export const ProfilePage = () => {
                         phone: e.target.value
                       })
                     }
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
+                    className={styles.input}
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-[#073b27] font-black mb-1">
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>
                   حجم تخمینی (کیلوگرم):
                 </label>
                 <select
@@ -265,7 +243,7 @@ export const ProfilePage = () => {
                       estimatedKg: e.target.value
                     })
                   }
-                  className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
+                  className={styles.input}
                 >
                   <option value="100">۱۰۰ کیلوگرم (۱۰ کیسه)</option>
                   <option value="500">۵۰۰ کیلوگرم (۵۰ کیسه)</option>
@@ -273,8 +251,8 @@ export const ProfilePage = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-[#073b27] font-black mb-1">
+              <div className={styles.inputGroup}>
+                <label className={styles.label}>
                   توضیحات اضافی:
                 </label>
                 <textarea
@@ -287,13 +265,13 @@ export const ProfilePage = () => {
                     })
                   }
                   placeholder="نوع برنج درخواستی، تاریخ تحویل و..."
-                  className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl p-2.5 text-[#073b27] font-bold"
+                  className={styles.input}
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#073b27] to-[#136f46] text-[#fef08a] font-black text-xs py-3 rounded-xl border border-[#d4af37]"
+                className={styles.primaryButton}
               >
                 ثبت استعلام قیمت عمده
               </button>
@@ -303,33 +281,33 @@ export const ProfilePage = () => {
       )}
 
       {activeSubTab === 'support' && (
-        <div className="space-y-3">
-          <div className="bg-white p-4 rounded-2xl border-2 border-[#d4af37]/40 shadow-sm space-y-3">
-            <h3 className="text-xs font-black text-[#073b27]">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className={styles.card}>
+            <h3 className={styles.sectionTitle}>
               ارتباط مستقیم با واحد فروش و امور مشتریان:
             </h3>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className={styles.grid2}>
               <a
                 href="tel:09170000000"
-                className="flex items-center justify-center gap-2 bg-[#f0fdf4] hover:bg-[#d4af37]/20 text-[#073b27] font-black text-xs p-3 rounded-xl border border-[#d4af37]/40"
+                className={styles.contactCard}
               >
-                <i className="fa-solid fa-phone text-[#d4af37]" />
+                <i className="fa-solid fa-phone" style={{ color: '#d4af37' }} />
                 <span>تماس تلفنی</span>
               </a>
               <a
                 href="https://wa.me/#"
                 target="_blank"
                 rel="noreferrer"
-                className="flex items-center justify-center gap-2 bg-[#f0fdf4] hover:bg-[#d4af37]/20 text-[#073b27] font-black text-xs p-3 rounded-xl border border-[#d4af37]/40"
+                className={styles.contactCard}
               >
-                <i className="fa-brands fa-whatsapp text-[#25d366] text-sm" />
+                <i className="fa-brands fa-whatsapp" style={{ color: '#25d366', fontSize: '0.875rem' }} />
                 <span>واتساپ پشتیبانی</span>
               </a>
             </div>
 
-            <div className="pt-2 border-t border-[#d4af37]/20">
-              <label className="block text-xs font-black text-[#073b27] mb-1">
+            <div className={styles.rowBorder} style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderBottom: 'none', borderTop: '1px solid rgba(212, 175, 55, 0.2)' }}>
+              <label className={styles.label} style={{ marginBottom: '0.25rem' }}>
                 ارسال پیام یا سوال به پشتیبانی:
               </label>
               <textarea
@@ -337,10 +315,11 @@ export const ProfilePage = () => {
                 value={supportText}
                 onChange={(e) => setSupportText(e.target.value)}
                 placeholder="سوال خود درباره پخت، ارسال یا کیفیت برنج را بنویسید..."
-                className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl p-2.5 text-xs text-[#073b27] font-bold mb-2"
+                className={styles.input}
+                style={{ marginBottom: '0.5rem' }}
               />
               {supportSuccess ? (
-                <p className="text-xs text-[#073b27] font-black text-center bg-[#f0fdf4] border border-[#d4af37] p-2 rounded-xl">
+                <p className={styles.emptyState} style={{ padding: '0.5rem' }}>
                   پیام شما دریافت شد. همکاران ما به زودی پاسخ خواهند داد.
                 </p>
               ) : (
@@ -352,7 +331,7 @@ export const ProfilePage = () => {
                       setTimeout(() => setSupportSuccess(false), 3000);
                     }
                   }}
-                  className="w-full bg-[#073b27] text-[#fef08a] font-black text-xs py-2.5 rounded-xl border border-[#d4af37]"
+                  className={styles.supportButton}
                 >
                   ارسال تیکت پشتیبانی
                 </button>
@@ -364,3 +343,4 @@ export const ProfilePage = () => {
     </div>
   );
 };
+

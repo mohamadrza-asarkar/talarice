@@ -30,31 +30,31 @@ export const AmazingDeals = () => {
   if (dealProducts.length === 0) return null;
 
   return (
-    <section className={`mx-4 my-3 bg-[#063822] rounded-3xl p-4 shadow-xl border-2 border-[#d4af37]/60 text-white ${styles.dealsSection}`}>
-      <div className="flex justify-between items-center mb-3">
-        <div className="flex items-center gap-1.5">
-          <i className="fa-solid fa-fire-flame-curved text-[#fef08a] text-base" />
-          <h3 className="text-sm sm:text-base font-black text-[#fef08a]">
+    <section className={styles.dealsSection}>
+      <div className={styles.header}>
+        <div className={styles.titleWrapper}>
+          <i className="fa-solid fa-fire-flame-curved" style={{ color: '#fef08a', fontSize: '1rem' }} />
+          <h3 className={styles.title}>
             پیشنهاد شگفت‌انگیز طلا رایس
           </h3>
         </div>
 
-        <div className="flex items-center gap-1 dir-ltr">
-          <span className="bg-[#fef08a] text-[#073822] font-black text-xs px-2 py-0.5 rounded-lg shadow-sm">
+        <div className={styles.timer}>
+          <span className={styles.timeBox}>
             {String(timeLeft.seconds).padStart(2, '0')}
           </span>
-          <span className="text-[#fef08a] font-bold text-xs">:</span>
-          <span className="bg-[#fef08a] text-[#073822] font-black text-xs px-2 py-0.5 rounded-lg shadow-sm">
+          <span className={styles.colon}>:</span>
+          <span className={styles.timeBox}>
             {String(timeLeft.minutes).padStart(2, '0')}
           </span>
-          <span className="text-[#fef08a] font-bold text-xs">:</span>
-          <span className="bg-[#fef08a] text-[#073822] font-black text-xs px-2 py-0.5 rounded-lg shadow-sm">
+          <span className={styles.colon}>:</span>
+          <span className={styles.timeBox}>
             {String(timeLeft.hours).padStart(2, '0')}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className={styles.gridContainer}>
         {dealProducts.slice(0, 2).map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
@@ -62,3 +62,4 @@ export const AmazingDeals = () => {
     </section>
   );
 };
+

@@ -4,7 +4,7 @@ import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const BottomNav = () => {
-  const { cartCount, setIsCartOpen } = useApp();
+  const { cartCount, setIsCartOpen, isAuthenticated } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -14,75 +14,68 @@ export const BottomNav = () => {
     if (path === '/catalog') return 'catalog';
     if (path === '/blog') return 'blog';
     if (path === '/profile') return 'profile';
+    if (path === '/auth') return 'auth';
     return '';
   };
 
   const activeTab = getActiveTab();
 
   return (
-    <nav className={`fixed bottom-0 left-0 right-0 z-40 bg-[#042a1b] border-t-2 border-[#d4af37]/50 shadow-2xl ${styles.bottomNav}`}>
-      <div className="max-w-md mx-auto grid grid-cols-5 items-center py-2 px-1 text-center">
+    <nav className={styles.bottomNav}>
+      <div className={styles.navContainer}>
         <button
           onClick={() => navigate('/')}
-          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'home'
-              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
-              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          className={`${styles.navButton} ${
+            activeTab === 'home' ? styles.navButtonSelected : styles.navButtonUnselected
           }`}
         >
-          <i className="fa-solid fa-house text-sm" />
-          <span className="text-[10px] mt-0.5 font-black">خانه</span>
+          <i className="fa-solid fa-house" style={{ fontSize: '0.875rem' }} />
+          <span className={`${styles.label} ${activeTab === 'home' ? styles.labelBlack : styles.labelBold}`}>خانه</span>
         </button>
 
         <button
           onClick={() => navigate('/catalog')}
-          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'catalog'
-              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
-              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          className={`${styles.navButton} ${
+            activeTab === 'catalog' ? styles.navButtonSelected : styles.navButtonUnselected
           }`}
         >
-          <i className="fa-solid fa-table-cells-large text-sm" />
-          <span className="text-[10px] mt-0.5 font-bold">دسته‌بندی</span>
+          <i className="fa-solid fa-table-cells-large" style={{ fontSize: '0.875rem' }} />
+          <span className={`${styles.label} ${activeTab === 'catalog' ? styles.labelBlack : styles.labelBold}`}>دسته‌بندی</span>
         </button>
 
         <button
           onClick={() => setIsCartOpen(true)}
-          className="flex flex-col items-center justify-center py-1 rounded-xl text-[#d1fae5] hover:text-[#fef08a] relative cursor-pointer"
+          className={`${styles.navButton} ${styles.navButtonUnselected}`}
         >
-          <div className="relative">
-            <i className="fa-solid fa-cart-shopping text-sm" />
+          <div className={styles.iconContainer}>
+            <i className="fa-solid fa-cart-shopping" style={{ fontSize: '0.875rem' }} />
             {cartCount > 0 && (
-              <span className="absolute -top-2 -right-2.5 bg-[#fef08a] text-[#073822] font-black text-[9px] w-4 h-4 rounded-full flex items-center justify-center border border-[#042a1b]">
+              <span className={styles.badge}>
                 {cartCount.toLocaleString('fa-IR')}
               </span>
             )}
           </div>
-          <span className="text-[10px] mt-0.5 font-bold">سبد خرید</span>
+          <span className={`${styles.label} ${styles.labelBold}`}>سبد خرید</span>
         </button>
 
         <button
           onClick={() => navigate('/blog')}
-          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'blog'
-              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
-              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          className={`${styles.navButton} ${
+            activeTab === 'blog' ? styles.navButtonSelected : styles.navButtonUnselected
           }`}
         >
-          <i className="fa-solid fa-book-open text-sm" />
-          <span className="text-[10px] mt-0.5 font-bold">بلاگ و آموزش</span>
+          <i className="fa-solid fa-book-open" style={{ fontSize: '0.875rem' }} />
+          <span className={`${styles.label} ${activeTab === 'blog' ? styles.labelBlack : styles.labelBold}`}>بلاگ و آموزش</span>
         </button>
 
         <button
-          onClick={() => navigate('/profile')}
-          className={`flex flex-col items-center justify-center py-1 rounded-xl transition-all cursor-pointer ${
-            activeTab === 'profile'
-              ? 'bg-[#fef08a] text-[#073822] shadow-md font-black'
-              : 'text-[#d1fae5] hover:text-[#fef08a]'
+          onClick={() => navigate(isAuthenticated ? '/profile' : '/auth')}
+          className={`${styles.navButton} ${
+            (activeTab === 'profile' || activeTab === 'auth') ? styles.navButtonSelected : styles.navButtonUnselected
           }`}
         >
-          <i className="fa-solid fa-user text-sm" />
-          <span className="text-[10px] mt-0.5 font-bold">پروفایل</span>
+          <i className="fa-solid fa-user" style={{ fontSize: '0.875rem' }} />
+          <span className={`${styles.label} ${(activeTab === 'profile' || activeTab === 'auth') ? styles.labelBlack : styles.labelBold}`}>پروفایل</span>
         </button>
       </div>
     </nav>

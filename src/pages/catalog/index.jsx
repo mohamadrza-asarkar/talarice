@@ -1,51 +1,53 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import { ProductCard } from '../../components/productCard';
 import styles from './style.module.css';
 
 export const CatalogPage = () => {
-  const { products, setIsSearchOpen } = useApp();
+  const { products } = useApp();
+  const navigate = useNavigate();
 
   return (
-    <div className={`px-4 py-3 pb-24 space-y-3.5 animate-fade-in ${styles.catalogWrapper}`}>
-      <div className="bg-[#063822] text-white p-4 rounded-3xl shadow-xl border-2 border-[#d4af37]/60">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="bg-[#fef08a] text-[#073822] text-[10px] font-black px-2.5 py-0.5 rounded-full shadow-sm">
+    <div className={styles.catalogWrapper}>
+      <div className={styles.headerCard}>
+        <div className={styles.headerTopRow}>
+          <span className={styles.locationBadge}>
             شالیزارهای کامفیروز فارس
           </span>
-          <span className="text-[11px] text-[#fef08a] font-black">
+          <span className={styles.countBadge}>
             {products.length.toLocaleString('fa-IR')} گونی برنج
           </span>
         </div>
-        <h2 className="text-base font-black text-white">
+        <h2 className={styles.title}>
           فهرست گونی‌های برنج کامفیروزی
         </h2>
-        <p className="text-xs text-[#a7f3d0] mt-1 font-normal">
+        <p className={styles.subtitle}>
           عرضه مستقیم در کیسه‌های پارچه‌ای نخی سفید با گارانتی اصالت
         </p>
       </div>
 
-      <div className="flex items-center justify-end px-1 text-xs">
+      <div className={styles.searchRow}>
         <button
-          onClick={() => setIsSearchOpen(true)}
-          className="text-[#fef08a] hover:text-[#d4af37] text-xs font-bold flex items-center gap-1 shrink-0 p-1 cursor-pointer bg-[#063822] px-3 py-1.5 rounded-xl border border-[#d4af37]/40"
+          onClick={() => navigate('/search')}
+          className={styles.searchButton}
         >
-          <i className="fa-solid fa-magnifying-glass text-xs" />
+          <i className="fa-solid fa-magnifying-glass" style={{ fontSize: '0.75rem' }} />
           <span>جستجو در محصولات</span>
         </button>
       </div>
 
       {products.length === 0 ? (
-        <div className="bg-[#063822] rounded-3xl p-8 text-center border-2 border-[#d4af37]/40 text-white my-6">
-          <div className="w-14 h-14 rounded-full bg-[#042a1b] border-2 border-[#d4af37] flex items-center justify-center mx-auto mb-3 text-[#fef08a] text-xl">
+        <div className={styles.emptyState}>
+          <div className={styles.emptyIcon}>
             <i className="fa-solid fa-wheat-awn-circle-exclamation" />
           </div>
-          <h4 className="text-sm font-black text-[#fef08a] mb-1">
+          <h4 className={styles.emptyTitle}>
             موردی یافت نشد
           </h4>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3">
+        <div className={styles.gridContainer}>
           {products.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
@@ -54,3 +56,4 @@ export const CatalogPage = () => {
     </div>
   );
 };
+

@@ -26,247 +26,172 @@ export const CheckoutModal = () => {
     deliveryNote: '',
     paymentMethod: 'gateway'
   });
-
   const [createdOrder, setCreatedOrder] = useState(null);
 
   if (!isCheckoutOpen) return null;
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleNext = (e) => {
-    if (e) e.preventDefault();
-    if (step === 1) {
-      if (!formData.recipientName || !formData.phone || !formData.fullAddress) {
-        alert('لطفاً مشخصات و آدرس تحویل را کامل وارد نمایید.');
-        return;
-      }
-      setStep(2);
-    } else if (step === 2) {
-      setStep(3);
-    } else if (step === 3) {
-      const order = addOrder({
-        items: cart,
-        totalAmount: cartSubtotal,
-        discountAmount,
-        shippingFee,
-        finalAmount: finalTotal,
-        paymentMethod: formData.paymentMethod,
-        address: {
-          recipientName: formData.recipientName,
-          phone: formData.phone,
-          province: formData.province,
-          city: formData.city,
-          postalCode: formData.postalCode,
-          fullAddress: formData.fullAddress
-        }
-      });
+  const handleNext = () => {
+    if (step === 3) {
+      const order = addOrder(formData);
       setCreatedOrder(order);
       setStep(4);
+    } else {
+      setStep(step + 1);
     }
   };
 
-  const handleClose = () => {
-    setIsCheckoutOpen(false);
-    setStep(1);
-    setCreatedOrder(null);
-  };
-
   const handleFinish = () => {
-    handleClose();
-    setActiveTab('profile');
+    setIsCheckoutOpen(false);
+    setTimeout(() => {
+      setStep(1);
+      setCreatedOrder(null);
+      setActiveTab('profile');
+    }, 300);
   };
 
   return (
-    <div className={`fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 ${styles.modalOverlay}`}>
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border-2 border-[#d4af37] animate-fade-in text-[#073b27]">
-        <div className="bg-gradient-to-r from-[#073b27] to-[#136f46] text-[#fef08a] p-4 flex justify-between items-center border-b-2 border-[#d4af37]">
-          <div className="flex items-center gap-2">
-            <i className="fa-solid fa-truck-fast text-xl text-[#fef08a]" />
-            <h2 className="text-base font-black">
-              تکمیل و ثبت سفارش گونی برنج طلا رایس
-            </h2>
+    <div className={styles.modalOverlay}>
+      <div 
+        className={styles.backdrop}
+        onClick={() => step !== 4 && setIsCheckoutOpen(false)}
+      ></div>
+      
+      <div className={styles.modalContainer}>
+        <div className={styles.modalHeader}>
+          <div className={styles.headerTitle}>
+            <i className="fa-solid fa-truck-fast" />
+            <span>تکمیل خرید و ارسال</span>
           </div>
-          {step < 4 && (
+          {step !== 4 && (
             <button
-              onClick={handleClose}
-              className="text-[#fef08a] hover:bg-white/20 rounded-full p-1 transition-colors"
+              onClick={() => setIsCheckoutOpen(false)}
+              className={styles.closeBtn}
             >
-              <i className="fa-solid fa-xmark text-lg" />
+              <i className="fa-solid fa-xmark" />
             </button>
           )}
         </div>
 
-        {step < 4 && (
-          <div className="flex justify-between items-center px-6 py-3 bg-[#f0fdf4] border-b border-[#d4af37]/30 text-xs font-black">
-            <div className={`flex items-center gap-1.5 ${step >= 1 ? 'text-[#073b27]' : 'text-gray-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 1 ? 'bg-[#073b27] text-[#fef08a]' : 'bg-gray-200 text-gray-600'}`}>
-                ۱
-              </span>
-              <span>آدرس گیرنده</span>
+        <div className={styles.stepperContainer}>
+          <div className={styles.stepper}>
+            <div className={`${styles.step} ${step >= 1 ? styles.stepActive : styles.stepInactive}`}>
+              <div className={`${styles.stepCircle} ${step >= 1 ? styles.stepCircleActive : styles.stepCircleInactive}`}>۱</div>
+              <span className={`${styles.stepLabel} ${step >= 1 ? styles.stepLabelActive : styles.stepLabelInactive}`}>آدرس</span>
             </div>
-            <div className="h-0.5 w-6 bg-[#d4af37]/40" />
-            <div className={`flex items-center gap-1.5 ${step >= 2 ? 'text-[#073b27]' : 'text-gray-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 2 ? 'bg-[#073b27] text-[#fef08a]' : 'bg-gray-200 text-gray-600'}`}>
-                ۲
-              </span>
-              <span>بازبینی کیسه‌ها</span>
+            <div className={`${styles.stepLine} ${step >= 2 ? styles.stepLineActive : styles.stepLineInactive}`}></div>
+            <div className={`${styles.step} ${step >= 2 ? styles.stepActive : styles.stepInactive}`}>
+              <div className={`${styles.stepCircle} ${step >= 2 ? styles.stepCircleActive : styles.stepCircleInactive}`}>۲</div>
+              <span className={`${styles.stepLabel} ${step >= 2 ? styles.stepLabelActive : styles.stepLabelInactive}`}>بررسی</span>
             </div>
-            <div className="h-0.5 w-6 bg-[#d4af37]/40" />
-            <div className={`flex items-center gap-1.5 ${step >= 3 ? 'text-[#073b27]' : 'text-gray-400'}`}>
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${step >= 3 ? 'bg-[#073b27] text-[#fef08a]' : 'bg-gray-200 text-gray-600'}`}>
-                ۳
-              </span>
-              <span>پرداخت</span>
+            <div className={`${styles.stepLine} ${step >= 3 ? styles.stepLineActive : styles.stepLineInactive}`}></div>
+            <div className={`${styles.step} ${step >= 3 ? styles.stepActive : styles.stepInactive}`}>
+              <div className={`${styles.stepCircle} ${step >= 3 ? styles.stepCircleActive : styles.stepCircleInactive}`}>۳</div>
+              <span className={`${styles.stepLabel} ${step >= 3 ? styles.stepLabelActive : styles.stepLabelInactive}`}>پرداخت</span>
             </div>
           </div>
-        )}
+        </div>
 
-        <div className="p-5 max-h-[75vh] overflow-y-auto space-y-4">
+        <div className={styles.modalContent}>
           {step === 1 && (
-            <form onSubmit={handleNext} className="space-y-3 text-xs">
-              <h3 className="font-black text-sm text-[#073b27] mb-2 flex items-center gap-1.5">
-                <i className="fa-solid fa-location-dot text-[#d4af37]" />
-                اطلاعات تحویل‌گیرنده و آدرس ارسال:
+            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className={styles.formContainer}>
+              <h3 className={styles.sectionTitle}>
+                <i className="fa-solid fa-location-dot" style={{ color: '#d4af37' }} />
+                اطلاعات گیرنده و آدرس ارسال:
               </h3>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-black text-[#073b27] mb-1">
-                    نام و نام خانوادگی تحویل گیرنده:
-                  </label>
-                  <input
-                    type="text"
-                    name="recipientName"
-                    required
-                    value={formData.recipientName}
-                    onChange={handleInputChange}
-                    placeholder="مثلاً: محمد رضایی"
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold outline-none focus:border-[#073b27]"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-[#073b27] mb-1">
-                    شماره همراه (جهت پیامک رهگیری):
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    required
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="۰۹۱۷۱۲۳۴۵۶۷"
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold outline-none focus:border-[#073b27]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <label className="block font-black text-[#073b27] mb-1">استان:</label>
-                  <input
-                    type="text"
-                    name="province"
-                    value={formData.province}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-[#073b27] mb-1">شهر:</label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
-                  />
-                </div>
-                <div>
-                  <label className="block font-black text-[#073b27] mb-1">کد پستی:</label>
-                  <input
-                    type="text"
-                    name="postalCode"
-                    value={formData.postalCode}
-                    onChange={handleInputChange}
-                    placeholder="۱۰ رقمی"
-                    className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-black text-[#073b27] mb-1">
-                  آدرس دقیق پستی:
-                </label>
-                <textarea
-                  rows={2}
-                  name="fullAddress"
-                  required
-                  value={formData.fullAddress}
-                  onChange={handleInputChange}
-                  placeholder="خیابان، کوچه، پلاک، واحد..."
-                  className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl p-2.5 text-[#073b27] font-bold outline-none focus:border-[#073b27]"
-                />
-              </div>
-
-              <div>
-                <label className="block font-black text-[#073b27] mb-1">
-                  توضیحات تکمیلی تحویل (اختیاری):
-                </label>
+              
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>نام و نام خانوادگی تحویل‌گیرنده</label>
                 <input
+                  required
                   type="text"
-                  name="deliveryNote"
-                  value={formData.deliveryNote}
-                  onChange={handleInputChange}
-                  placeholder="مثلا: تماس قبل از رسیدن یا تحویل به نگهبانی"
-                  className="w-full bg-[#f0fdf4] border border-[#d4af37]/40 rounded-xl px-3 py-2 text-[#073b27] font-bold"
+                  value={formData.recipientName}
+                  onChange={(e) => setFormData({...formData, recipientName: e.target.value})}
+                  className={styles.formInput}
+                  placeholder="مثال: علی احمدی"
                 />
               </div>
 
-              <div className="pt-3">
-                <button
-                  type="submit"
-                  className="w-full bg-gradient-to-r from-[#073b27] to-[#136f46] text-[#fef08a] font-black text-sm py-3 rounded-xl shadow-lg border border-[#d4af37]"
-                >
-                  مرحله بعد: بازبینی سفارش
-                </button>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>شماره موبایل (جهت هماهنگی ارسال)</label>
+                <input
+                  required
+                  type="tel"
+                  dir="ltr"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className={styles.formInput}
+                  placeholder="09120000000"
+                />
               </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>استان</label>
+                  <select
+                    value={formData.province}
+                    onChange={(e) => setFormData({...formData, province: e.target.value})}
+                    className={styles.formInput}
+                  >
+                    <option>فارس</option>
+                    <option>تهران</option>
+                    <option>اصفهان</option>
+                    <option>خراسان رضوی</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>شهر</label>
+                  <select
+                    value={formData.city}
+                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    className={styles.formInput}
+                  >
+                    <option>شیراز</option>
+                    <option>مرودشت</option>
+                    <option>کامفیروز</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>آدرس دقیق پستی</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={formData.fullAddress}
+                  onChange={(e) => setFormData({...formData, fullAddress: e.target.value})}
+                  className={styles.formTextarea}
+                  placeholder="خیابان، کوچه، پلاک، واحد..."
+                />
+              </div>
+
+              <button type="submit" className={styles.primaryButton}>
+                مرحله بعد: بررسی سفارش
+              </button>
             </form>
           )}
 
           {step === 2 && (
-            <div className="space-y-4 text-xs">
-              <h3 className="font-black text-sm text-[#073b27] flex items-center gap-1.5">
-                <i className="fa-solid fa-clipboard-check text-[#d4af37]" />
+            <div className={styles.formContainer}>
+              <h3 className={styles.sectionTitle}>
+                <i className="fa-solid fa-clipboard-check" style={{ color: '#d4af37' }} />
                 بررسی اقلام و کیسه‌های انتخابی:
               </h3>
-
-              <div className="space-y-2 max-h-48 overflow-y-auto">
+              
+              <div className={styles.cartItemsList}>
                 {cart.map((item) => (
-                  <div
-                    key={`${item.product.id}-${item.weightKg}`}
-                    className="flex justify-between items-center bg-[#f0fdf4] p-2.5 rounded-xl border border-[#d4af37]/30"
-                  >
+                  <div key={`${item.product.id}-${item.weightKg}`} className={styles.cartItem}>
                     <div>
-                      <div className="font-black text-[#073b27]">
-                        {item.product.name}
-                      </div>
-                      <div className="text-[11px] text-[#b45309]">
+                      <div className={styles.cartItemName}>{item.product.name}</div>
+                      <div className={styles.cartItemVariant}>
                         کیسه {item.weightKg.toLocaleString('fa-IR')} کیلویی ×{' '}
                         {item.quantity.toLocaleString('fa-IR')}
                       </div>
                     </div>
-                    <div className="font-black text-sm text-[#073b27]">
+                    <div className={styles.cartItemPrice}>
                       {(
-                        (item.weightKg === item.product.weight
-                          ? item.product.price
-                          : Math.round(
-                              (item.product.price / item.product.weight) *
-                                item.weightKg
-                            )) * item.quantity
+                        (item.weightKg === item.product.weight 
+                          ? item.product.price 
+                          : Math.round((item.product.price / item.product.weight) * item.weightKg)) * item.quantity
                       ).toLocaleString('fa-IR')}{' '}
                       تومان
                     </div>
@@ -274,32 +199,22 @@ export const CheckoutModal = () => {
                 ))}
               </div>
 
-              <div className="bg-[#fefce8] p-3 rounded-xl border border-[#d4af37]/40 space-y-1.5 font-bold">
-                <div className="flex justify-between">
+              <div className={styles.addressSummary}>
+                <div className={styles.summaryRow}>
                   <span>تحویل‌گیرنده:</span>
                   <span>{formData.recipientName} ({formData.phone})</span>
                 </div>
-                <div className="flex justify-between">
+                <div className={styles.summaryRow}>
                   <span>آدرس:</span>
-                  <span className="text-[11px] text-justify max-w-[220px]">
-                    {formData.fullAddress}
-                  </span>
+                  <span className={styles.addressText}>{formData.fullAddress}</span>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="bg-gray-100 text-[#073b27] font-black text-xs px-4 py-3 rounded-xl border border-gray-300"
-                >
+              <div className={styles.buttonGroup}>
+                <button type="button" onClick={() => setStep(1)} className={styles.secondaryButton}>
                   ویرایش آدرس
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(3)}
-                  className="flex-1 bg-gradient-to-r from-[#073b27] to-[#136f46] text-[#fef08a] font-black text-sm py-3 rounded-xl shadow-lg border border-[#d4af37]"
-                >
+                <button type="button" onClick={() => setStep(3)} className={`${styles.primaryButton} ${styles.flex1}`}>
                   تایید و انتخاب روش پرداخت
                 </button>
               </div>
@@ -307,106 +222,72 @@ export const CheckoutModal = () => {
           )}
 
           {step === 3 && (
-            <div className="space-y-4 text-xs">
-              <h3 className="font-black text-sm text-[#073b27] flex items-center gap-1.5">
-                <i className="fa-solid fa-credit-card text-[#d4af37]" />
+            <div className={styles.formContainer}>
+              <h3 className={styles.sectionTitle}>
+                <i className="fa-solid fa-credit-card" style={{ color: '#d4af37' }} />
                 انتخاب روش پرداخت:
               </h3>
-
-              <div className="space-y-2.5">
-                <label
-                  onClick={() =>
-                    setFormData({ ...formData, paymentMethod: 'gateway' })
-                  }
-                  className={`flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    formData.paymentMethod === 'gateway'
-                      ? 'border-[#073b27] bg-[#f0fdf4]'
-                      : 'border-gray-200 bg-white'
-                  }`}
-                >
-                  <i className="fa-solid fa-credit-card text-[#073b27] text-xl" />
+              
+              <div className={styles.paymentMethods}>
+                <label onClick={() => setFormData({ ...formData, paymentMethod: 'gateway' })} className={`${styles.paymentMethodLabel} ${formData.paymentMethod === 'gateway' ? styles.paymentMethodActive : styles.paymentMethodInactive}`}>
+                  <i className="fa-solid fa-credit-card" style={{ color: '#073b27', fontSize: '1.25rem' }} />
                   <div>
-                    <div className="font-black text-xs text-[#073b27]">
-                      درگاه پرداخت آنلاین شتاب
-                    </div>
-                    <div className="text-[11px] text-[#1e3a29]">
-                      پرداخت امن بانکی با تمامی کارت‌های عضو شتاب
-                    </div>
+                    <div className={styles.paymentMethodTitle}>درگاه پرداخت آنلاین شتاب</div>
+                    <div className={styles.paymentMethodDesc}>پرداخت امن بانکی با تمامی کارت‌های عضو شتاب</div>
                   </div>
                   <input
                     type="radio"
                     name="payment"
                     checked={formData.paymentMethod === 'gateway'}
                     onChange={() => {}}
-                    className="mr-auto accent-[#073b27]"
+                    className={styles.radioInput}
                   />
                 </label>
-
-                <label
-                  onClick={() =>
-                    setFormData({ ...formData, paymentMethod: 'card' })
-                  }
-                  className={`flex items-center gap-3 p-3.5 rounded-2xl border-2 cursor-pointer transition-all ${
-                    formData.paymentMethod === 'card'
-                      ? 'border-[#073b27] bg-[#f0fdf4]'
-                      : 'border-gray-200 bg-white'
-                  }`}
-                >
-                  <i className="fa-solid fa-building-columns text-[#b45309] text-xl" />
+                
+                <label onClick={() => setFormData({ ...formData, paymentMethod: 'card' })} className={`${styles.paymentMethodLabel} ${formData.paymentMethod === 'card' ? styles.paymentMethodActive : styles.paymentMethodInactive}`}>
+                  <i className="fa-solid fa-building-columns" style={{ color: '#b45309', fontSize: '1.25rem' }} />
                   <div>
-                    <div className="font-black text-xs text-[#073b27]">
-                      کارت به کارت حساب طلا رایس
-                    </div>
-                    <div className="text-[11px] text-[#1e3a29]">
-                      ارسال تصویر فیش واریزی در واتساپ یا تلگرام
-                    </div>
+                    <div className={styles.paymentMethodTitle}>کارت به کارت حساب طلا رایس</div>
+                    <div className={styles.paymentMethodDesc}>ارسال تصویر فیش واریزی در واتساپ یا تلگرام</div>
                   </div>
                   <input
                     type="radio"
                     name="payment"
                     checked={formData.paymentMethod === 'card'}
                     onChange={() => {}}
-                    className="mr-auto accent-[#073b27]"
+                    className={styles.radioInput}
                   />
                 </label>
               </div>
 
-              <div className="bg-[#f0fdf4] p-3 rounded-2xl border border-[#d4af37]/40 space-y-1.5">
-                <div className="flex justify-between font-bold">
+              <div className={styles.totalsBox}>
+                <div className={styles.totalsRow}>
                   <span>مبلغ کل سفارش:</span>
                   <span>{cartSubtotal.toLocaleString('fa-IR')} تومان</span>
                 </div>
                 {discountAmount > 0 && (
-                  <div className="flex justify-between text-red-600 font-bold">
+                  <div className={styles.discountRow}>
                     <span>مبلغ تخفیف:</span>
                     <span>- {discountAmount.toLocaleString('fa-IR')} تومان</span>
                   </div>
                 )}
-                <div className="flex justify-between font-bold">
+                <div className={styles.totalsRow}>
                   <span>هزینه حمل و نقل:</span>
                   <span>
                     {shippingFee === 0 ? 'رایگان' : `${shippingFee.toLocaleString('fa-IR')} تومان`}
                   </span>
                 </div>
-                <div className="flex justify-between font-black text-sm text-[#073b27] pt-2 border-t border-[#d4af37]/30">
+                <div className={styles.finalTotalRow}>
                   <span>مبلغ قابل پرداخت نهایی:</span>
                   <span>{finalTotal.toLocaleString('fa-IR')} تومان</span>
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  className="bg-gray-100 text-[#073b27] font-black text-xs px-4 py-3 rounded-xl border border-gray-300"
-                >
+              <div className={styles.buttonGroup}>
+                <button type="button" onClick={() => setStep(2)} className={styles.secondaryButton}>
                   بازگشت
                 </button>
-                <button
-                  type="button"
-                  onClick={handleNext}
-                  className="flex-1 bg-gradient-to-r from-[#073b27] to-[#136f46] text-[#fef08a] font-black text-sm py-3 rounded-xl shadow-lg border border-[#d4af37]"
-                >
+                <button type="button" onClick={handleNext} className={`${styles.primaryButton} ${styles.flex1}`}>
                   پرداخت و ثبت نهایی سفارش
                 </button>
               </div>
@@ -414,49 +295,38 @@ export const CheckoutModal = () => {
           )}
 
           {step === 4 && createdOrder && (
-            <div className="text-center space-y-4 py-2">
-              <div className="w-16 h-16 bg-[#f0fdf4] text-[#073b27] rounded-full flex items-center justify-center mx-auto shadow-lg border-2 border-[#d4af37]">
-                <i className="fa-solid fa-circle-check text-4xl text-[#073b27]" />
+            <div className={styles.successContainer}>
+              <div className={styles.successIconWrapper}>
+                <i className="fa-solid fa-circle-check" style={{ fontSize: '2.25rem' }} />
               </div>
-
+              
               <div>
-                <h3 className="text-lg font-black text-[#073b27]">
-                  سفارش شما با موفقیت ثبت گردید!
-                </h3>
-                <p className="text-xs text-[#1e3a29] mt-1 font-medium">
+                <h3 className={styles.successTitle}>سفارش شما با موفقیت ثبت گردید!</h3>
+                <p className={styles.successDesc}>
                   کیسه‌های برنج کامفیروزی در حال آماده‌سازی و ارسال می‌باشند.
                 </p>
               </div>
-
-              <div className="bg-[#f0fdf4] p-4 rounded-2xl border-2 border-[#d4af37]/50 text-right space-y-2 text-xs">
-                <div className="flex justify-between border-b border-[#d4af37]/30 pb-2">
-                  <span className="font-bold">شماره سفارش:</span>
-                  <span className="font-black text-[#073b27] font-mono">
-                    {createdOrder.id}
-                  </span>
+              
+              <div className={styles.orderDetailsBox}>
+                <div className={styles.orderDetailRow}>
+                  <span className={styles.orderDetailLabel}>شماره سفارش:</span>
+                  <span className={`${styles.orderDetailValue} ${styles.monoText}`}>{createdOrder.id}</span>
                 </div>
-                <div className="flex justify-between border-b border-[#d4af37]/30 pb-2">
-                  <span className="font-bold">کد رهگیری پستی:</span>
-                  <span className="font-black text-[#b45309] font-mono">
-                    {createdOrder.trackingCode}
-                  </span>
+                <div className={styles.orderDetailRow}>
+                  <span className={styles.orderDetailLabel}>کد رهگیری پستی:</span>
+                  <span className={`${styles.orderDetailValueSecondary} ${styles.monoText}`}>{createdOrder.trackingCode}</span>
                 </div>
-                <div className="flex justify-between border-b border-[#d4af37]/30 pb-2">
-                  <span className="font-bold">مبلغ پرداخت شده:</span>
-                  <span className="font-black text-[#073b27]">
-                    {createdOrder.finalAmount.toLocaleString('fa-IR')} تومان
-                  </span>
+                <div className={styles.orderDetailRow}>
+                  <span className={styles.orderDetailLabel}>مبلغ پرداخت شده:</span>
+                  <span className={styles.orderDetailValue}>{createdOrder.finalAmount.toLocaleString('fa-IR')} تومان</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="font-bold">تحویل‌گیرنده:</span>
+                <div className={styles.orderDetailRowNoBorder}>
+                  <span className={styles.orderDetailLabel}>تحویل‌گیرنده:</span>
                   <span>{createdOrder.address.recipientName}</span>
                 </div>
               </div>
 
-              <button
-                onClick={handleFinish}
-                className="w-full bg-[#073b27] text-[#fef08a] font-black text-sm py-3 rounded-xl border border-[#d4af37] shadow-lg"
-              >
+              <button onClick={handleFinish} className={styles.finishButton}>
                 مشاهده در تاریخچه سفارشات
               </button>
             </div>

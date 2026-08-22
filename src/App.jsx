@@ -6,20 +6,22 @@ import { Main } from './components/main';
 import { BottomNav } from './components/bottomNav';
 import { CartDrawer } from './components/cartDrawer';
 import { CheckoutModal } from './components/checkoutModal';
-import { ProductDetailModal } from './components/productDetailModal';
+import styles from './App.module.css';
 
 const AppLayout = () => {
   const location = useLocation();
   const isSearchPage = location.pathname === '/search';
+  const isProductPage = location.pathname.startsWith('/product/');
+
+  const hideHeaderAndNav = isSearchPage || isProductPage;
 
   return (
-    <div className="min-h-screen bg-[#042a1b] text-white max-w-md mx-auto relative shadow-2xl overflow-x-hidden border-x border-[#d4af37]/40">
-      {!isSearchPage && <Header />}
+    <div className={styles.appWrapper}>
+      {!hideHeaderAndNav && <Header />}
       <Main />
-      {!isSearchPage && <BottomNav />}
+      {!hideHeaderAndNav && <BottomNav />}
       <CartDrawer />
       <CheckoutModal />
-      <ProductDetailModal />
     </div>
   );
 };

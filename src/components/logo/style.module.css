@@ -1,11 +1,81 @@
-.logoContainer {
-  user-select: none;
+.logoCircleWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.badge {
-  transition: transform 0.2s ease;
+.logoGlowEffect {
+  position: absolute;
+  width: 6rem;
+  height: 6rem;
+  border-radius: 9999px;
+  background-color: rgba(253, 224, 71, 0.2);
+  filter: blur(24px);
+  pointer-events: none;
 }
 
-.badge:hover {
-  transform: scale(1.05);
+.logoCircleContainer {
+  position: relative;
+  width: 5rem;
+  height: 5rem;
+  border-radius: 9999px;
+  background-color: white;
+  border: 3px solid #d4af37;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  padding: 0.125rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 9999px;
+  transform: scale(1.15);
+}
+
+.logoInlineContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.logoInlineIcon {
+  position: relative;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: white;
+  border: 2px solid #d4af37;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0.125rem;
+}
+
+.logoTextContainer {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.logoTextPrimary {
+  font-weight: 900;
+  color: #073822;
+  font-size: 0.875rem;
+  line-height: 1.25;
+}
+
+.logoTextSecondary {
+  font-size: 9px;
+  font-weight: 700;
+  color: #b45309;
+  letter-spacing: 0.05em;
 }

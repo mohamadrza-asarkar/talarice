@@ -40,65 +40,61 @@ export const HeroSlider = () => {
   };
 
   return (
-    <section className={`px-4 pt-3 pb-1 ${styles.sliderSection}`}>
-      <div className="relative rounded-3xl overflow-hidden shadow-xl border-2 border-[#d4af37]/60 min-h-[190px] flex flex-col justify-between text-white p-5 bg-[#042a1b]">
+    <section className={styles.sliderSection}>
+      <div className={styles.sliderContainer}>
         {/* The background image */}
         <img
           key={currentSlide}
           src={bgImage}
           alt={slide.title}
-          className="absolute inset-0 w-full h-full object-cover z-0 opacity-60 animate-fade-in transition-transform duration-700"
+          className={styles.bgImage}
         />
         
         {/* Gradient overlay to ensure text readability */}
-        <div className="absolute inset-0 z-10 bg-gradient-to-l from-[#063822]/80 via-[#0a462c]/70 to-[#042a1b]/90" />
+        <div className={styles.overlay} />
 
-        <div className="relative z-20 flex flex-col items-start space-y-1.5">
-          <span className="bg-[#fef08a] text-[#073822] text-[10px] font-black px-3 py-0.5 rounded-full shadow-sm">
+        <div className={styles.contentContainer}>
+          <span className={styles.badge}>
             فروش ویژه طلا رایس
           </span>
-          <h2 className="text-base sm:text-lg font-black text-white leading-snug drop-shadow">
+          <h2 className={styles.title}>
             {slide.title}
           </h2>
-          <p className="text-[11px] text-[#e2e8f0] font-medium leading-relaxed drop-shadow max-w-[260px]">
+          <p className={styles.description}>
             {slide.description}
           </p>
         </div>
 
-        <div className="relative z-20 flex items-center justify-between mt-3 pt-2">
+        <div className={styles.controlsContainer}>
           <button
             onClick={handleCta}
-            className="bg-[#fef08a] hover:bg-[#fde047] text-[#073822] font-black text-xs px-4 py-2 rounded-xl shadow-md flex items-center gap-2 active:scale-95 transition-all"
+            className={styles.ctaButton}
           >
             <span>{slide.ctaText || 'مشاهده تخفیف‌های امروز'}</span>
-            <i className="fa-solid fa-arrow-left text-[11px]" />
+            <i className="fa-solid fa-arrow-left" style={{ fontSize: '11px' }} />
           </button>
 
-          <div className="flex items-center gap-2">
+          <div className={styles.navigationContainer}>
             <button
               onClick={handlePrev}
-              className="w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-xs"
+              className={styles.navButton}
             >
-              <i className="fa-solid fa-chevron-right text-[10px]" />
+              <i className="fa-solid fa-chevron-right" style={{ fontSize: '10px' }} />
             </button>
-            <div className="flex items-center gap-1">
+            <div className={styles.dotsContainer}>
               {heroSlides.map((_, idx) => (
                 <div
                   key={idx}
                   onClick={() => setCurrentSlide(idx)}
-                  className={`cursor-pointer transition-all ${
-                    currentSlide === idx
-                      ? 'w-4 h-1.5 bg-[#fef08a] rounded-full'
-                      : 'w-1.5 h-1.5 bg-white/50 rounded-full'
-                  }`}
+                  className={currentSlide === idx ? styles.dotActive : styles.dotInactive}
                 />
               ))}
             </div>
             <button
               onClick={handleNext}
-              className="w-7 h-7 rounded-full bg-black/40 hover:bg-black/60 text-white flex items-center justify-center text-xs"
+              className={styles.navButton}
             >
-              <i className="fa-solid fa-chevron-left text-[10px]" />
+              <i className="fa-solid fa-chevron-left" style={{ fontSize: '10px' }} />
             </button>
           </div>
         </div>
