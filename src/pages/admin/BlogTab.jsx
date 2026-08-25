@@ -43,19 +43,17 @@ export const BlogTab = ({ onUpdate, showToast }) => {
     try {
       let finalImageUrl = formData.image;
       if (imageFile) {
-        const uploadData = new FormData();
-        uploadData.append('image', imageFile);
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadData
-        });
-        const json = await res.json();
-        if (json.success) {
-          finalImageUrl = json.url;
+        try {
+          const uploadRes = await API.upload.uploadImage(imageFile);
+          if (uploadRes && (uploadRes.url || uploadRes.data?.url)) {
+            finalImageUrl = uploadRes.url || uploadRes.data?.url;
+          }
+        } catch (uploadErr) {
+          console.warn('Upload error:', uploadErr);
         }
       }
 
-      await API.post('/posts', {
+      await API.blog.create({
         ...formData,
         image: finalImageUrl || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&q=80'
       });

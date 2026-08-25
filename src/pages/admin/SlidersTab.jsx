@@ -54,16 +54,12 @@ export const SlidersTab = ({ onUpdate, showToast }) => {
         uploadData.append('subtitle', formData.subtitle);
         uploadData.append('link', formData.link);
 
-        const res = await fetch('/api/slides', {
-          method: 'POST',
-          body: uploadData
-        });
-        const json = await res.json();
-        if (json.success) {
+        const res = await API.sliders.create(uploadData);
+        if (res?.success !== false) {
           if (showToast) showToast('بنر اسلایدر با موفقیت آپلود و ذخیره شد');
         }
       } else {
-        await API.post('/slides', formData);
+        await API.sliders.create(formData);
         if (showToast) showToast('بنر اسلایدر با موفقیت اضافه شد');
       }
 

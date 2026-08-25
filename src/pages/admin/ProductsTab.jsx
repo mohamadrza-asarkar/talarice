@@ -112,17 +112,15 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
     try {
       let finalImageUrl = formData.image;
       
-      // If a file was selected, upload via Multer endpoint
+      // If a file was selected, upload via API
       if (imageFile) {
-        const uploadData = new FormData();
-        uploadData.append('image', imageFile);
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: uploadData
-        });
-        const json = await res.json();
-        if (json.success) {
-          finalImageUrl = json.url;
+        try {
+          const uploadRes = await API.upload.uploadImage(imageFile);
+          if (uploadRes && (uploadRes.url || uploadRes.data?.url)) {
+            finalImageUrl = uploadRes.url || uploadRes.data?.url;
+          }
+        } catch (uploadErr) {
+          console.warn('Image upload error, using local/preview URL or existing image:', uploadErr);
         }
       }
 
