@@ -40,7 +40,7 @@ export const BottomNav = () => {
           }`}
         >
           <i className="fa-solid fa-table-cells-large" style={{ fontSize: '0.875rem' }} />
-          <span className={`${styles.label} ${activeTab === 'catalog' ? styles.labelBlack : styles.labelBold}`}>دسته‌بندی</span>
+          <span className={`${styles.label} ${activeTab === 'catalog' ? styles.labelBlack : styles.labelBold}`}>محصولات</span>
         </button>
 
         <button
@@ -51,7 +51,7 @@ export const BottomNav = () => {
             <i className="fa-solid fa-cart-shopping" style={{ fontSize: '0.875rem' }} />
             {cartCount > 0 && (
               <span className={styles.badge}>
-                {cartCount.toLocaleString('fa-IR')}
+                {(cartCount || 0).toLocaleString('fa-IR')}
               </span>
             )}
           </div>

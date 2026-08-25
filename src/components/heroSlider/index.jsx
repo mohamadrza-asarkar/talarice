@@ -12,24 +12,32 @@ export const HeroSlider = () => {
   const { heroSlides, setActiveTab, setSelectedCategory } = useApp();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const displaySlides = (heroSlides && heroSlides.length > 0) ? heroSlides : [
+    {
+      title: 'فروشگاه تخصصی برنج اعلا طلا رایس',
+      description: 'عرضه مستقیم برنج خالص و خوش‌پخت از شالیزارها با ضمانت مرجوعی و پخت مجلسی',
+      image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1200",
+      ctaText: 'مشاهده لیست برنج‌ها'
+    }
+  ];
+
   useEffect(() => {
-    if (!heroSlides || heroSlides.length === 0) return;
+    if (displaySlides.length <= 1) return;
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
     }, 5500);
     return () => clearInterval(timer);
-  }, [heroSlides]);
+  }, [displaySlides.length]);
 
-  if (!heroSlides || heroSlides.length === 0) return null;
-  const slide = heroSlides[currentSlide];
+  const slide = displaySlides[currentSlide] || displaySlides[0];
   const bgImage = slide.image || slideImages[currentSlide % slideImages.length];
 
   const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
   };
 
   const handlePrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
   };
 
   const handleCta = () => {

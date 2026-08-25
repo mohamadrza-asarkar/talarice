@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const ProfilePage = () => {
-  const { orders, addresses, logout } = useApp();
+  const { orders, addresses, logout, currentUser, isAdmin } = useApp();
   const [activeSubTab, setActiveSubTab] = useState('orders');
 
   const [wholesaleForm, setWholesaleForm] = useState({
@@ -36,28 +36,41 @@ export const ProfilePage = () => {
   return (
     <div className={styles.profileWrapper}>
       <div className={styles.headerCard}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', flexWrap: 'wrap', gap: '1rem' }}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>
-              M
+              {currentUser?.name ? currentUser.name.charAt(0) : 'م'}
             </div>
             <div>
-              <h2 className={styles.userName}>محمد رضایی</h2>
+              <h2 className={styles.userName}>{currentUser?.name || 'محمد رضایی'}</h2>
               <p className={styles.userPhone}>
-                ۰۹۱۷ ۱۲۳ ۴۵۶۷
+                {currentUser?.phone || '۰۹۱۷ ۱۲۳ ۴۵۶۷'}
               </p>
-              <span className={styles.userBadge}>
-                مشتری طلایی
-              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '4px' }}>
+                <span className={styles.userBadge}>
+                  مشتری طلایی
+                </span>
+              </div>
             </div>
           </div>
-          <button 
-            onClick={logout}
-            style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: 'bold' }}
-          >
-            <i className="fa-solid fa-arrow-right-from-bracket" style={{ marginLeft: '0.5rem' }} />
-            خروج
-          </button>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            {isAdmin && (
+              <a 
+                href="/admin"
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'linear-gradient(135deg, #d97706, #b45309)', color: '#fff', padding: '6px 12px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 'bold', textDecoration: 'none', boxShadow: '0 2px 8px rgba(217, 119, 6, 0.3)' }}
+              >
+                <i className="fa-solid fa-crown" />
+                پنل مدیریت
+              </a>
+            )}
+            <button 
+              onClick={logout}
+              style={{ color: '#ef4444', fontSize: '0.875rem', fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              <i className="fa-solid fa-arrow-right-from-bracket" style={{ marginLeft: '0.5rem' }} />
+              خروج
+            </button>
+          </div>
         </div>
       </div>
 
@@ -122,7 +135,7 @@ export const ProfilePage = () => {
                 <div className={styles.totalRow}>
                   <span>مبلغ کل:</span>
                   <span className={styles.totalValue}>
-                    {ord.finalAmount.toLocaleString('fa-IR')} تومان
+                    {((ord.finalAmount || ord.totalAmount) || 0).toLocaleString('fa-IR')} تومان
                   </span>
                 </div>
               </div>

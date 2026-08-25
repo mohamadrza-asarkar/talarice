@@ -100,7 +100,7 @@ export const SearchPage = () => {
                       </h4>
                       <div className={styles.resultPriceRow}>
                         <span className={styles.resultPrice}>
-                          {product.price.toLocaleString('fa-IR')}
+                          {(product.price || 0).toLocaleString('fa-IR')}
                         </span>
                         <span className={styles.resultCurrency}>تومان</span>
                       </div>

@@ -105,14 +105,16 @@ export const CartDrawer = () => {
                         </div>
                         
                         <div className={styles.itemVariant}>
-                          کیسه {item.weightKg.toLocaleString('fa-IR')} کیلویی
+                          کیسه {(item.weightKg ?? 10).toLocaleString('fa-IR')} کیلویی
                         </div>
                         
                         <div className={styles.itemActionsRow}>
                           <div className={styles.priceDetails}>
-                            {((item.weightKg === item.product.weight 
-                                ? item.product.price 
-                                : Math.round((item.product.price / item.product.weight) * item.weightKg)) * item.quantity).toLocaleString('fa-IR')} تومان
+                            {(
+                              ((item.weightKg === (item.product?.weight || 10)
+                                ? (item.product?.price || 0)
+                                : Math.round(((item.product?.price || 0) / (item.product?.weight || 10)) * (item.weightKg || 10))) * (item.quantity || 1)) || 0
+                            ).toLocaleString('fa-IR')} تومان
                           </div>
                           
                           <div className={styles.quantityControls}>
@@ -122,7 +124,7 @@ export const CartDrawer = () => {
                             >
                               -
                             </button>
-                            <span className={styles.qtyValue}>{item.quantity.toLocaleString('fa-IR')}</span>
+                            <span className={styles.qtyValue}>{(item.quantity ?? 1).toLocaleString('fa-IR')}</span>
                             <button
                               onClick={() => updateQuantity(item.product.id, item.weightKg, item.quantity + 1)}
                               className={styles.qtyBtn}
@@ -171,24 +173,24 @@ export const CartDrawer = () => {
                 <div className={styles.summarySection}>
                   <div className={styles.summaryRow}>
                     <span>جمع کل کالاها:</span>
-                    <span>{cartSubtotal.toLocaleString('fa-IR')} تومان</span>
+                    <span>{(cartSubtotal || 0).toLocaleString('fa-IR')} تومان</span>
                   </div>
                   
-                  {discountAmount > 0 && (
+                  {(discountAmount || 0) > 0 && (
                     <div className={styles.summaryRowDiscount}>
                       <span>تخفیف:</span>
-                      <span>- {discountAmount.toLocaleString('fa-IR')} تومان</span>
+                      <span>- {(discountAmount || 0).toLocaleString('fa-IR')} تومان</span>
                     </div>
                   )}
                   
                   <div className={styles.summaryRow}>
                     <span>هزینه ارسال:</span>
-                    <span>{shippingFee === 0 ? 'رایگان' : `${shippingFee.toLocaleString('fa-IR')} تومان`}</span>
+                    <span>{shippingFee === 0 ? 'رایگان' : `${(shippingFee || 0).toLocaleString('fa-IR')} تومان`}</span>
                   </div>
                   
                   <div className={styles.summaryTotalRow}>
                     <span>مبلغ قابل پرداخت:</span>
-                    <span>{finalTotal.toLocaleString('fa-IR')} تومان</span>
+                    <span>{(finalTotal || 0).toLocaleString('fa-IR')} تومان</span>
                   </div>
                   
                   <button 

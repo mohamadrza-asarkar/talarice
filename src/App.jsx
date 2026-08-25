@@ -12,8 +12,9 @@ const AppLayout = () => {
   const location = useLocation();
   const isSearchPage = location.pathname === '/search';
   const isProductPage = location.pathname.startsWith('/product/');
+  const isAdminPage = location.pathname.startsWith('/admin');
 
-  const hideHeaderAndNav = isSearchPage || isProductPage;
+  const hideHeaderAndNav = isSearchPage || isProductPage || isAdminPage;
 
   return (
     <div className={styles.appWrapper}>

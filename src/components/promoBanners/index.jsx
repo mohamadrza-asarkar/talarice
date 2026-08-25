@@ -1,55 +1,48 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context';
+import { getPromoBanners } from '../../api/promoBanners';
 import styles from './style.module.css';
 
 export const PromoBanners = () => {
   const { setActiveTab, setSelectedCategory } = useApp();
+  const banners = useMemo(() => getPromoBanners(), []);
 
   return (
     <section className={styles.section}>
-      <div
-        onClick={() => {
-          setSelectedCategory('economic');
-          setActiveTab('catalog');
-        }}
-        className={`${styles.bannerCard} ${styles.bannerDark}`}
-      >
-        <div className={styles.contentWrapper}>
-          <span className={styles.badgeDark}>
-            ارسال رایگان
-          </span>
-          <h4 className={styles.titleDark}>
-            پک ۲۰ کیلویی اقتصادی
-          </h4>
-          <p className={styles.subtitleDark}>دو کیسه ۱۰ کیلویی سفید</p>
+      {banners.map((banner) => (
+        <div
+          key={banner.id}
+          onClick={() => {
+            if (banner.categoryId) {
+              setSelectedCategory(banner.categoryId);
+            }
+            setActiveTab('catalog');
+          }}
+          className={`${styles.bannerCard} ${banner.theme === 'dark' ? styles.bannerDark : styles.bannerLight}`}
+        >
+          <div className={styles.contentWrapper}>
+            <span className={banner.theme === 'dark' ? styles.badgeDark : styles.badgeLight}>
+              {banner.badge}
+            </span>
+            <h4 className={banner.theme === 'dark' ? styles.titleDark : styles.titleLight}>
+              {banner.title}
+            </h4>
+            <p className={banner.theme === 'dark' ? styles.subtitleDark : styles.subtitleLight}>
+              {banner.subtitle}
+            </p>
+          </div>
+          <div className={styles.actionRow}>
+            <span className={banner.theme === 'dark' ? styles.actionTextDark : styles.actionTextLight}>
+              {banner.actionText}
+            </span>
+            <i 
+              className="fa-solid fa-arrow-left" 
+              style={{ fontSize: '10px', color: banner.theme === 'dark' ? '#fef08a' : '#073b27' }} 
+            />
+          </div>
         </div>
-        <div className={styles.actionRow}>
-          <span className={styles.actionTextDark}>خرید با تخفیف</span>
-          <i className="fa-solid fa-arrow-left" style={{ fontSize: '10px', color: '#fef08a' }} />
-        </div>
-      </div>
-
-      <div
-        onClick={() => {
-          setSelectedCategory('half-grain');
-          setActiveTab('catalog');
-        }}
-        className={`${styles.bannerCard} ${styles.bannerLight}`}
-      >
-        <div className={styles.contentWrapper}>
-          <span className={styles.badgeLight}>
-            عطر فوق‌العاده
-          </span>
-          <h4 className={styles.titleLight}>
-            نیم‌دانه معطر کامفیروز
-          </h4>
-          <p className={styles.subtitleLight}>کیسه ۵ کیلویی خوش‌پخت</p>
-        </div>
-        <div className={styles.actionRow}>
-          <span className={styles.actionTextLight}>بررسی و خرید</span>
-          <i className="fa-solid fa-arrow-left" style={{ fontSize: '10px', color: '#073b27' }} />
-        </div>
-      </div>
+      ))}
     </section>
   );
 };
+

@@ -15,7 +15,7 @@ export const Categories = () => {
       <div className={styles.headerRow}>
         <h3 className={styles.title}>
           <i className="fa-solid fa-wheat-awn" style={{ color: '#d4af37' }} />
-          <span>دسته‌بندی کیسه‌های طلا رایس</span>
+          <span>محصولات طلا رایس</span>
         </h3>
         <span className={styles.subtitle}>
           ۱۰۰٪ خالص کامفیروزی

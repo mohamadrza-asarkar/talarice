@@ -6,19 +6,57 @@ import styles from './style.module.css';
 export const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, addToCart, setIsCartOpen } = useApp();
+  const { products, addToCart, setIsCartOpen, refreshData } = useApp();
   
   const [product, setProduct] = useState(null);
   const [selectedWeight, setSelectedWeight] = useState(10);
   const [activeTab, setActiveTab] = useState('desc');
+  const [reviewText, setReviewText] = useState('');
+  const [reviewerName, setReviewerName] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+  
+  const submitReview = async (e) => {
+    e.preventDefault();
+    if (!reviewText.trim() || !reviewerName.trim() || !product) return;
+    try {
+      setSubmittingReview(true);
+      const prodId = product._id || product.id;
+      const res = await fetch(`/api/reviews`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          productId: prodId,
+          sender: reviewerName, 
+          comment: reviewText, 
+          rating: 5 
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        const newRev = data.data;
+        setProduct(prev => ({
+          ...prev,
+          reviews: [newRev, ...(prev.reviews || [])],
+          reviewCount: (prev.reviews?.length || 0) + 1
+        }));
+        setReviewText('');
+        setReviewerName('');
+        alert('نظر ارزشمند شما با موفقیت ثبت شد.');
+        if (refreshData) refreshData();
+      }
+    } catch(err) {
+      alert('خطا در ثبت نظر');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
 
   useEffect(() => {
-    // Scroll to top on mount
     window.scrollTo(0, 0);
-    const foundProduct = products.find(p => p.id === id);
+    const foundProduct = products.find(p => p.id === id || p._id === id);
     if (foundProduct) {
       setProduct(foundProduct);
-      setSelectedWeight(foundProduct.weight);
+      setSelectedWeight(foundProduct.weight || 10);
     }
   }, [id, products]);
 
@@ -41,19 +79,21 @@ export const ProductPage = () => {
     );
   }
 
+  const defaultWeight = product.weight || 10;
   const weightOptions = product.weightOptions && product.weightOptions.length > 0 
     ? product.weightOptions 
-    : [product.weight];
+    : [defaultWeight];
 
+  const basePrice = product.price || 0;
   const currentPrice =
-    selectedWeight === product.weight
-      ? product.price
-      : Math.round((product.price / product.weight) * selectedWeight);
+    selectedWeight === defaultWeight
+      ? basePrice
+      : Math.round((basePrice / defaultWeight) * selectedWeight);
 
   const currentOldPrice = product.oldPrice
-    ? selectedWeight === product.weight
+    ? selectedWeight === defaultWeight
       ? product.oldPrice
-      : Math.round((product.oldPrice / product.weight) * selectedWeight)
+      : Math.round((product.oldPrice / defaultWeight) * selectedWeight)
     : null;
 
   return (
@@ -76,13 +116,13 @@ export const ProductPage = () => {
 
       <div className={styles.imageContainer}>
         <img 
-          src={product.image} 
-          alt={product.name} 
+          src={product.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'} 
+          alt={product.name || 'برنج'} 
           className={styles.productImage}
         />
-        {product.discountPercent && (
+        {product.discountPercent != null && product.discountPercent > 0 && (
           <div className={styles.productBadge}>
-            {product.discountPercent.toLocaleString('fa-IR')}٪ تخفیف
+            {(product.discountPercent || 0).toLocaleString('fa-IR')}٪ تخفیف
           </div>
         )}
       </div>
@@ -92,7 +132,7 @@ export const ProductPage = () => {
           <h1 className={styles.productTitle}>{product.name}</h1>
           <div className={styles.ratingBox}>
             <i className="fa-solid fa-star" />
-            <span>{product.rating}</span>
+            <span>{product.rating || '۵.۰'}</span>
           </div>
         </div>
         
@@ -118,19 +158,19 @@ export const ProductPage = () => {
         </div>
 
         <div className={styles.priceContainer}>
-          {currentOldPrice && (
+          {currentOldPrice != null && currentOldPrice > currentPrice && (
             <div className={styles.oldPriceRow}>
               <span className={styles.discountBadge}>
                 {Math.round(((currentOldPrice - currentPrice) / currentOldPrice) * 100)}٪
               </span>
               <span className={styles.oldPriceValue}>
-                {currentOldPrice.toLocaleString('fa-IR')}
+                {(currentOldPrice || 0).toLocaleString('fa-IR')}
               </span>
             </div>
           )}
           <div className={styles.currentPriceRow}>
             <span className={styles.currentPriceValue}>
-              {currentPrice.toLocaleString('fa-IR')}
+              {(currentPrice || 0).toLocaleString('fa-IR')}
             </span>
             <span className={styles.currency}>تومان</span>
           </div>
@@ -186,21 +226,55 @@ export const ProductPage = () => {
             )}
             {activeTab === 'reviews' && (
               <div className={styles.reviewsList}>
-                <div className={styles.reviewItem}>
-                  <div className={styles.reviewHeader}>
-                    <span className={styles.reviewerName}>کاربر سایت</span>
-                    <div className={styles.reviewStars}>
-                      <i className="fa-solid fa-star" />
-                      <i className="fa-solid fa-star" />
-                      <i className="fa-solid fa-star" />
-                      <i className="fa-solid fa-star" />
-                      <i className="fa-solid fa-star" />
+                {product.reviews && product.reviews.length > 0 ? (
+                  product.reviews.map((rev, idx) => (
+                    <div key={idx} className={styles.reviewItem}>
+                      <div className={styles.reviewHeader}>
+                        <span className={styles.reviewerName}>{rev.sender || rev.name || 'کاربر گرامی'}</span>
+                        <div className={styles.reviewStars}>
+                          {Array.from({ length: rev.rating || 5 }).map((_, i) => (
+                            <i key={i} className="fa-solid fa-star" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className={styles.reviewText}>
+                        {rev.comment || rev.text}
+                      </p>
+                      {rev.date && <span className="text-xs text-gray-400 mt-2 block">{rev.date}</span>}
                     </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-500 mb-4">هنوز نظری برای این محصول ثبت نشده است. اولین نفری باشید که نظر می‌دهد!</p>
+                )}
+                
+                <form onSubmit={submitReview} className="mt-8 border-t border-gray-100 pt-6">
+                  <h4 className="font-bold text-sm text-[#042a1b] mb-4">ثبت دیدگاه و تجربه مصرف</h4>
+                  <div className="space-y-3">
+                    <input 
+                      type="text" 
+                      placeholder="نام و نام خانوادگی شما (مثال: علی رضایی)" 
+                      value={reviewerName} 
+                      onChange={e => setReviewerName(e.target.value)}
+                      className="w-full p-3 bg-white border border-slate-300 shadow-none rounded-xl text-sm outline-none focus:border-[#d4af37] placeholder:text-slate-400 font-medium"
+                      required
+                    />
+                    <textarea 
+                      placeholder="دیدگاه خود را درباره عطر، طعم، پخت، ری‌کشی و کیفیت دانه‌ها بنویسید..." 
+                      value={reviewText} 
+                      onChange={e => setReviewText(e.target.value)}
+                      className="w-full p-3 bg-white border border-slate-300 shadow-none rounded-xl text-sm outline-none focus:border-[#d4af37] resize-none placeholder:text-slate-400 font-medium"
+                      rows="3"
+                      required
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={submittingReview}
+                      className="bg-[#042a1b] hover:bg-[#042a1b]/90 text-[#d4af37] px-6 py-2.5 rounded-xl text-sm font-bold shadow-none transition-colors"
+                    >
+                      {submittingReview ? 'درحال ثبت...' : 'ثبت نظر'}
+                    </button>
                   </div>
-                  <p className={styles.reviewText}>
-                    کیفیت محصول بسیار عالی بود. عطر و طعم فوق‌العاده‌ای داشت.
-                  </p>
-                </div>
+                </form>
               </div>
             )}
           </div>

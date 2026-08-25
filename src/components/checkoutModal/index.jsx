@@ -179,19 +179,19 @@ export const CheckoutModal = () => {
               
               <div className={styles.cartItemsList}>
                 {cart.map((item) => (
-                  <div key={`${item.product.id}-${item.weightKg}`} className={styles.cartItem}>
+                  <div key={`${item.product?.id || 'item'}-${item.weightKg}`} className={styles.cartItem}>
                     <div>
-                      <div className={styles.cartItemName}>{item.product.name}</div>
+                      <div className={styles.cartItemName}>{item.product?.name || 'برنج کامفیروزی'}</div>
                       <div className={styles.cartItemVariant}>
-                        کیسه {item.weightKg.toLocaleString('fa-IR')} کیلویی ×{' '}
-                        {item.quantity.toLocaleString('fa-IR')}
+                        کیسه {(item.weightKg ?? 10).toLocaleString('fa-IR')} کیلویی ×{' '}
+                        {(item.quantity ?? 1).toLocaleString('fa-IR')}
                       </div>
                     </div>
                     <div className={styles.cartItemPrice}>
                       {(
-                        (item.weightKg === item.product.weight 
-                          ? item.product.price 
-                          : Math.round((item.product.price / item.product.weight) * item.weightKg)) * item.quantity
+                        ((item.weightKg === (item.product?.weight || 10)
+                          ? (item.product?.price || 0)
+                          : Math.round(((item.product?.price || 0) / (item.product?.weight || 10)) * (item.weightKg || 10))) * (item.quantity || 1)) || 0
                       ).toLocaleString('fa-IR')}{' '}
                       تومان
                     </div>
@@ -263,23 +263,23 @@ export const CheckoutModal = () => {
               <div className={styles.totalsBox}>
                 <div className={styles.totalsRow}>
                   <span>مبلغ کل سفارش:</span>
-                  <span>{cartSubtotal.toLocaleString('fa-IR')} تومان</span>
+                  <span>{(cartSubtotal || 0).toLocaleString('fa-IR')} تومان</span>
                 </div>
-                {discountAmount > 0 && (
+                {(discountAmount || 0) > 0 && (
                   <div className={styles.discountRow}>
                     <span>مبلغ تخفیف:</span>
-                    <span>- {discountAmount.toLocaleString('fa-IR')} تومان</span>
+                    <span>- {(discountAmount || 0).toLocaleString('fa-IR')} تومان</span>
                   </div>
                 )}
                 <div className={styles.totalsRow}>
                   <span>هزینه حمل و نقل:</span>
                   <span>
-                    {shippingFee === 0 ? 'رایگان' : `${shippingFee.toLocaleString('fa-IR')} تومان`}
+                    {shippingFee === 0 ? 'رایگان' : `${(shippingFee || 0).toLocaleString('fa-IR')} تومان`}
                   </span>
                 </div>
                 <div className={styles.finalTotalRow}>
                   <span>مبلغ قابل پرداخت نهایی:</span>
-                  <span>{finalTotal.toLocaleString('fa-IR')} تومان</span>
+                  <span>{(finalTotal || 0).toLocaleString('fa-IR')} تومان</span>
                 </div>
               </div>
 
@@ -318,11 +318,11 @@ export const CheckoutModal = () => {
                 </div>
                 <div className={styles.orderDetailRow}>
                   <span className={styles.orderDetailLabel}>مبلغ پرداخت شده:</span>
-                  <span className={styles.orderDetailValue}>{createdOrder.finalAmount.toLocaleString('fa-IR')} تومان</span>
+                  <span className={styles.orderDetailValue}>{((createdOrder.finalAmount || createdOrder.totalAmount) || 0).toLocaleString('fa-IR')} تومان</span>
                 </div>
                 <div className={styles.orderDetailRowNoBorder}>
                   <span className={styles.orderDetailLabel}>تحویل‌گیرنده:</span>
-                  <span>{createdOrder.address.recipientName}</span>
+                  <span>{createdOrder.address?.recipientName || formData.recipientName}</span>
                 </div>
               </div>
 

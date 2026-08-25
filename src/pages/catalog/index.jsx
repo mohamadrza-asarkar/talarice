@@ -16,7 +16,7 @@ export const CatalogPage = () => {
             شالیزارهای کامفیروز فارس
           </span>
           <span className={styles.countBadge}>
-            {products.length.toLocaleString('fa-IR')} گونی برنج
+            {(products?.length || 0).toLocaleString('fa-IR')} گونی برنج
           </span>
         </div>
         <h2 className={styles.title}>

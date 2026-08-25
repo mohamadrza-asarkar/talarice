@@ -1,20 +1,83 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import data from '../api/data.json';
+import API from '../services/api';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
-  const [products] = useState(data.products || []);
-  const [articles] = useState(data.articles || []);
-  const [reviews] = useState(data.reviews || []);
-  const [coupons] = useState(data.coupons || []);
-  const [categories] = useState(data.categories || []);
-  const [trustItems] = useState(data.trustItems || []);
-  const [heroSlides] = useState(data.heroSlides || []);
-  const [brandStory] = useState(data.brandStory || {});
-  const [testTips] = useState(data.testTips || []);
+  const [products, setProducts] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [reviews] = useState([]);
+  const [coupons, setCoupons] = useState([]);
+  const [categories] = useState([]);
+  const [trustItems] = useState([]);
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [brandStory] = useState({});
+  const [testTips] = useState([]);
+
+  const getImageUrl = (path) => {
+    if (!path) return '/images/products/hashemi.jpg';
+    if (path.startsWith('http')) return path;
+    return path;
+  };
+
+  const fetchRealData = async () => {
+    try {
+      // Fetch Products
+      const prodRes = await API.get('/products');
+      if (prodRes.success && prodRes.data) {
+        // Map API data to Frontend data schema to preserve UI and styles
+        const mappedProducts = prodRes.data.map(p => ({
+          id: p._id || p.id,
+          _id: p._id || p.id,
+          name: p.name || p.title || 'برنج اعلا',
+          description: p.description || '',
+          price: p.price || 0,
+          stock: p.countInStock !== undefined ? p.countInStock : (p.stock || 0),
+          countInStock: p.countInStock !== undefined ? p.countInStock : (p.stock || 0),
+          inStock: p.isAvailable !== false && (p.countInStock !== undefined ? p.countInStock > 0 : (p.stock || 0) > 0),
+          category: p.category || 'برنج اعلا',
+          image: getImageUrl(p.image || (p.images && p.images[0])), 
+          weight: p.weight || 10,
+          origin: p.origin || 'ایران',
+          rating: p.rating || 5,
+          reviews: p.reviews || [],
+          reviewCount: (p.reviews && p.reviews.length) || p.numReviews || 0,
+          gallery: (p.images && p.images.length > 0) ? p.images.map(getImageUrl) : [getImageUrl(p.image)],
+          features: p.features || ['۱۰۰٪ خالص و الک شده', 'عطر و طعم طبیعی', 'ارسال سریع'],
+          cookingTime: p.cookingTime || '۳۰ دقیقه',
+          smellLevel: p.smellLevel || 'فوق‌العاده عالی',
+          grainType: p.grainType || 'دانه بلند مجلسی',
+          isFeatured: p.isFeatured || false
+        }));
+        setProducts(mappedProducts);
+      }
+
+      // Fetch Home Data / Sliders
+      const sliderRes = await API.get('/slides').catch(() => API.get('/sliders')).catch(() => null);
+      if (sliderRes && sliderRes.success && sliderRes.data) {
+        const mappedSliders = sliderRes.data.map(s => ({
+          id: s._id || s.id,
+          title: s.title || 'پیشنهاد ویژه طلا رایس',
+          subtitle: 'عرضه مستقیم از شالیزار',
+          image: getImageUrl(s.image),
+          link: s.link || '/catalog'
+        }));
+        setHeroSlides(mappedSliders);
+      }
+    } catch (err) {
+      console.warn('Failed to fetch real data:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRealData();
+  }, []);
+
+  const refreshData = () => {
+    fetchRealData();
+  };
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -45,74 +108,94 @@ export const AppProvider = ({ children }) => {
   const [orders, setOrders] = useState(() => {
     try {
       const saved = localStorage.getItem('tala_orders');
-      return saved ? JSON.parse(saved) : [
-        {
-          id: 'ORD-9842',
-          date: '۱۴۰۳/۰۵/۲۴',
-          items: [
-            {
-              product: data.products[0],
-              quantity: 1,
-              weightKg: 10
-            }
-          ],
-          totalAmount: 1200000,
-          discountAmount: 0,
-          shippingFee: 0,
-          finalAmount: 1200000,
-          status: 'processing',
-          trackingCode: 'TRK-8874125',
-          paymentMethod: 'gateway',
-          address: {
-            recipientName: 'محمد رضایی',
-            phone: '09171234567',
-            fullAddress: 'شیراز، خیابان ارم، کوچه ۱۲، پلاک ۴'
-          }
-        }
-      ];
+      return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
 
-  const [addresses] = useState([
-    {
-      id: 'addr-1',
-      title: 'منزل شخصی',
-      recipientName: 'محمد رضایی',
-      phone: '۰۹۱۷ ۱۲۳ ۴۵۶۷',
-      province: 'فارس',
-      city: 'شیراز',
-      postalCode: '۷۱۹۴۷۱۲۳۴۵',
-      fullAddress: 'شیراز، بلوار ارم، کوچه ۱۲، پلاک ۴، زنگ ۲',
-      isDefault: true
-    },
-    {
-      id: 'addr-2',
-      title: 'دفتر شرکت',
-      recipientName: 'محمد رضایی',
-      phone: '۰۹۱۷ ۱۲۳ ۴۵۶۷',
-      province: 'فارس',
-      city: 'شیراز',
-      postalCode: '۷۱۸۵۵۹۸۷۶۵',
-      fullAddress: 'شیراز، خیابان ملاصدرا، ساختمان میلاد، طبقه سوم',
-      isDefault: false
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const userStr = localStorage.getItem('tala_user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch {
+      return null;
     }
-  ]);
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('tala_auth') === 'true';
   });
 
-  const login = () => {
+  const isAdmin = Boolean(currentUser && currentUser.role === 'admin');
+
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('tala_token') || '';
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    return Boolean(localStorage.getItem('tala_token') || localStorage.getItem('tala_auth') === 'true');
+  });
+
+  const login = (userData = null, jwtToken = null) => {
     setIsAuthenticated(true);
     localStorage.setItem('tala_auth', 'true');
+    if (jwtToken) {
+      setToken(jwtToken);
+      localStorage.setItem('tala_token', jwtToken);
+    }
+    if (userData) {
+      setCurrentUser(userData);
+      localStorage.setItem('tala_user', JSON.stringify(userData));
+    }
   };
 
   const logout = () => {
     setIsAuthenticated(false);
+    setCurrentUser(null);
+    setToken('');
     localStorage.removeItem('tala_auth');
+    localStorage.removeItem('tala_token');
+    localStorage.removeItem('tala_user');
     navigate('/');
+  };
+
+  const loginUser = async (phoneOrEmail, password) => {
+    try {
+      const data = await API.post('/auth/login', { 
+        email: phoneOrEmail, 
+        phone: phoneOrEmail, 
+        username: phoneOrEmail, 
+        mobile: phoneOrEmail, 
+        password 
+      });
+      const user = data.user || data.data?.user;
+      const jwtToken = data.token || data.data?.token;
+      if (data.success && user) {
+        login(user, jwtToken);
+        return { success: true, user, message: data.message || 'ورود با موفقیت انجام شد' };
+      }
+      return { success: false, message: data.message || 'نام کاربری یا رمز عبور نادرست است' };
+    } catch (err) {
+      return { success: false, message: err.message || 'خطا در ارتباط با سرور' };
+    }
+  };
+
+  const registerUser = async (name, phone, password, email) => {
+    try {
+      const data = await API.post('/auth/register', { 
+        name, 
+        email: email || `${phone}@store.ir`, 
+        phone, 
+        mobile: phone, 
+        password 
+      });
+      const user = data.user || data.data?.user;
+      const jwtToken = data.token || data.data?.token;
+      if (data.success && user) {
+        login(user, jwtToken);
+        return { success: true, user, message: data.message || 'ثبت نام با موفقیت انجام شد' };
+      }
+      return { success: false, message: data.message || 'خطا در ثبت نام' };
+    } catch (err) {
+      return { success: false, message: err.message || 'خطا در ارتباط با سرور' };
+    }
   };
 
   useEffect(() => {
@@ -262,12 +345,15 @@ export const AppProvider = ({ children }) => {
     <AppContext.Provider
       value={{
         products,
+        setProducts,
         articles,
+        setArticles,
         reviews,
         coupons,
         categories,
         trustItems,
         heroSlides,
+        setHeroSlides,
         brandStory,
         testTips,
         activeTab,
@@ -292,22 +378,45 @@ export const AppProvider = ({ children }) => {
         cart,
         cartCount,
         cartTotalAmount,
+        cartSubtotal: cartTotalAmount,
         discountAmount,
         shippingFee,
         finalAmount,
+        finalTotal: finalAmount,
         appliedCoupon,
         addToCart,
         updateCartQuantity,
+        updateQuantity: updateCartQuantity,
         removeFromCart,
         clearCart,
         applyCoupon,
         removeCoupon,
         orders,
+        setOrders,
         createOrder,
-        addresses,
+        addOrder: createOrder,
+        addresses: currentUser?.addresses || [
+          {
+            id: 'addr-1',
+            title: 'منزل شخصی',
+            recipientName: currentUser?.name || 'محمد رضایی',
+            phone: currentUser?.phone || '۰۹۱۷ ۱۲۳ ۴۵۶۷',
+            province: 'فارس',
+            city: 'شیراز',
+            postalCode: '۷۱۹۴۷۱۲۳۴۵',
+            fullAddress: 'شیراز، بلوار ارم، کوچه ۱۲، پلاک ۴، زنگ ۲',
+            isDefault: true
+          }
+        ],
         isAuthenticated,
+        currentUser,
+        isAdmin,
+        token,
         login,
-        logout
+        logout,
+        loginUser,
+        registerUser,
+        refreshData: fetchRealData
       }}
     >
       {children}

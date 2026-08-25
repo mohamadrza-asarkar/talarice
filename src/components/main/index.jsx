@@ -8,6 +8,7 @@ import { ProfilePage } from '../../pages/profile';
 import { SearchPage } from '../../pages/search';
 import { ProductPage } from '../../pages/product';
 import { AuthPage } from '../../pages/auth';
+import { AdminPage } from '../../pages/admin';
 import styles from './style.module.css';
 
 export const Main = () => {
@@ -15,8 +16,9 @@ export const Main = () => {
   const location = useLocation();
   const isSearchPage = location.pathname === '/search';
   const isProductPage = location.pathname.startsWith('/product/');
+  const isAdminPage = location.pathname.startsWith('/admin');
 
-  const useFullHeight = isSearchPage || isProductPage;
+  const useFullHeight = isSearchPage || isProductPage || isAdminPage;
 
   return (
     <main className={`${!useFullHeight ? styles.minHeight + ' ' + styles.mainContainer : styles.fullHeight}`}>
@@ -28,9 +30,12 @@ export const Main = () => {
         <Route path="/auth" element={!isAuthenticated ? <AuthPage /> : <Navigate to="/profile" replace />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/product/:id" element={<ProductPage />} />
+        <Route path="/admin/*" element={<AdminPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
   );
 };
+
 

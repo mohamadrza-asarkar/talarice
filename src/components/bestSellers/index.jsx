@@ -6,6 +6,8 @@ import styles from './style.module.css';
 export const BestSellers = () => {
   const { products, setActiveTab } = useApp();
 
+  if (!products || products.length === 0) return null;
+
   return (
     <section className={styles.section}>
       <div className={styles.headerRow}>
