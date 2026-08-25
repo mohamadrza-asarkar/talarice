@@ -18,15 +18,23 @@ export const AdminLogin = () => {
     // Check credentials against the server
     try {
       const res = await loginUser(identifier, password);
-      if (res.success && (res.user.role === 'admin' || identifier === 'admin')) {
-         // Logged in as admin successfully
-      } else if (res.success) {
-         setError('این حساب کاربری دسترسی مدیریت ندارد.');
+      if (res.success) {
+        const isAdm = Boolean(
+          res.user?.role?.toLowerCase() === 'admin' ||
+          res.user?.isAdmin === true ||
+          res.user?.is_admin === true ||
+          identifier.toLowerCase() === 'admin'
+        );
+        if (isAdm) {
+          // Logged in as admin successfully
+        } else {
+          setError('این حساب کاربری دسترسی سطح مدیریت (ادمین) ندارد. لطفاً با حساب ادمین وارد شوید.');
+        }
       } else {
-         setError(res.message || 'نام کاربری یا کلمه عبور نادرست است.');
+        setError(res.message || 'نام کاربری یا کلمه عبور نادرست است.');
       }
     } catch (err) {
-      setError('خطا در ارتباط با سرور یا اطلاعات نادرست');
+      setError(err?.message || 'خطا در اعتبارسنجی و ورود به سیستم');
     } finally {
       setLoading(false);
     }
@@ -79,7 +87,7 @@ export const AdminLogin = () => {
                 type="text"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
-                className="w-full p-3.5 pr-11 bg-white border border-slate-300 rounded-2xl text-xs font-medium placeholder:text-slate-400 focus:border-[#d4af37] outline-none transition-colors"
+                className="w-full p-3.5 pr-11 bg-white border border-slate-300 rounded-2xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-[#d4af37] outline-none transition-colors"
                 placeholder="نام کاربری (مثال: admin)"
                 required
               />
@@ -94,7 +102,7 @@ export const AdminLogin = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-3.5 pr-11 pl-11 bg-white border border-slate-300 rounded-2xl text-xs font-medium placeholder:text-slate-400 focus:border-[#d4af37] outline-none transition-colors"
+                className="w-full p-3.5 pr-11 pl-11 bg-white border border-slate-300 rounded-2xl text-xs font-bold text-slate-900 placeholder:text-slate-400 focus:border-[#d4af37] outline-none transition-colors"
                 placeholder="رمز عبور مدیریت (مثال: admin)"
                 required
               />

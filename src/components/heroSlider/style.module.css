@@ -1,176 +1,195 @@
-.sliderSection {
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 0.75rem;
-  padding-bottom: 0.25rem;
+.sliderWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1280px;
+  margin: 16px auto 24px;
+  padding: 0 16px;
 }
 
 .sliderContainer {
   position: relative;
-  border-radius: 1.5rem;
+  width: 100%;
+  min-height: 280px;
+  height: 380px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border: 2px solid rgba(212, 175, 55, 0.6);
-  min-height: 190px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  color: white;
-  padding: 1.25rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
   background-color: #042a1b;
 }
 
-.bgImage {
+@media (max-width: 768px) {
+  .sliderContainer {
+    height: 240px;
+    min-height: 200px;
+    border-radius: 16px;
+  }
+}
+
+.slide {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.6s ease-in-out, visibility 0.6s ease-in-out;
+  display: flex;
+  align-items: center;
+}
+
+.slide.active {
+  opacity: 1;
+  visibility: visible;
+  z-index: 1;
+}
+
+.slideImage {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  z-index: 0;
-  opacity: 0.6;
-  animation: fadeIn 0.5s ease-in-out;
-  transition-property: transform;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 700ms;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 0.6; }
+  z-index: 1;
 }
 
 .overlay {
   position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: 10;
-  background-image: linear-gradient(to left, rgba(6, 56, 34, 0.8), rgba(10, 70, 44, 0.7), rgba(4, 42, 27, 0.9));
+  inset: 0;
+  background: linear-gradient(90deg, rgba(4, 42, 27, 0.92) 0%, rgba(4, 42, 27, 0.65) 50%, rgba(4, 42, 27, 0.15) 100%);
+  z-index: 2;
 }
 
-.contentContainer {
+.slideContent {
   position: relative;
-  z-index: 20;
+  z-index: 3;
+  padding: 32px 48px;
+  max-width: 600px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.375rem;
+  gap: 12px;
 }
 
-.badge {
-  background-color: #fef08a;
-  color: #073822;
-  font-size: 10px;
-  font-weight: 900;
-  padding: 0.125rem 0.75rem;
-  border-radius: 9999px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-}
-
-.title {
-  font-size: 1rem;
-  font-weight: 900;
-  color: white;
-  line-height: 1.375;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-@media (min-width: 640px) {
-  .title {
-    font-size: 1.125rem;
+@media (max-width: 768px) {
+  .slideContent {
+    padding: 20px 24px;
+    gap: 8px;
   }
 }
 
-.description {
-  font-size: 11px;
-  color: #e2e8f0;
-  font-weight: 500;
-  line-height: 1.625;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-  max-width: 260px;
-}
-
-.controlsContainer {
-  position: relative;
-  z-index: 20;
-  display: flex;
+.badge {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  margin-top: 0.75rem;
-  padding-top: 0.5rem;
-}
-
-.ctaButton {
-  background-color: #fef08a;
-  color: #073822;
-  font-weight: 900;
-  font-size: 0.75rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.75rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition-property: all;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-.ctaButton:hover {
-  background-color: #fde047;
-}
-
-.ctaButton:active {
-  transform: scale(0.95);
-}
-
-.navigationContainer {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.navButton {
-  width: 1.75rem;
-  height: 1.75rem;
+  gap: 6px;
+  background: rgba(212, 175, 55, 0.2);
+  border: 1px solid #d4af37;
+  color: #f6e05e;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
   border-radius: 9999px;
-  background-color: rgba(0, 0, 0, 0.4);
-  color: white;
+  width: fit-content;
+}
+
+.title {
+  color: #ffffff;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.3;
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 18px;
+  }
+}
+
+.subtitle {
+  color: #e2e8f0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .subtitle {
+    font-size: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.ctaBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  color: #042a1b;
+  font-weight: 800;
+  font-size: 14px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  width: fit-content;
+  margin-top: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+}
+
+.ctaBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+}
+
+.navBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 5;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(4px);
+  color: #042a1b;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  transition-property: all;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s;
 }
 
-.navButton:hover {
-  background-color: rgba(0, 0, 0, 0.6);
+.navBtn:hover {
+  background: #ffffff;
+  transform: translateY(-50%) scale(1.1);
 }
 
-.dotsContainer {
+.prevBtn {
+  right: 16px;
+}
+
+.nextBtn {
+  left: 16px;
+}
+
+.dots {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
+  gap: 8px;
 }
 
-.dotActive {
-  cursor: pointer;
-  transition-property: all;
-  width: 1rem;
-  height: 0.375rem;
-  background-color: #fef08a;
+.dot {
+  width: 10px;
+  height: 10px;
   border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s;
 }
 
-.dotInactive {
-  cursor: pointer;
-  transition-property: all;
-  width: 0.375rem;
-  height: 0.375rem;
-  background-color: rgba(255, 255, 255, 0.5);
-  border-radius: 9999px;
+.dot.activeDot {
+  width: 28px;
+  background: #d4af37;
 }

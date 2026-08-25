@@ -55,7 +55,7 @@ export const AdminPage = () => {
   }, [isAdmin, activeTab]);
 
   const handleResetData = async () => {
-    if (!window.confirm('آیا از پاکسازی تمام محصولات، سفارشات، اسلایدرها و مقالات اطمینان دارید؟ داده‌ها کاملاً خالی خواهند شد.')) {
+    if (!window.confirm('آیا از پاکسازی تمام محصولات، سفارشات و مقالات اطمینان دارید؟ داده‌ها کاملاً خالی خواهند شد.')) {
       return;
     }
     try {

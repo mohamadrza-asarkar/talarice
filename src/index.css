@@ -25,6 +25,15 @@ input, button, textarea, select {
   font: inherit;
 }
 
+input, textarea, select {
+  color: #0f172a !important;
+  caret-color: #042a1b !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]), textarea {
+  color: #0f172a !important;
+}
+
 button {
   border: none;
   background: none;

@@ -1,112 +1,98 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { ChevronRight, ChevronLeft, Sparkles, ArrowLeft } from 'lucide-react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-const slideImages = [
-  "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=800",
-  "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=800",
-  "https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=800"
-];
-
 export const HeroSlider = () => {
-  const { heroSlides, setActiveTab, setSelectedCategory } = useApp();
+  const { heroSlides } = useApp();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  const displaySlides = (heroSlides && heroSlides.length > 0) ? heroSlides : [
-    {
-      title: 'فروشگاه تخصصی برنج اعلا طلا رایس',
-      description: 'عرضه مستقیم برنج خالص و خوش‌پخت از شالیزارها با ضمانت مرجوعی و پخت مجلسی',
-      image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1200",
-      ctaText: 'مشاهده لیست برنج‌ها'
-    }
-  ];
+  // If there are no slides fetched from backend/created by admin, do not render any mock slides
+  if (!heroSlides || heroSlides.length === 0) {
+    return null;
+  }
 
   useEffect(() => {
-    if (displaySlides.length <= 1) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
-    }, 5500);
-    return () => clearInterval(timer);
-  }, [displaySlides.length]);
-
-  const slide = displaySlides[currentSlide] || displaySlides[0];
-  const bgImage = slide.image || slideImages[currentSlide % slideImages.length];
+    if (heroSlides.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [heroSlides.length]);
 
   const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % displaySlides.length);
+    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
   };
 
   const handlePrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
-  };
-
-  const handleCta = () => {
-    if (slide.category) {
-      setSelectedCategory(slide.category);
-    }
-    setActiveTab('catalog');
+    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
   };
 
   return (
-    <section className={styles.sliderSection}>
+    <section className={styles.sliderWrapper} aria-label="اسلایدر ویژه">
       <div className={styles.sliderContainer}>
-        {/* The background image */}
-        <img
-          key={currentSlide}
-          src={bgImage}
-          alt={slide.title}
-          className={styles.bgImage}
-        />
-        
-        {/* Gradient overlay to ensure text readability */}
-        <div className={styles.overlay} />
-
-        <div className={styles.contentContainer}>
-          <span className={styles.badge}>
-            فروش ویژه طلا رایس
-          </span>
-          <h2 className={styles.title}>
-            {slide.title}
-          </h2>
-          <p className={styles.description}>
-            {slide.description}
-          </p>
-        </div>
-
-        <div className={styles.controlsContainer}>
-          <button
-            onClick={handleCta}
-            className={styles.ctaButton}
+        {heroSlides.map((slide, index) => (
+          <div
+            key={slide.id || slide._id || index}
+            className={`${styles.slide} ${index === currentSlide ? styles.active : ''}`}
           >
-            <span>{slide.ctaText || 'مشاهده تخفیف‌های امروز'}</span>
-            <i className="fa-solid fa-arrow-left" style={{ fontSize: '11px' }} />
-          </button>
+            {slide.image && (
+              <img
+                src={slide.image}
+                alt={slide.title || 'اسلاید'}
+                className={styles.slideImage}
+              />
+            )}
+            <div className={styles.overlay} />
+            <div className={styles.slideContent}>
+              <div className={styles.badge}>
+                <Sparkles size={14} />
+                <span>پیشنهاد برتر</span>
+              </div>
+              {slide.title && <h2 className={styles.title}>{slide.title}</h2>}
+              {slide.subtitle && <p className={styles.subtitle}>{slide.subtitle}</p>}
+              {slide.link && (
+                <Link to={slide.link} className={styles.ctaBtn}>
+                  <span>مشاهده و خرید</span>
+                  <ArrowLeft size={16} />
+                </Link>
+              )}
+            </div>
+          </div>
+        ))}
 
-          <div className={styles.navigationContainer}>
+        {heroSlides.length > 1 && (
+          <>
             <button
               onClick={handlePrev}
-              className={styles.navButton}
+              className={`${styles.navBtn} ${styles.prevBtn}`}
+              aria-label="اسلاید قبلی"
             >
-              <i className="fa-solid fa-chevron-right" style={{ fontSize: '10px' }} />
+              <ChevronRight size={22} />
             </button>
-            <div className={styles.dotsContainer}>
-              {heroSlides.map((_, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={currentSlide === idx ? styles.dotActive : styles.dotInactive}
+            <button
+              onClick={handleNext}
+              className={`${styles.navBtn} ${styles.nextBtn}`}
+              aria-label="اسلاید بعدی"
+            >
+              <ChevronLeft size={22} />
+            </button>
+            <div className={styles.dots}>
+              {heroSlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`${styles.dot} ${index === currentSlide ? styles.activeDot : ''}`}
+                  aria-label={`رفتن به اسلاید ${index + 1}`}
                 />
               ))}
             </div>
-            <button
-              onClick={handleNext}
-              className={styles.navButton}
-            >
-              <i className="fa-solid fa-chevron-left" style={{ fontSize: '10px' }} />
-            </button>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </section>
   );
 };
+
+export default HeroSlider;
