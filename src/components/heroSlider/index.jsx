@@ -8,18 +8,20 @@ export const HeroSlider = () => {
   const { heroSlides } = useApp();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  const slidesCount = heroSlides?.length || 0;
+
+  useEffect(() => {
+    if (slidesCount <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slidesCount);
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [slidesCount]);
+
   // If there are no slides fetched from backend/created by admin, do not render any mock slides
   if (!heroSlides || heroSlides.length === 0) {
     return null;
   }
-
-  useEffect(() => {
-    if (heroSlides.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [heroSlides.length]);
 
   const handleNext = () => {
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);

@@ -15,14 +15,18 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  timeout: 15000,
+  timeout: 8000,
 });
 
 // Attach Auth Bearer token and dynamic baseURL to all outgoing requests
 apiClient.interceptors.request.use(
   (config) => {
     config.baseURL = getBaseURL();
-    const token = localStorage.getItem('tala_token') || localStorage.getItem('token');
+    const token = localStorage.getItem('tala_token') || 
+                  localStorage.getItem('token') || 
+                  localStorage.getItem('jwtToken') ||
+                  localStorage.getItem('auth_token') ||
+                  (typeof sessionStorage !== 'undefined' ? (sessionStorage.getItem('tala_token') || sessionStorage.getItem('token')) : null);
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

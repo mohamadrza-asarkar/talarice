@@ -16,9 +16,10 @@ export const Main = () => {
   const location = useLocation();
   const isSearchPage = location.pathname === '/search';
   const isProductPage = location.pathname.startsWith('/product/');
+  const isAuthPage = location.pathname === '/auth';
   const isAdminPage = location.pathname.startsWith('/admin');
 
-  const useFullHeight = isSearchPage || isProductPage || isAdminPage;
+  const useFullHeight = isSearchPage || isProductPage || isAdminPage || isAuthPage;
 
   return (
     <main className={`${!useFullHeight ? styles.minHeight + ' ' + styles.mainContainer : styles.fullHeight}`}>

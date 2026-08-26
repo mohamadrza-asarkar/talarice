@@ -47,7 +47,7 @@ export const BlogPage = () => {
       <div className={styles.headerCard}>
         <div className={styles.headerTop}>
           <span className={styles.headerBadge}>
-            مجله تخصصی طلا رایس
+            وبلاگ آموزشی طلا رایس
           </span>
           <span className={styles.headerSubtitle}>
             <i className="fa-solid fa-feather-pointed" />

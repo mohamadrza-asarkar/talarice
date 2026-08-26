@@ -5,6 +5,8 @@ import styles from './style.module.css';
 export const CustomerReviews = () => {
   const { reviews } = useApp();
 
+  if (!reviews || reviews.length === 0) return null;
+
   return (
     <section className={styles.section}>
       <div className={styles.reviewsContainer}>

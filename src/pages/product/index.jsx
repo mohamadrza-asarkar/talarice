@@ -182,47 +182,21 @@ export const ProductPage = () => {
               onClick={() => setActiveTab('desc')}
               className={`${styles.tabBtn} ${activeTab === 'desc' ? styles.tabActive : styles.tabInactive}`}
             >
-              معرفی محصول
-            </button>
-            <button 
-              onClick={() => setActiveTab('specs')}
-              className={`${styles.tabBtn} ${activeTab === 'specs' ? styles.tabActive : styles.tabInactive}`}
-            >
-              مشخصات پخت
+              توضیحات محصول
             </button>
             <button 
               onClick={() => setActiveTab('reviews')}
               className={`${styles.tabBtn} ${activeTab === 'reviews' ? styles.tabActive : styles.tabInactive}`}
             >
-              نظرات ({product.reviewCount || 0})
+              نظرات کاربران ({product.reviews?.length || 0})
             </button>
           </div>
           
           <div className={styles.tabContent}>
             {activeTab === 'desc' && (
               <p className={styles.descText}>
-                {product.description || 'برنج کامفیروزی اصل با عطر و طعم بی‌نظیر، مستقیماً از شالیزارهای منطقه کامفیروز فارس. این برنج دارای دانه‌های سالم و یکدست بوده و پس از پخت، ری‌کشی بسیار عالی دارد.'}
+                {product.description || 'برنج اعلا با عطر و طعم عالی، محصول خالص و درجه یک.'}
               </p>
-            )}
-            {activeTab === 'specs' && (
-              <ul className={styles.specsList}>
-                <li className={styles.specItem}>
-                  <span className={styles.specLabel}>منطقه کشت:</span>
-                  <span className={styles.specValue}>{product.origin || 'کامفیروز، استان فارس'}</span>
-                </li>
-                <li className={styles.specItem}>
-                  <span className={styles.specLabel}>شالیکار:</span>
-                  <span className={styles.specValue}>{product.farmer || 'تعاونی شالیکاران'}</span>
-                </li>
-                <li className={styles.specItem}>
-                  <span className={styles.specLabel}>طریقه پخت پیشنهادی:</span>
-                  <span className={styles.specValue}>{product.cookingRatio || '۱ پیمانه برنج به ۱.۳ پیمانه آب'}</span>
-                </li>
-                <li className={styles.specItem}>
-                  <span className={styles.specLabel}>میزان ری‌کشی:</span>
-                  <span className={styles.specValue}>{product.elongation || 'عالی'}</span>
-                </li>
-              </ul>
             )}
             {activeTab === 'reviews' && (
               <div className={styles.reviewsList}>

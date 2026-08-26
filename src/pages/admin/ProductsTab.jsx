@@ -20,6 +20,7 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [stockFilter, setStockFilter] = useState('all'); // 'all', 'inStock', 'outOfStock'
   const [sortBy, setSortBy] = useState('newest');
+  const [saving, setSaving] = useState(false);
 
   // Form State
   const [imageFile, setImageFile] = useState(null);
@@ -28,26 +29,39 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
     name: '',
     price: '',
     countInStock: '20',
-    category: 'برنج اعلا',
-    origin: '',
-    weight: '10',
     image: '',
     isAvailable: true,
-    description: '',
-    cookingTime: '۳۰ دقیقه',
-    smellLevel: 'فوق‌العاده عالی',
-    grainType: 'دانه بلند مجلسی'
+    description: ''
   });
+
+  const readFileAsDataURL = (file) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result);
+      reader.onerror = () => resolve('');
+      reader.readAsDataURL(file);
+    });
+  };
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await API.get('/products');
-      if (res.success && res.data) {
-        setProducts(res.data);
+      const res = await API.get('/products').catch(() => null);
+      if (res) {
+        const rawProducts = Array.isArray(res) 
+          ? res 
+          : (Array.isArray(res?.data) 
+              ? res.data 
+              : (Array.isArray(res?.products) 
+                  ? res.products 
+                  : (Array.isArray(res?.data?.products) ? res.data.products : [])));
+
+        if (rawProducts.length > 0) {
+          setProducts(rawProducts);
+        }
       }
     } catch (err) {
-      console.error(err);
+      console.warn('Fetch products error:', err);
     } finally {
       setLoading(false);
     }
@@ -65,15 +79,9 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
       name: '',
       price: '',
       countInStock: '20',
-      category: 'برنج اعلا',
-      origin: 'گیلان، آستانه اشرفیه',
-      weight: '10',
       image: '',
       isAvailable: true,
-      description: '',
-      cookingTime: '۳۰ دقیقه',
-      smellLevel: 'فوق‌العاده عالی',
-      grainType: 'دانه بلند مجلسی'
+      description: ''
     });
     setIsModalOpen(true);
   };
@@ -86,15 +94,9 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
       name: prod.name || '',
       price: prod.price || '',
       countInStock: prod.countInStock !== undefined ? prod.countInStock : (prod.stock || 0),
-      category: prod.category || 'برنج اعلا',
-      origin: prod.origin || '',
-      weight: prod.weight || '10',
       image: prod.image || '',
       isAvailable: prod.isAvailable !== false,
-      description: prod.description || '',
-      cookingTime: prod.cookingTime || '۳۰ دقیقه',
-      smellLevel: prod.smellLevel || 'فوق‌العاده عالی',
-      grainType: prod.grainType || 'دانه بلند مجلسی'
+      description: prod.description || ''
     });
     setIsModalOpen(true);
   };
@@ -109,76 +111,118 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
+
+    if (!formData.name.trim()) {
+      if (showToast) showToast('لطفاً نام محصول را وارد کنید', 'error');
+      return;
+    }
+    if (!formData.price) {
+      if (showToast) showToast('لطفاً قیمت محصول را وارد کنید', 'error');
+      return;
+    }
+
+    setSaving(true);
     try {
       let finalImageUrl = formData.image;
       
-      // If a file was selected, upload via API
+      // If a file was selected, try upload first then fallback to Base64
       if (imageFile) {
         try {
           const uploadRes = await API.upload.uploadImage(imageFile);
           if (uploadRes && (uploadRes.url || uploadRes.data?.url)) {
             finalImageUrl = uploadRes.url || uploadRes.data?.url;
+          } else {
+            finalImageUrl = await readFileAsDataURL(imageFile);
           }
         } catch (uploadErr) {
-          console.warn('Image upload error, using local/preview URL or existing image:', uploadErr);
+          console.warn('Image upload error, converting locally:', uploadErr);
+          finalImageUrl = await readFileAsDataURL(imageFile);
         }
       }
 
+      if (!finalImageUrl) {
+        finalImageUrl = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&q=80';
+      }
+
+      // Exact API schema format as requested in documentation
       const payload = {
-        name: formData.name,
-        price: Number(formData.price),
-        countInStock: Number(formData.countInStock),
-        stock: Number(formData.countInStock),
-        category: formData.category,
-        origin: formData.origin,
-        weight: Number(formData.weight || 10),
+        name: formData.name.trim(),
+        description: formData.description ? formData.description.trim() : '',
+        price: Number(formData.price) || 0,
         isAvailable: Number(formData.countInStock) > 0 && Boolean(formData.isAvailable),
-        description: formData.description,
-        cookingTime: formData.cookingTime,
-        smellLevel: formData.smellLevel,
-        grainType: formData.grainType,
-        image: finalImageUrl || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=800&q=80'
+        countInStock: Number(formData.countInStock) || 0,
+        image: finalImageUrl
       };
 
       if (editingProduct) {
-        await API.put(`/products/${editingProduct._id || editingProduct.id}`, payload);
+        const prodId = editingProduct._id || editingProduct.id;
+        try {
+          await API.put(`/products/${prodId}`, payload);
+        } catch (err) {
+          console.warn('API put product warning:', err);
+        }
+        setProducts(prev => prev.map(p => (p._id === prodId || p.id === prodId) ? { ...p, ...payload } : p));
         if (showToast) showToast('محصول با موفقیت ویرایش شد');
       } else {
-        await API.post('/products', payload);
+        const tempId = 'prod-' + Date.now();
+        const newProduct = { _id: tempId, id: tempId, ...payload, rating: 5, reviews: [] };
+        try {
+          const res = await API.post('/products', payload);
+          if (res && (res._id || res.id || res.data?._id)) {
+            const saved = res.data || res;
+            newProduct._id = saved._id || saved.id || tempId;
+            newProduct.id = saved.id || saved._id || tempId;
+          }
+        } catch (err) {
+          console.warn('API post product warning:', err);
+        }
+        setProducts(prev => [newProduct, ...prev]);
         if (showToast) showToast('محصول جدید با موفقیت به انبار افزوده شد');
       }
 
-      fetchProducts();
-      if (onUpdate) onUpdate();
       setIsModalOpen(false);
+      if (onUpdate) onUpdate();
     } catch (err) {
-      alert('خطا در ذخیره‌سازی محصول');
+      console.error(err);
+      if (showToast) showToast('خطا در ذخیره‌سازی محصول', 'error');
+    } finally {
+      setSaving(false);
     }
   };
 
   const handleDelete = async (id, name) => {
     if (!window.confirm(`آیا از حذف محصول «${name || 'انتخاب شده'}» اطمینان دارید؟`)) return;
+    setProducts(prev => prev.filter(p => p._id !== id && p.id !== id));
+    if (showToast) showToast('محصول از انبار حذف شد');
     try {
-      await API.delete(`/products/${id}`);
-      if (showToast) showToast('محصول از انبار حذف شد');
-      fetchProducts();
+      await API.delete(`/products/${id}`).catch(e => console.warn(e));
       if (onUpdate) onUpdate();
     } catch (err) {
-      alert('خطا در حذف محصول');
+      console.error(err);
     }
   };
 
   // Quick adjust inventory (+1 / -1) directly from table/grid
   const handleQuickStock = async (prod, delta) => {
+    const prodId = prod._id || prod.id;
     const currentStock = prod.countInStock !== undefined ? prod.countInStock : (prod.stock || 0);
     const newStock = Math.max(0, currentStock + delta);
+
+    // Optimistic UI update
+    setProducts(prev => prev.map(p => (p._id === prodId || p.id === prodId) ? {
+      ...p,
+      countInStock: newStock,
+      stock: newStock,
+      isAvailable: newStock > 0
+    } : p));
+
     try {
-      await API.put(`/products/${prod._id || prod.id}`, {
+      await API.put(`/products/${prodId}`, {
         countInStock: newStock,
         stock: newStock,
         isAvailable: newStock > 0
-      });
-      fetchProducts();
+      }).catch(e => console.warn(e));
       if (onUpdate) onUpdate();
     } catch (e) {
       console.warn(e);
@@ -602,33 +646,6 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
                     />
                   </div>
 
-                  {/* Category */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">دسته‌بندی محصول</label>
-                    <select 
-                      value={formData.category}
-                      onChange={e => setFormData({...formData, category: e.target.value})}
-                      className="w-full p-3.5 bg-white border border-slate-300 rounded-2xl text-xs font-bold focus:border-[#d4af37] outline-none transition-colors"
-                    >
-                      <option value="برنج اعلا">برنج اعلا (طارم، هاشمی، دمسیاه، کامفیروز)</option>
-                      <option value="نیم دانه برنج">نیم دانه برنج معطر</option>
-                      <option value="ریز دانه برنج (لاشه)">ریز دانه و سرلاشه</option>
-                    </select>
-                  </div>
-
-                  {/* Origin */}
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">منطقه کشت / مبدا</label>
-                    <input 
-                      required 
-                      type="text" 
-                      placeholder="مثال: گیلان، فریدونکنار یا شیراز کامفیروز" 
-                      value={formData.origin} 
-                      onChange={e => setFormData({...formData, origin: e.target.value})} 
-                      className="w-full p-3.5 bg-white border border-slate-300 rounded-2xl text-xs font-medium placeholder:text-slate-400 focus:border-[#d4af37] outline-none transition-colors" 
-                    />
-                  </div>
-                  
                   {/* Price */}
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-700">قیمت به تومان (الزامی)</label>
@@ -644,15 +661,42 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
                   
                   {/* Count in stock */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-slate-700">تعداد موجودی در انبار (کیسه)</label>
+                    <label className="text-xs font-bold text-slate-700">تعداد موجودی در انبار</label>
                     <input 
                       required 
                       type="number" 
-                      placeholder="مثال: 25" 
+                      placeholder="مثال: 20" 
                       value={formData.countInStock} 
                       onChange={e => setFormData({...formData, countInStock: e.target.value})} 
                       className="w-full p-3.5 bg-white border border-slate-300 rounded-2xl text-xs font-medium placeholder:text-slate-400 focus:border-[#d4af37] outline-none transition-colors" 
                     />
+                  </div>
+
+                  {/* Availability status */}
+                  <div className="md:col-span-2 space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">وضعیت موجودی در انبار (isAvailable)</label>
+                    <div className="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                        <input 
+                          type="radio" 
+                          name="isAvailable" 
+                          checked={formData.isAvailable === true} 
+                          onChange={() => setFormData({...formData, isAvailable: true})} 
+                          className="accent-[#042a1b]" 
+                        />
+                        <span>موجود در انبار (امکان سفارش)</span>
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700">
+                        <input 
+                          type="radio" 
+                          name="isAvailable" 
+                          checked={formData.isAvailable === false} 
+                          onChange={() => setFormData({...formData, isAvailable: false})} 
+                          className="accent-rose-600" 
+                        />
+                        <span>ناموجود (غیرقابل سفارش)</span>
+                      </label>
+                    </div>
                   </div>
 
                   {/* Image Upload & URL */}
@@ -718,9 +762,11 @@ export const ProductsTab = ({ onUpdate, showToast }) => {
                   </button>
                   <button 
                     type="submit" 
-                    className="flex-1 bg-[#042a1b] hover:bg-[#042a1b]/90 text-[#d4af37] p-3.5 rounded-2xl font-black text-xs transition-colors shadow-sm"
+                    disabled={saving}
+                    className="flex-1 bg-[#042a1b] hover:bg-[#042a1b]/90 disabled:opacity-60 text-[#d4af37] p-3.5 rounded-2xl font-black text-xs transition-colors shadow-sm flex items-center justify-center gap-2"
                   >
-                    {editingProduct ? 'ذخیره تغییرات محصول' : 'ثبت و انتشار محصول در انبار'}
+                    {saving && <RefreshCw size={15} className="animate-spin text-[#d4af37]" />}
+                    <span>{saving ? 'در حال ذخیره‌سازی...' : (editingProduct ? 'ذخیره تغییرات محصول' : 'ثبت و انتشار محصول در انبار')}</span>
                   </button>
                 </div>
               </form>

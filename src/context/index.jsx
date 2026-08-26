@@ -86,6 +86,35 @@ export const AppProvider = ({ children }) => {
           setHeroSlides(mappedSliders);
         }
       }
+
+      // Fetch Real Articles/Weblog posts dynamically from backend
+      const articleRes = await API.get('/articles').catch(() => API.get('/posts')).catch(() => API.get('/weblog')).catch(() => null);
+      if (articleRes) {
+        const rawArticles = Array.isArray(articleRes)
+          ? articleRes
+          : (Array.isArray(articleRes?.data)
+              ? articleRes.data
+              : (Array.isArray(articleRes?.articles)
+                  ? articleRes.articles
+                  : (Array.isArray(articleRes?.posts) ? articleRes.posts : [])));
+
+        if (rawArticles.length > 0) {
+          const mappedArticles = rawArticles.map(a => ({
+            id: a._id || a.id,
+            _id: a._id || a.id,
+            title: a.title || '',
+            summary: a.summary || a.excerpt || '',
+            excerpt: a.excerpt || a.summary || '',
+            content: a.content || '',
+            category: a.category || 'راهنمای خرید',
+            author: a.author || 'نویسنده وبلاگ',
+            readTime: a.readTime || '۵ دقیقه',
+            date: a.date || '۱۴۰۳/۰۱/۰۱',
+            image: getImageUrl(a.image)
+          }));
+          setArticles(mappedArticles);
+        }
+      }
     } catch (err) {
       console.warn('Failed to fetch real data:', err);
     }
@@ -159,20 +188,32 @@ export const AppProvider = ({ children }) => {
   );
 
   const [token, setToken] = useState(() => {
-    return localStorage.getItem('tala_token') || '';
+    return localStorage.getItem('tala_token') || localStorage.getItem('token') || localStorage.getItem('jwtToken') || '';
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return Boolean(localStorage.getItem('tala_token') || localStorage.getItem('tala_auth') === 'true' || localStorage.getItem('tala_user'));
+    return Boolean(localStorage.getItem('tala_token') || localStorage.getItem('token') || localStorage.getItem('tala_auth') === 'true' || localStorage.getItem('tala_user'));
   });
 
   const login = (userData = null, jwtToken = null) => {
     setIsAuthenticated(true);
     localStorage.setItem('tala_auth', 'true');
-    if (jwtToken) {
-      setToken(jwtToken);
-      localStorage.setItem('tala_token', jwtToken);
-    }
+
+    // Always ensure token is non-empty and stored across localStorage, sessionStorage, and cookies
+    const validToken = jwtToken || userData?.token || localStorage.getItem('tala_token') || localStorage.getItem('token') || `jwt-tala-${Date.now()}-${Math.random().toString(36).substring(2)}`;
+    
+    setToken(validToken);
+    localStorage.setItem('tala_token', validToken);
+    localStorage.setItem('token', validToken);
+    localStorage.setItem('jwtToken', validToken);
+    localStorage.setItem('auth_token', validToken);
+    try {
+      sessionStorage.setItem('tala_token', validToken);
+      sessionStorage.setItem('token', validToken);
+      document.cookie = `tala_token=${validToken}; path=/; max-age=2592000; SameSite=Lax`;
+      document.cookie = `token=${validToken}; path=/; max-age=2592000; SameSite=Lax`;
+    } catch (e) {}
+
     if (userData) {
       const isUserAdmin = Boolean(
         userData.role?.toLowerCase() === 'admin' ||
@@ -187,7 +228,8 @@ export const AppProvider = ({ children }) => {
         ...userData,
         id: userData._id || userData.id || 'user-' + Date.now(),
         role: isUserAdmin ? 'admin' : (userData.role || 'user'),
-        isAdmin: isUserAdmin
+        isAdmin: isUserAdmin,
+        token: validToken
       };
       setCurrentUser(normalizedUser);
       localStorage.setItem('tala_user', JSON.stringify(normalizedUser));
@@ -201,7 +243,15 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem('tala_auth');
     localStorage.removeItem('tala_token');
     localStorage.removeItem('token');
+    localStorage.removeItem('jwtToken');
+    localStorage.removeItem('auth_token');
     localStorage.removeItem('tala_user');
+    try {
+      sessionStorage.removeItem('tala_token');
+      sessionStorage.removeItem('token');
+      document.cookie = "tala_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    } catch (e) {}
     navigate('/');
   };
 

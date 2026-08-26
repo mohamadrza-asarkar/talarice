@@ -13,8 +13,7 @@ export const BottomNav = () => {
     if (path === '/') return 'home';
     if (path === '/catalog') return 'catalog';
     if (path === '/blog') return 'blog';
-    if (path === '/profile') return 'profile';
-    if (path === '/auth') return 'auth';
+    if (path === '/profile' || path === '/auth') return 'profile';
     return '';
   };
 
@@ -65,17 +64,17 @@ export const BottomNav = () => {
           }`}
         >
           <i className="fa-solid fa-book-open" style={{ fontSize: '0.875rem' }} />
-          <span className={`${styles.label} ${activeTab === 'blog' ? styles.labelBlack : styles.labelBold}`}>بلاگ و آموزش</span>
+          <span className={`${styles.label} ${activeTab === 'blog' ? styles.labelBlack : styles.labelBold}`}>وبلاگ و آموزش</span>
         </button>
 
         <button
           onClick={() => navigate(isAuthenticated ? '/profile' : '/auth')}
           className={`${styles.navButton} ${
-            (activeTab === 'profile' || activeTab === 'auth') ? styles.navButtonSelected : styles.navButtonUnselected
+            activeTab === 'profile' ? styles.navButtonSelected : styles.navButtonUnselected
           }`}
         >
           <i className="fa-solid fa-user" style={{ fontSize: '0.875rem' }} />
-          <span className={`${styles.label} ${(activeTab === 'profile' || activeTab === 'auth') ? styles.labelBlack : styles.labelBold}`}>پروفایل</span>
+          <span className={`${styles.label} ${activeTab === 'profile' ? styles.labelBlack : styles.labelBold}`}>پروفایل</span>
         </button>
       </div>
     </nav>

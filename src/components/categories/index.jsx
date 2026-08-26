@@ -5,6 +5,8 @@ import styles from './style.module.css';
 export const Categories = () => {
   const { categories, selectedCategory, setSelectedCategory, setActiveTab } = useApp();
 
+  if (!categories || categories.length === 0) return null;
+
   const handleSelect = (id) => {
     setSelectedCategory(id);
     setActiveTab('catalog');

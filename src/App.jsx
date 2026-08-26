@@ -14,7 +14,8 @@ const AppLayout = () => {
   const isProductPage = location.pathname.startsWith('/product/');
   const isAdminPage = location.pathname.startsWith('/admin');
 
-  const hideHeaderAndNav = isSearchPage || isProductPage || isAdminPage;
+  const isAuthPage = location.pathname === '/auth';
+  const hideHeaderAndNav = isSearchPage || isProductPage || isAdminPage || isAuthPage;
 
   return (
     <div className={styles.appWrapper}>

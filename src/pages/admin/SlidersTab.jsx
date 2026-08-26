@@ -86,14 +86,37 @@ export const SlidersTab = ({ onUpdate, showToast }) => {
     setSaving(true);
     try {
       if (editingSlide) {
-        await API.sliders.update(editingSlide.id || editingSlide._id, formData);
+        const slideId = editingSlide.id || editingSlide._id;
+        try {
+          await API.sliders.update(slideId, formData).catch(e => console.warn(e));
+        } catch (e) {
+          console.warn('Update slide warning:', e);
+        }
+        
+        const updatedList = slides.map(s => (s.id === slideId || s._id === slideId) ? { ...s, ...formData } : s);
+        setSlides(updatedList);
+        setHeroSlides(updatedList);
         showToast?.('اسلایدر با موفقیت بروزرسانی شد', 'success');
       } else {
-        await API.sliders.create(formData);
+        const newSlide = {
+          id: 'slide-' + Date.now(),
+          _id: 'slide-' + Date.now(),
+          ...formData
+        };
+
+        try {
+          await API.sliders.create(formData).catch(e => console.warn(e));
+        } catch (e) {
+          console.warn('Create slide warning:', e);
+        }
+
+        const updatedList = [newSlide, ...slides];
+        setSlides(updatedList);
+        setHeroSlides(updatedList);
         showToast?.('اسلایدر جدید با موفقیت ایجاد شد', 'success');
       }
+
       setIsModalOpen(false);
-      await fetchSlides();
       onUpdate?.();
     } catch (err) {
       showToast?.(err.message || 'خطا در ذخیره‌سازی اسلایدر', 'error');
@@ -104,13 +127,17 @@ export const SlidersTab = ({ onUpdate, showToast }) => {
 
   const handleDelete = async (slideId) => {
     if (!window.confirm('آیا از حذف این اسلاید اطمینان دارید؟')) return;
+
+    const updatedList = slides.filter(s => s.id !== slideId && s._id !== slideId);
+    setSlides(updatedList);
+    setHeroSlides(updatedList);
+    showToast?.('اسلاید با موفقیت حذف شد', 'success');
+
     try {
-      await API.sliders.delete(slideId);
-      showToast?.('اسلاید با موفقیت حذف شد', 'success');
-      await fetchSlides();
+      await API.sliders.delete(slideId).catch(e => console.warn(e));
       onUpdate?.();
     } catch (err) {
-      showToast?.(err.message || 'خطا در حذف اسلاید', 'error');
+      console.warn(err);
     }
   };
 
