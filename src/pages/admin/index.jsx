@@ -12,7 +12,7 @@ import { UsersTab } from './UsersTab';
 import { SlidersTab } from './SlidersTab';
 import { BlogTab } from './BlogTab';
 import { AdminLogin } from './AdminLogin';
-import API from '../../services/api';
+import API from '../../api/client';
 
 export const AdminPage = () => {
   const { isAdmin, user, logout, refreshData } = useApp();

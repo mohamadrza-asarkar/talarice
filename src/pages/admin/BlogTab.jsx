@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../../services/api';
+import API from '../../api/client';
 import { 
   Plus, Trash2, BookOpen, RefreshCw, Upload, 
   Calendar, FileText, Sparkles 

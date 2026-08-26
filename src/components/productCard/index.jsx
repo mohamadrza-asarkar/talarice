@@ -1,105 +1,60 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
-import styles from './style.module.css';
 
-export const ProductCard = ({ product }) => {
-  const { addToCart } = useApp();
-  const navigate = useNavigate();
-  
+export function ProductCard({ product }) {
+  const { addToCart, setIsCartOpen } = useApp();
   if (!product) return null;
 
-  const defaultWeight = product.weight || 10;
-  // Initialize with the default product weight
-  const [selectedWeight, setSelectedWeight] = useState(defaultWeight);
-  
-  // Safely get weight options or default to [product.weight]
-  const weightOptions = product.weightOptions && product.weightOptions.length > 0 
-    ? product.weightOptions 
-    : [defaultWeight];
-
-  const handleQuickAdd = (e) => {
-    e.stopPropagation();
-    addToCart(product, selectedWeight, 1);
-  };
-
-  const handleWeightSelect = (e, w) => {
-    e.stopPropagation();
-    setSelectedWeight(w);
-  };
-
-  const handleCardClick = () => {
-    navigate(`/product/${product.id}`);
-  };
-
-  const basePrice = product.price || 0;
-  const currentPrice = Math.round(basePrice * (selectedWeight / defaultWeight));
-  const currentOldPrice = product.oldPrice ? Math.round(product.oldPrice * (selectedWeight / defaultWeight)) : null;
+  const id = product._id || product.id;
 
   return (
-    <div className={styles.card}>
-      <div className={styles.contentWrapper} onClick={handleCardClick}>
-        <div className={styles.imageContainer}>
-          <img
-            src={product.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'}
-            alt={product.name || 'برنج'}
-            className={styles.image}
-          />
-          {product.discountPercent != null && product.discountPercent > 0 && (
-            <span className={styles.discountBadge}>
-              {(product.discountPercent || 0).toLocaleString('fa-IR')}٪ تخفیف
-            </span>
-          )}
-        </div>
-
-        <h4 className={styles.title}>
-          {product.name}
-        </h4>
-        
-        {product.description && (
-          <p className={styles.description}>
-            {product.description}
-          </p>
+    <div className="bg-[#073b27] border border-[#d4af37]/20 rounded-2xl overflow-hidden flex flex-col justify-between group">
+      <Link to={`/product/${id}`} className="block relative">
+        <img
+          src={product.image || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=500'}
+          alt={product.name}
+          className="w-full h-36 object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+        {product.isAvailable === false && (
+          <span className="absolute top-2 right-2 bg-red-600/90 text-white text-[10px] px-2 py-0.5 rounded font-bold">
+            ناموجود
+          </span>
         )}
-      </div>
+      </Link>
 
-      <div className={styles.bottomSection} onClick={(e) => e.stopPropagation()}>
-        {/* Weight Selector */}
-        <div className={styles.weightContainer}>
-          {weightOptions.map((w) => (
-            <button
-              key={w}
-              onClick={(e) => handleWeightSelect(e, w)}
-              className={`${styles.weightButton} ${
-                selectedWeight === w ? styles.weightButtonSelected : styles.weightButtonUnselected
-              }`}
-            >
-              {w} کیلو
-            </button>
-          ))}
+      <div className="p-3 flex flex-col gap-2 flex-1 justify-between">
+        <div>
+          <Link to={`/product/${id}`}>
+            <h3 className="text-xs font-bold text-white line-clamp-2 hover:text-[#d4af37]">
+              {product.name}
+            </h3>
+          </Link>
         </div>
 
-        <div className={styles.priceContainer}>
-          {currentOldPrice != null && (
-            <div className={styles.oldPrice}>
-              {(currentOldPrice || 0).toLocaleString('fa-IR')}
-            </div>
-          )}
-          <div className={styles.currentPrice}>
-            <span>{(currentPrice || 0).toLocaleString('fa-IR')}</span>
-            <span className={styles.currency}>تومان</span>
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/10">
+          <div className="flex flex-col">
+            <span className="text-xs font-black text-[#d4af37]">
+              {Number(product.price || 0).toLocaleString('fa-IR')}
+            </span>
+            <span className="text-[10px] text-gray-400">تومان</span>
           </div>
-        </div>
 
-        <button
-          onClick={handleQuickAdd}
-          className={styles.addButton}
-        >
-          <i className="fa-solid fa-cart-plus" />
-          <span>افزودن به سبد</span>
-        </button>
+          <button
+            onClick={() => {
+              addToCart(product);
+              setIsCartOpen(true);
+            }}
+            disabled={product.isAvailable === false}
+            className="bg-[#d4af37] text-[#042a1b] p-2 rounded-xl text-xs font-bold hover:bg-yellow-400 transition-colors disabled:opacity-50"
+            title="افزودن به سبد خرید"
+          >
+            <i className="fa-solid fa-cart-plus" />
+          </button>
+        </div>
       </div>
     </div>
   );
-};
+}
 
+export default ProductCard;

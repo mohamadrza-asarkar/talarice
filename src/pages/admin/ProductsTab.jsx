@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../../services/api';
+import API from '../../api/client';
 import { 
   Plus, Trash2, Search, PackageOpen, Upload, CheckCircle2, 
   XCircle, Star, MessageSquare, Edit3, Layers, Filter, 

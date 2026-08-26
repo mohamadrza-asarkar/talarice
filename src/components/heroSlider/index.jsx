@@ -1,100 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronRight, ChevronLeft, Sparkles, ArrowLeft } from 'lucide-react';
 import { useApp } from '../../context';
-import styles from './style.module.css';
 
-export const HeroSlider = () => {
+export function HeroSlider() {
   const { heroSlides } = useApp();
-  const [currentSlide, setCurrentSlide] = useState(0);
+  if (!heroSlides || heroSlides.length === 0) return null;
 
-  const slidesCount = heroSlides?.length || 0;
-
-  useEffect(() => {
-    if (slidesCount <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slidesCount);
-    }, 6000);
-    return () => clearInterval(interval);
-  }, [slidesCount]);
-
-  // If there are no slides fetched from backend/created by admin, do not render any mock slides
-  if (!heroSlides || heroSlides.length === 0) {
-    return null;
-  }
-
-  const handleNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
-  };
-
-  const handlePrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
-  };
+  const slide = heroSlides[0];
 
   return (
-    <section className={styles.sliderWrapper} aria-label="اسلایدر ویژه">
-      <div className={styles.sliderContainer}>
-        {heroSlides.map((slide, index) => (
-          <div
-            key={slide.id || slide._id || index}
-            className={`${styles.slide} ${index === currentSlide ? styles.active : ''}`}
-          >
-            {slide.image && (
-              <img
-                src={slide.image}
-                alt={slide.title || 'اسلاید'}
-                className={styles.slideImage}
-              />
-            )}
-            <div className={styles.overlay} />
-            <div className={styles.slideContent}>
-              <div className={styles.badge}>
-                <Sparkles size={14} />
-                <span>پیشنهاد برتر</span>
-              </div>
-              {slide.title && <h2 className={styles.title}>{slide.title}</h2>}
-              {slide.subtitle && <p className={styles.subtitle}>{slide.subtitle}</p>}
-              {slide.link && (
-                <Link to={slide.link} className={styles.ctaBtn}>
-                  <span>مشاهده و خرید</span>
-                  <ArrowLeft size={16} />
-                </Link>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {heroSlides.length > 1 && (
-          <>
-            <button
-              onClick={handlePrev}
-              className={`${styles.navBtn} ${styles.prevBtn}`}
-              aria-label="اسلاید قبلی"
-            >
-              <ChevronRight size={22} />
-            </button>
-            <button
-              onClick={handleNext}
-              className={`${styles.navBtn} ${styles.nextBtn}`}
-              aria-label="اسلاید بعدی"
-            >
-              <ChevronLeft size={22} />
-            </button>
-            <div className={styles.dots}>
-              {heroSlides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className={`${styles.dot} ${index === currentSlide ? styles.activeDot : ''}`}
-                  aria-label={`رفتن به اسلاید ${index + 1}`}
-                />
-              ))}
-            </div>
-          </>
-        )}
+    <div className="relative rounded-2xl overflow-hidden border border-[#d4af37]/30 h-44 shadow-lg group">
+      <img
+        src={slide.image}
+        alt={slide.title}
+        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
+        <h2 className="text-sm font-black text-white">{slide.title}</h2>
+        <p className="text-[11px] text-gray-200 mt-0.5">{slide.subtitle}</p>
+        <Link
+          to={slide.link || '/catalog'}
+          className="mt-2.5 inline-flex items-center gap-1 bg-[#d4af37] text-[#042a1b] text-xs font-bold px-3 py-1.5 rounded-lg w-max"
+        >
+          <span>مشاهده و خرید</span>
+          <i className="fa-solid fa-arrow-left text-[10px]" />
+        </Link>
       </div>
-    </section>
+    </div>
   );
-};
+}
 
 export default HeroSlider;

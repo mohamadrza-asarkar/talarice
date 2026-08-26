@@ -1,16 +1,11 @@
 import { api } from './client';
 
 export const uploadAPI = {
-  // Upload an image file (returns { success: true, url: string } or url)
-  uploadImage: async (fileOrFormData) => {
-    let formData;
-    if (fileOrFormData instanceof FormData) {
-      formData = fileOrFormData;
-    } else {
-      formData = new FormData();
-      formData.append('image', fileOrFormData);
+  uploadImage: (file) => {
+    const formData = file instanceof FormData ? file : new FormData();
+    if (!(file instanceof FormData)) {
+      formData.append('image', file);
     }
-
     return api.upload('/upload', formData);
   },
 };

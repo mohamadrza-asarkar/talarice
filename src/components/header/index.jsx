@@ -1,51 +1,36 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useApp } from '../../context';
+import { Link } from 'react-router-dom';
 import { Logo } from '../logo';
 import { SearchBar } from '../searchBar';
+import { useApp } from '../../context';
 import { Sparkles } from 'lucide-react';
-import styles from './style.module.css';
 
-export const Header = () => {
-  const navigate = useNavigate();
+export function Header() {
   const { isAdmin } = useApp();
 
   return (
-    <header className={styles.header}>
-      <div className={styles.container}>
-        <div style={{ display: 'flex', width: '100%', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div
-            onClick={() => navigate('/')}
-            className={styles.logoWrapper}
-          >
-            <Logo variant="circle" />
-          </div>
+    <header className="sticky top-0 z-30 bg-[#042a1b]/95 backdrop-blur-md border-b border-[#d4af37]/20 px-4 py-3">
+      <div className="max-w-md mx-auto flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-2">
+            <Logo />
+          </Link>
 
           {isAdmin && (
-            <button
-              onClick={() => navigate('/admin')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.25), rgba(180, 83, 9, 0.35))',
-                border: '1px solid rgba(217, 119, 6, 0.5)',
-                color: '#fbbf24',
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '0.75rem',
-                fontWeight: '800',
-                cursor: 'pointer',
-                boxShadow: '0 2px 10px rgba(0,0,0,0.2)'
-              }}
+            <Link
+              to="/admin"
+              className="flex items-center gap-1.5 bg-[#d4af37]/20 border border-[#d4af37]/40 text-[#d4af37] px-3 py-1.5 rounded-full text-xs font-bold"
             >
-              <Sparkles size={14} color="#fbbf24" />
-              پنل ادمین
-            </button>
+              <Sparkles size={14} />
+              <span>پنل ادمین</span>
+            </Link>
           )}
         </div>
+
         <SearchBar />
       </div>
     </header>
   );
-};
+}
+
+export default Header;

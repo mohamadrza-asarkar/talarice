@@ -4,7 +4,7 @@ import {
   Sparkles, RefreshCw, Upload, CheckCircle2, AlertCircle, Eye
 } from 'lucide-react';
 import { useApp } from '../../context';
-import API from '../../services/api';
+import API from '../../api/client';
 
 export const SlidersTab = ({ onUpdate, showToast }) => {
   const { heroSlides, setHeroSlides } = useApp();

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import API from '../../services/api';
+import API from '../../api/client';
 import { 
   Users, Search, UserPlus, Shield, ShieldCheck, 
   Trash2, Phone, Mail, Calendar, RefreshCw, UserCheck 

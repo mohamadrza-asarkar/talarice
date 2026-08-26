@@ -7,11 +7,10 @@ import { BestSellers } from '../../components/bestSellers';
 import { BrandStory } from '../../components/brandStory';
 import { CustomerReviews } from '../../components/customerReviews';
 import { Footer } from '../../components/footer';
-import styles from './style.module.css';
 
-export const HomePage = () => {
+export function HomePage() {
   return (
-    <div className={styles.homeWrapper}>
+    <div className="flex flex-col gap-6 py-4 px-3">
       <HeroSlider />
       <TrustBar />
       <AmazingDeals />
@@ -22,4 +21,6 @@ export const HomePage = () => {
       <Footer />
     </div>
   );
-};
+}
+
+export default HomePage;
