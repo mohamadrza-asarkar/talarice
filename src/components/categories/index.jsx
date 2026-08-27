@@ -1,14 +1,10 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const Categories = () => {
-  const { categories, selectedCategory, setSelectedCategory, setActiveTab } = useApp();
-
-  const handleSelect = (id) => {
-    setSelectedCategory(id);
-    setActiveTab('catalog');
-  };
+  const { categories, selectedCategory, setSelectedCategory } = useApp();
 
   return (
     <section className={styles.section}>
@@ -26,19 +22,21 @@ export const Categories = () => {
           .map((cat) => {
             const isSelected = selectedCategory === cat.id;
             return (
-              <button
+              <Link
                 key={cat.id}
-                onClick={() => handleSelect(cat.id)}
+                to="/catalog"
+                onClick={() => setSelectedCategory(cat.id)}
                 className={`${styles.categoryButton} ${isSelected ? styles.categoryButtonSelected : styles.categoryButtonUnselected}`}
               >
                 <div className={styles.iconWrapper}>
                   <i className={cat.iconClass} />
                 </div>
                 <span className={styles.categoryName}>{cat.name}</span>
-              </button>
+              </Link>
             );
           })}
       </div>
     </section>
   );
 };
+

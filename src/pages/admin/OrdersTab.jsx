@@ -1,6 +1,7 @@
 import React from 'react';
 import { useApp } from '../../context';
 import { Package, Truck, CheckCircle2 } from 'lucide-react';
+import styles from './style.module.css';
 
 export const OrdersTab = () => {
   const { orders, setOrders } = useApp();
@@ -10,75 +11,74 @@ export const OrdersTab = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <div>
+      <div className={styles.tabHeader}>
         <div>
-          <h1 className="text-3xl font-black text-slate-800 tracking-tight">سفارشات فروشگاه</h1>
-          <p className="text-slate-500 font-medium mt-1">مشاهده و بررسی وضعیت مرسولات مشتریان</p>
+          <h1 className={styles.tabTitle}>سفارشات فروشگاه</h1>
+          <p className={styles.tabSubtitle}>مشاهده و بررسی وضعیت مرسولات مشتریان</p>
         </div>
       </div>
 
-      <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] shadow-sm border border-slate-200/60 overflow-hidden">
+      <div className={styles.card}>
         {orders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-slate-400">
-            <Package size={64} className="mb-4 opacity-20" />
-            <p className="font-bold text-lg">سفارشی یافت نشد</p>
+          <div className={styles.emptyState}>
+            <Package size={64} className={styles.emptyIcon} />
+            <p className={styles.emptyText}>سفارشی یافت نشد</p>
           </div>
         ) : (
-          <div className="p-6">
-            <div className="overflow-x-auto">
-              <table className="w-full text-right">
+          <div className={styles.tableContainer}>
+            <div className={styles.tableWrapper}>
+              <table className={styles.table}>
                 <thead>
-                  <tr className="text-slate-400 text-sm border-b border-slate-100">
-                    <th className="pb-4 font-bold pl-4">کد رهگیری سیستم</th>
-                    <th className="pb-4 font-bold">اطلاعات مشتری</th>
-                    <th className="pb-4 font-bold">مبلغ نهایی (تومان)</th>
-                    <th className="pb-4 font-bold">وضعیت فعلی</th>
-                    <th className="pb-4 font-bold text-center">عملیات</th>
+                  <tr>
+                    <th className={styles.th} style={{ paddingLeft: '1rem' }}>کد رهگیری سیستم</th>
+                    <th className={styles.th}>اطلاعات مشتری</th>
+                    <th className={styles.th}>مبلغ نهایی (تومان)</th>
+                    <th className={styles.th}>وضعیت فعلی</th>
+                    <th className={styles.th} style={{ textAlign: 'center' }}>عملیات</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody>
                   {orders.map(o => (
-                    <tr key={o.id || o._id} className="group hover:bg-slate-50/50 transition-colors">
-                      <td className="py-5 pl-4">
-                        <span className="font-mono text-sm font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200 shadow-sm">
+                    <tr key={o.id || o._id} className={styles.tr}>
+                      <td className={styles.td} style={{ paddingLeft: '1rem' }}>
+                        <span style={{ fontFamily: 'monospace', fontSize: '0.875rem', fontWeight: 700, color: '#475569', backgroundColor: '#f1f5f9', padding: '0.375rem 0.75rem', borderRadius: '0.75rem', border: '1px solid #e2e8f0' }}>
                           {String(o.id || o._id).slice(-6).toUpperCase()}
                         </span>
                       </td>
-                      <td className="py-5">
-                        <div className="font-black text-slate-800">{o.user?.name || o.addresses?.[0]?.recipientName || 'مشتری ناشناس'}</div>
-                        <div className="text-xs font-bold text-slate-500 mt-0.5">{o.user?.phone || o.addresses?.[0]?.phone || '---'}</div>
+                      <td className={styles.td}>
+                        <div style={{ fontWeight: 900, color: '#1e293b' }}>{o.user?.name || o.addresses?.[0]?.recipientName || 'مشتری ناشناس'}</div>
+                        <div style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', marginTop: '0.125rem' }}>{o.user?.phone || o.addresses?.[0]?.phone || '---'}</div>
                       </td>
-                      <td className="py-5 font-black text-slate-700">
+                      <td className={styles.td} style={{ fontWeight: 900, color: '#334155' }}>
                         {(o.finalAmount || o.totalPrice)?.toLocaleString()}
                       </td>
-                      <td className="py-5">
+                      <td className={styles.td}>
                         {o.status === 'processing' && (
-                          <div className="flex items-center gap-2 bg-amber-50 text-amber-700 w-fit px-3 py-1.5 rounded-xl text-sm font-bold border border-amber-100">
-                            <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></div>
+                          <div className={styles.statusProcessing}>
                             در حال پردازش
                           </div>
                         )}
                         {o.status === 'shipped' && (
-                          <div className="flex items-center gap-2 bg-blue-50 text-blue-700 w-fit px-3 py-1.5 rounded-xl text-sm font-bold border border-blue-100">
+                          <div className={styles.statusShipped}>
                             <Truck size={14} />
                             ارسال شده
                           </div>
                         )}
                         {o.status === 'delivered' && (
-                          <div className="flex items-center gap-2 bg-emerald-50 text-emerald-700 w-fit px-3 py-1.5 rounded-xl text-sm font-bold border border-emerald-100">
+                          <div className={styles.statusDelivered}>
                             <CheckCircle2 size={14} />
                             تحویل شده
                           </div>
                         )}
                       </td>
-                      <td className="py-5 text-center">
+                      <td className={styles.td} style={{ textAlign: 'center' }}>
                         {o.status === 'processing' ? (
-                           <button onClick={() => updateStatus(o.id || o._id, 'shipped')} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs flex items-center justify-center gap-2 font-bold mx-auto shadow-md shadow-slate-800/20 transition-all hover:-translate-y-0.5">
+                           <button onClick={() => updateStatus(o.id || o._id, 'shipped')} className={styles.orderActionBtn}>
                              <Truck size={14} /> تغییر به ارسال شده
                            </button>
                         ) : (
-                           <span className="text-slate-300 text-xs font-bold px-4 py-2">اقدامی نیاز نیست</span>
+                           <span style={{ color: '#cbd5e1', fontSize: '0.75rem', fontWeight: 700, padding: '0.5rem 1rem' }}>اقدامی نیاز نیست</span>
                         )}
                       </td>
                     </tr>

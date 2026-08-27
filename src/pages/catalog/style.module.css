@@ -73,6 +73,7 @@
   border-radius: 0.75rem;
   border: 1px solid rgba(212, 175, 55, 0.4);
   transition: all 150ms;
+  text-decoration: none;
 }
 
 .searchButton i {

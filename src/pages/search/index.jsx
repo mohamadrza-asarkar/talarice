@@ -12,6 +12,16 @@ export const SearchPage = () => {
     inputRef.current?.focus();
   }, []);
 
+  const handleBack = (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    if (window.history?.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/');
+    }
+  };
+
   const query = searchQuery?.trim() ?? '';
   const filtered = query
     ? (products ?? []).filter((p) => p.name?.includes(query) || p.description?.includes(query))
@@ -20,7 +30,12 @@ export const SearchPage = () => {
   return (
     <div className={styles.wrapper}>
       <header className={styles.header}>
-        <button onClick={() => navigate(-1)} className={styles.backBtn}>
+        <button 
+          type="button" 
+          onClick={handleBack} 
+          className={styles.backBtn}
+          aria-label="بازگشت"
+        >
           <i className="fa-solid fa-arrow-right" />
         </button>
         <div className={styles.inputBox}>

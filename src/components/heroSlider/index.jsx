@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const HeroSlider = () => {
-  const { heroSlides, setActiveTab, setSelectedCategory } = useApp();
+  const { heroSlides, setSelectedCategory } = useApp();
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
   useEffect(() => {
@@ -19,8 +21,9 @@ export const HeroSlider = () => {
 
   const handleCta = () => {
     if (slide.category) setSelectedCategory(slide.category);
-    setActiveTab('catalog');
+    navigate('/catalog');
   };
+
 
   return (
     <section className={styles.sliderSection}>

@@ -53,6 +53,7 @@
   cursor: pointer;
   background: transparent;
   font-family: inherit;
+  text-decoration: none;
 }
 
 .categoryButtonSelected {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
@@ -8,24 +8,23 @@ export const ProductPage = () => {
   const navigate = useNavigate();
   const { products, addToCart, setIsCartOpen } = useApp();
 
-  const [product, setProduct] = useState(null);
-  const [selectedWeight, setSelectedWeight] = useState(10);
-  const [activeTab, setActiveTab] = useState('desc');
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    const found = products?.find((p) => p.id === id);
-    if (found) {
-      setProduct(found);
-      setSelectedWeight(found.weight ?? 10);
+  const handleBack = () => {
+    if (window.history?.state?.idx > 0) {
+      navigate(-1);
+    } else {
+      navigate('/catalog');
     }
-  }, [id, products]);
+  };
+
+  const product = products?.find((p) => String(p.id) === String(id) || String(p._id) === String(id));
+  const [selectedWeight, setSelectedWeight] = useState(null);
+  const [activeTab, setActiveTab] = useState('desc');
 
   if (!product) {
     return (
       <div className={styles.pageWrapper}>
         <header className={styles.header}>
-          <button onClick={() => navigate(-1)} className={styles.backBtn}>
+          <button type="button" onClick={handleBack} className={styles.backBtn}>
             <i className="fa-solid fa-arrow-right" />
             <span>بازگشت</span>
           </button>
@@ -41,8 +40,9 @@ export const ProductPage = () => {
   }
 
   const defaultWeight = product.weight ?? 10;
+  const currentSelectedWeight = selectedWeight ?? defaultWeight;
   const weightOptions = product.weightOptions?.length ? product.weightOptions : [defaultWeight];
-  const ratio = selectedWeight / defaultWeight;
+  const ratio = currentSelectedWeight / defaultWeight;
   const currentPrice = Math.round((product.price ?? 0) * ratio);
   const currentOldPrice = product.oldPrice ? Math.round(product.oldPrice * ratio) : null;
 
@@ -55,7 +55,7 @@ export const ProductPage = () => {
   return (
     <div className={styles.pageWrapper}>
       <header className={styles.header}>
-        <button onClick={() => navigate(-1)} className={styles.backBtn}>
+        <button type="button" onClick={handleBack} className={styles.backBtn}>
           <i className="fa-solid fa-arrow-right" />
           <span>بازگشت</span>
         </button>
@@ -96,7 +96,7 @@ export const ProductPage = () => {
               <button
                 key={w}
                 onClick={() => setSelectedWeight(w)}
-                className={`${styles.weightBtn} ${selectedWeight === w ? styles.weightBtnActive : styles.weightBtnInactive}`}
+                className={`${styles.weightBtn} ${currentSelectedWeight === w ? styles.weightBtnActive : styles.weightBtnInactive}`}
               >
                 {w} کیلو
               </button>
@@ -184,7 +184,7 @@ export const ProductPage = () => {
       <div className={styles.bottomBar}>
         <button
           onClick={() => {
-            addToCart(product, selectedWeight);
+            addToCart(product, currentSelectedWeight);
             setIsCartOpen(true);
           }}
           className={styles.addToCartBtn}
@@ -196,3 +196,4 @@ export const ProductPage = () => {
     </div>
   );
 };
+

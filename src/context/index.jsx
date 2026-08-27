@@ -20,13 +20,14 @@ export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
   const [products, setProducts] = useState(initialProducts);
   const [articles, setArticles] = useState(initialArticles);
-  const [reviews, setReviews] = useState(initialReviews);
-  const [coupons, setCoupons] = useState(initialCoupons);
-  const [categories, setCategories] = useState(initialCategories);
-  const [trustItems, setTrustItems] = useState(initialTrustItems);
+  const [reviews] = useState(initialReviews);
+  const [coupons] = useState(initialCoupons);
   const [heroSlides, setHeroSlides] = useState(initialHeroSlides);
-  const [brandStory, setBrandStory] = useState(initialBrandStory);
-  const [testTips, setTestTips] = useState(initialTestTips);
+
+  const categories = initialCategories;
+  const trustItems = initialTrustItems;
+  const brandStory = initialBrandStory;
+  const testTips = initialTestTips;
 
   const getImageUrl = (path) => {
     if (!path) return '/images/products/hashemi.jpg';
@@ -39,7 +40,6 @@ export const AppProvider = ({ children }) => {
       // Fetch Products
       const prodRes = await API.get('/products');
       if (prodRes && prodRes.success && Array.isArray(prodRes.data) && prodRes.data.length > 0) {
-        // Map API data to Frontend data schema to preserve UI and styles
         const mappedProducts = prodRes.data.map(p => ({
           id: p._id || p.id,
           _id: p._id || p.id,
@@ -86,7 +86,6 @@ export const AppProvider = ({ children }) => {
         }));
         setHeroSlides(mappedSliders);
       } else {
-        // Fallback to fetch sliders directly if /home is not available
         const sliderRes = await API.get('/sliders').catch(() => null);
         if (sliderRes && sliderRes.success && Array.isArray(sliderRes.data) && sliderRes.data.length > 0) {
           const mappedSliders = sliderRes.data.map(s => ({
@@ -103,7 +102,7 @@ export const AppProvider = ({ children }) => {
         }
       }
     } catch (err) {
-      console.warn('Backend API not reachable, using mock test data:', err);
+      console.warn('Backend API not reachable, using initial data:', err);
     }
   };
 
@@ -116,13 +115,6 @@ export const AppProvider = ({ children }) => {
   const [selectedWeightFilter, setSelectedWeightFilter] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
 
-  const setActiveTab = (tab) => {
-    if (tab === 'home') navigate('/');
-    else navigate(`/${tab}`);
-  };
-
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedArticle, setSelectedArticle] = useState(null);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
@@ -224,7 +216,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  const registerUser = async (name, phone, password, email) => {
+  const registerUser = async (name, phone, password) => {
     try {
       const data = await API.post('/auth/register', { name, mobile: phone, password });
       if (data.success && data.data && data.data.token) {
@@ -367,19 +359,6 @@ export const AppProvider = ({ children }) => {
     return (b.reviewCount || 0) - (a.reviewCount || 0);
   });
 
-  const getActiveTab = () => {
-    if (typeof window === 'undefined') return 'home';
-    const path = window.location.pathname;
-    if (path === '/') return 'home';
-    if (path === '/catalog') return 'catalog';
-    if (path === '/blog') return 'blog';
-    if (path === '/profile') return 'profile';
-    if (path === '/search') return 'search';
-    return '';
-  };
-
-  const activeTab = getActiveTab();
-
   return (
     <AppContext.Provider
       value={{
@@ -395,8 +374,6 @@ export const AppProvider = ({ children }) => {
         setHeroSlides,
         brandStory,
         testTips,
-        activeTab,
-        setActiveTab,
         searchQuery,
         setSearchQuery,
         selectedCategory,
@@ -406,10 +383,6 @@ export const AppProvider = ({ children }) => {
         sortBy,
         setSortBy,
         filteredProducts,
-        selectedProduct,
-        setSelectedProduct,
-        selectedArticle,
-        setSelectedArticle,
         isCartOpen,
         setIsCartOpen,
         isCheckoutOpen,
@@ -434,19 +407,7 @@ export const AppProvider = ({ children }) => {
         setOrders,
         createOrder,
         addOrder: createOrder,
-        addresses: currentUser?.addresses || [
-          {
-            id: 'addr-1',
-            title: 'منزل شخصی',
-            recipientName: currentUser?.name || 'محمد رضایی',
-            phone: currentUser?.phone || '۰۹۱۷ ۱۲۳ ۴۵۶۷',
-            province: 'فارس',
-            city: 'شیراز',
-            postalCode: '۷۱۹۴۷۱۲۳۴۵',
-            fullAddress: 'شیراز، بلوار ارم، کوچه ۱۲، پلاک ۴، زنگ ۲',
-            isDefault: true
-          }
-        ],
+        addresses: currentUser?.addresses || [],
         isAuthenticated,
         currentUser,
         isAdmin,
@@ -470,3 +431,4 @@ export const useApp = () => {
   }
   return context;
 };
+

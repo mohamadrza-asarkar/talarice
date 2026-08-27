@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const ProductCard = ({ product }) => {
   const { addToCart } = useApp();
-  const navigate = useNavigate();
 
   if (!product) return null;
 
@@ -19,7 +18,7 @@ export const ProductCard = ({ product }) => {
 
   return (
     <article className={styles.card}>
-      <div className={styles.contentWrapper} onClick={() => navigate(`/product/${product.id}`)}>
+      <Link to={`/product/${product.id}`} className={styles.contentWrapper}>
         <div className={styles.imageContainer}>
           <img src={product.image} alt={product.name} className={styles.image} />
           {product.discountPercent > 0 && (
@@ -31,14 +30,15 @@ export const ProductCard = ({ product }) => {
 
         <h4 className={styles.title}>{product.name}</h4>
         {product.description && <p className={styles.description}>{product.description}</p>}
-      </div>
+      </Link>
 
       <div className={styles.bottomSection}>
         <div className={styles.weightContainer}>
           {weightOptions.map((w) => (
             <button
               key={w}
-              onClick={(e) => { e.stopPropagation(); setSelectedWeight(w); }}
+              type="button"
+              onClick={() => setSelectedWeight(w)}
               className={`${styles.weightButton} ${selectedWeight === w ? styles.weightButtonSelected : styles.weightButtonUnselected}`}
             >
               {w} کیلو
@@ -57,7 +57,8 @@ export const ProductCard = ({ product }) => {
         </div>
 
         <button
-          onClick={(e) => { e.stopPropagation(); addToCart(product, selectedWeight, 1); }}
+          type="button"
+          onClick={() => addToCart(product, selectedWeight, 1)}
           className={styles.addButton}
         >
           <i className="fa-solid fa-cart-plus" />
@@ -67,3 +68,4 @@ export const ProductCard = ({ product }) => {
     </article>
   );
 };
+

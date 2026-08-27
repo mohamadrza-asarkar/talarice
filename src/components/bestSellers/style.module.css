@@ -38,6 +38,7 @@
   cursor: pointer;
   background: none;
   border: none;
+  text-decoration: none;
 }
 
 .viewAllBtn:hover {

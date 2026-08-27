@@ -1,12 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import { ProductCard } from '../../components/productCard';
 import styles from './style.module.css';
 
 export const CatalogPage = () => {
   const { products } = useApp();
-  const navigate = useNavigate();
 
   return (
     <div className={styles.catalogWrapper}>
@@ -24,10 +23,10 @@ export const CatalogPage = () => {
       </header>
 
       <div className={styles.searchRow}>
-        <button onClick={() => navigate('/search')} className={styles.searchButton}>
+        <Link to="/search" className={styles.searchButton}>
           <i className="fa-solid fa-magnifying-glass" />
           <span>جستجو در محصولات</span>
-        </button>
+        </Link>
       </div>
 
       {!products?.length ? (
@@ -47,3 +46,4 @@ export const CatalogPage = () => {
     </div>
   );
 };
+

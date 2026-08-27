@@ -1,12 +1,11 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import { ProductCard } from '../productCard';
 import styles from './style.module.css';
 
 export const BestSellers = () => {
   const { products } = useApp();
-  const navigate = useNavigate();
 
   return (
     <section className={styles.section}>
@@ -15,10 +14,10 @@ export const BestSellers = () => {
           <i className="fa-solid fa-wheat-awn" />
           <span>پرفروش‌ترین گونی‌های برنج</span>
         </h3>
-        <button onClick={() => navigate('/catalog')} className={styles.viewAllBtn}>
+        <Link to="/catalog" className={styles.viewAllBtn}>
           <span>مشاهده همه</span>
           <i className="fa-solid fa-arrow-left" />
-        </button>
+        </Link>
       </div>
 
       <div className={styles.gridContainer}>
@@ -29,3 +28,4 @@ export const BestSellers = () => {
     </section>
   );
 };
+
