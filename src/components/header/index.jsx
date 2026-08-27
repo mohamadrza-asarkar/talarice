@@ -11,21 +11,19 @@ export const Header = () => {
 
   return (
     <header className={styles.header}>
-      <div className={styles.container}>
-        <div className={styles.topRow}>
-          <Link to="/" className={styles.logoWrapper}>
-            <Logo />
-          </Link>
+      <div className={styles.topRow}>
+        <Link to="/" className={styles.logoLink} aria-label="صفحه اصلی">
+          <Logo />
+        </Link>
 
-          {isAdmin && (
-            <Link to="/admin" className={styles.adminBtn}>
-              <Sparkles size={14} color="#fbbf24" />
-              پنل ادمین
-            </Link>
-          )}
-        </div>
-        <SearchBar />
+        {isAdmin && (
+          <Link to="/admin" className={styles.adminBtn}>
+            <Sparkles size={14} color="#fbbf24" />
+            <span>پنل ادمین</span>
+          </Link>
+        )}
       </div>
+      <SearchBar />
     </header>
   );
 };

@@ -7,33 +7,32 @@ export const BrandStory = () => {
 
   return (
     <section className={styles.storyCard}>
-      <header className={styles.header}>
-        <h3 className={styles.title}>
-          {brandStory?.title ?? 'ارزش و تازگی بی‌نظیر برنج کامفیروزی طلا رایس'}
-        </h3>
+      <h3 className={styles.title}>
+        <span>{brandStory?.title ?? 'ارزش و تازگی بی‌نظیر برنج کامفیروزی طلا رایس'}</span>
         <i className="fa-solid fa-circle-check" />
-      </header>
+      </h3>
 
       <p className={styles.description}>
         {brandStory?.description ??
           'طلا رایس با حذف کامل واسطه‌ها، اصیل‌ترین برنج معطر کامفیروز مرودشت استان فارس را در گونی‌های پارچه‌ای سفید با کیفیت مستقیماً به سفره‌های شما می‌رساند.'}
       </p>
 
-      <div className={styles.featuresGrid}>
-        <div className={styles.featureItem}>
+      <ul className={styles.features}>
+        <li>
           <strong>۱۰۰٪</strong>
           <span>ارگانیک و تازه</span>
-        </div>
-        <div className={`${styles.featureItem} ${styles.featureBorder}`}>
+        </li>
+        <li className={styles.border}>
           <strong>گونی سفید</strong>
           <span>بسته‌بندی نخی ممتاز</span>
-        </div>
-        <div className={styles.featureItem}>
+        </li>
+        <li>
           <strong>۷ روز</strong>
           <span>ضمانت برگشت</span>
-        </div>
-      </div>
+        </li>
+      </ul>
     </section>
   );
 };
+
 

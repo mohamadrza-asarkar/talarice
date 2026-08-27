@@ -41,13 +41,13 @@ export const CartDrawer = () => {
 
   return (
     <aside className={styles.overlay} onClick={() => setIsCartOpen(false)}>
-      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+      <section className={styles.drawer} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
-          <div className={styles.title}>
+          <h3 className={styles.title}>
             <i className="fa-solid fa-cart-flatbed-suitcases" />
-            <h3>سبد خرید شما</h3>
-          </div>
-          <button onClick={() => setIsCartOpen(false)} className={styles.closeBtn}>
+            <span>سبد خرید شما</span>
+          </h3>
+          <button onClick={() => setIsCartOpen(false)} className={styles.closeBtn} aria-label="بستن سبد خرید">
             <i className="fa-solid fa-xmark" />
           </button>
         </header>
@@ -61,7 +61,7 @@ export const CartDrawer = () => {
             </button>
           </div>
         ) : (
-          <main className={styles.body}>
+          <div className={styles.body}>
             <div className={styles.clearRow}>
               <span>{cart.length.toLocaleString('fa-IR')} کالا در سبد</span>
               <button onClick={clearCart} className={styles.clearBtn}>
@@ -70,7 +70,7 @@ export const CartDrawer = () => {
               </button>
             </div>
 
-            <div className={styles.itemsList}>
+            <ul className={styles.itemsList}>
               {cart.map((item) => {
                 const baseWeight = item.product?.weight ?? 10;
                 const unitPrice = item.product?.price ?? 0;
@@ -78,7 +78,7 @@ export const CartDrawer = () => {
                 const itemTotal = singlePrice * (item.quantity ?? 1);
 
                 return (
-                  <div key={`${item.product?.id}-${item.weightKg}`} className={styles.itemCard}>
+                  <li key={`${item.product?.id}-${item.weightKg}`} className={styles.itemCard}>
                     <img src={item.product?.image} alt={item.product?.name} className={styles.itemImg} />
                     <div className={styles.itemInfo}>
                       <div className={styles.itemTop}>
@@ -86,6 +86,7 @@ export const CartDrawer = () => {
                         <button
                           onClick={() => removeFromCart(item.product.id, item.weightKg)}
                           className={styles.deleteBtn}
+                          aria-label="حذف"
                         >
                           <i className="fa-solid fa-trash-can" />
                         </button>
@@ -107,10 +108,10 @@ export const CartDrawer = () => {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
 
             <div className={styles.couponBox}>
               {appliedCoupon ? (
@@ -161,9 +162,9 @@ export const CartDrawer = () => {
                 <i className="fa-solid fa-arrow-left" />
               </button>
             </footer>
-          </main>
+          </div>
         )}
-      </div>
+      </section>
     </aside>
   );
 };

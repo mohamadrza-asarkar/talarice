@@ -11,51 +11,35 @@ export const BottomNav = () => {
 
   return (
     <nav className={styles.bottomNav}>
-      <div className={styles.navContainer}>
-        <NavLink to="/" end className={getLinkClass}>
-          <span className={styles.iconContainer}>
-            <i className="fa-solid fa-house" />
-          </span>
-          <span className={styles.label}>خانه</span>
-        </NavLink>
+      <NavLink to="/" end className={getLinkClass}>
+        <i className="fa-solid fa-house" />
+        <span>خانه</span>
+      </NavLink>
 
-        <NavLink to="/catalog" className={getLinkClass}>
-          <span className={styles.iconContainer}>
-            <i className="fa-solid fa-table-cells-large" />
-          </span>
-          <span className={styles.label}>محصولات</span>
-        </NavLink>
+      <NavLink to="/catalog" className={getLinkClass}>
+        <i className="fa-solid fa-table-cells-large" />
+        <span>محصولات</span>
+      </NavLink>
 
-        <button
-          type="button"
-          onClick={() => setIsCartOpen(true)}
-          className={`${styles.navButton} ${styles.navButtonUnselected}`}
-        >
-          <span className={styles.iconContainer}>
-            <i className="fa-solid fa-cart-shopping" />
-            {cartCount > 0 && (
-              <span className={styles.badge}>
-                {cartCount.toLocaleString('fa-IR')}
-              </span>
-            )}
-          </span>
-          <span className={styles.label}>سبد خرید</span>
-        </button>
+      <button
+        type="button"
+        onClick={() => setIsCartOpen(true)}
+        className={`${styles.navButton} ${styles.navButtonUnselected} ${styles.cartButton}`}
+      >
+        <i className="fa-solid fa-cart-shopping" />
+        {cartCount > 0 && <span className={styles.badge}>{cartCount.toLocaleString('fa-IR')}</span>}
+        <span>سبد خرید</span>
+      </button>
 
-        <NavLink to="/blog" className={getLinkClass}>
-          <span className={styles.iconContainer}>
-            <i className="fa-solid fa-book-open" />
-          </span>
-          <span className={styles.label}>بلاگ و آموزش</span>
-        </NavLink>
+      <NavLink to="/blog" className={getLinkClass}>
+        <i className="fa-solid fa-book-open" />
+        <span>بلاگ</span>
+      </NavLink>
 
-        <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
-          <span className={styles.iconContainer}>
-            <i className="fa-solid fa-user" />
-          </span>
-          <span className={styles.label}>پروفایل</span>
-        </NavLink>
-      </div>
+      <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
+        <i className="fa-solid fa-user" />
+        <span>پروفایل</span>
+      </NavLink>
     </nav>
   );
 };

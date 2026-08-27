@@ -52,15 +52,15 @@ export const CheckoutModal = () => {
   const stepLabels = ['آدرس', 'بررسی', 'پرداخت'];
 
   return (
-    <div className={styles.overlay} onClick={() => step !== 4 && setIsCheckoutOpen(false)}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+    <aside className={styles.overlay} onClick={() => step !== 4 && setIsCheckoutOpen(false)}>
+      <dialog open className={styles.modal} onClick={(e) => e.stopPropagation()}>
         <header className={styles.header}>
-          <div className={styles.headerTitle}>
+          <h3 className={styles.headerTitle}>
             <i className="fa-solid fa-truck-fast" />
             <span>تکمیل خرید و ارسال</span>
-          </div>
+          </h3>
           {step !== 4 && (
-            <button onClick={() => setIsCheckoutOpen(false)} className={styles.closeBtn}>
+            <button onClick={() => setIsCheckoutOpen(false)} className={styles.closeBtn} aria-label="بستن">
               <i className="fa-solid fa-xmark" />
             </button>
           )}
@@ -74,7 +74,7 @@ export const CheckoutModal = () => {
                 <React.Fragment key={num}>
                   <div className={`${styles.step} ${step >= num ? styles.stepActive : ''}`}>
                     <span className={styles.stepCircle}>{num.toLocaleString('fa-IR')}</span>
-                    <span className={styles.stepLabel}>{lbl}</span>
+                    <span>{lbl}</span>
                   </div>
                   {idx < stepLabels.length - 1 && (
                     <div className={`${styles.stepLine} ${step > num ? styles.stepLineActive : ''}`} />
@@ -85,13 +85,13 @@ export const CheckoutModal = () => {
           </nav>
         )}
 
-        <main className={styles.content}>
+        <div className={styles.content}>
           {step === 1 && (
             <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className={styles.form}>
-              <h3 className={styles.sectionTitle}>
+              <h4 className={styles.sectionTitle}>
                 <i className="fa-solid fa-location-dot" />
                 <span>اطلاعات گیرنده و آدرس ارسال:</span>
-              </h3>
+              </h4>
 
               <div className={styles.formGroup}>
                 <label>نام و نام خانوادگی تحویل‌گیرنده</label>
@@ -162,12 +162,12 @@ export const CheckoutModal = () => {
 
           {step === 2 && (
             <div className={styles.form}>
-              <h3 className={styles.sectionTitle}>
+              <h4 className={styles.sectionTitle}>
                 <i className="fa-solid fa-clipboard-check" />
                 <span>بررسی اقلام انتخابی:</span>
-              </h3>
+              </h4>
 
-              <div className={styles.cartItemsList}>
+              <ul className={styles.cartItemsList}>
                 {cart.map((item) => {
                   const baseW = item.product?.weight ?? 10;
                   const unitP = item.product?.price ?? 0;
@@ -175,7 +175,7 @@ export const CheckoutModal = () => {
                   const total = price * (item.quantity ?? 1);
 
                   return (
-                    <div key={`${item.product?.id}-${item.weightKg}`} className={styles.cartReviewItem}>
+                    <li key={`${item.product?.id}-${item.weightKg}`} className={styles.cartReviewItem}>
                       <div>
                         <strong>{item.product?.name ?? 'برنج کامفیروزی'}</strong>
                         <div className={styles.variantText}>
@@ -183,10 +183,10 @@ export const CheckoutModal = () => {
                         </div>
                       </div>
                       <span className={styles.itemPrice}>{total.toLocaleString('fa-IR')} تومان</span>
-                    </div>
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
 
               <div className={styles.addressSummary}>
                 <div><strong>تحویل‌گیرنده:</strong> {formData.recipientName} ({formData.phone})</div>
@@ -206,10 +206,10 @@ export const CheckoutModal = () => {
 
           {step === 3 && (
             <div className={styles.form}>
-              <h3 className={styles.sectionTitle}>
+              <h4 className={styles.sectionTitle}>
                 <i className="fa-solid fa-credit-card" />
                 <span>انتخاب روش پرداخت:</span>
-              </h3>
+              </h4>
 
               <div className={styles.paymentList}>
                 <label
@@ -297,8 +297,8 @@ export const CheckoutModal = () => {
               </button>
             </div>
           )}
-        </main>
-      </div>
-    </div>
+        </div>
+      </dialog>
+    </aside>
   );
 };

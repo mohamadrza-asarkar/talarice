@@ -207,6 +207,9 @@
   gap: 0.5rem;
   max-height: 180px;
   overflow-y: auto;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .cartReviewItem {
