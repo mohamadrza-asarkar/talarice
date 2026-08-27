@@ -1,0 +1,81 @@
+.section {
+  padding: 0 1rem;
+  margin: 0.75rem 0;
+}
+
+.storyCard {
+  background-color: #063822;
+  border-radius: 1.5rem;
+  padding: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  border: 2px solid rgba(212, 175, 55, 0.6);
+  color: white;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.625rem;
+}
+
+.header i {
+  font-size: 1.125rem;
+  color: #fef08a;
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #fef08a;
+  line-height: 1.375;
+}
+
+@media (min-width: 640px) {
+  .title {
+    font-size: 1rem;
+  }
+}
+
+.description {
+  font-size: 11px;
+  color: #d1fae5;
+  line-height: 1.625;
+  margin-bottom: 1rem;
+  text-align: justify;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  text-align: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.featureItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 0.25rem;
+}
+
+.featureBorder {
+  border-left: 1px solid rgba(212, 175, 55, 0.3);
+  border-right: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.featureValue {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #fef08a;
+  line-height: 1.25;
+}
+
+.featureLabel {
+  font-size: 10px;
+  color: #a7f3d0;
+  margin-top: 0.125rem;
+}

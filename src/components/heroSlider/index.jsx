@@ -1,33 +1,77 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context';
+import styles from './style.module.css';
 
-export function HeroSlider() {
-  const { heroSlides } = useApp();
-  if (!heroSlides || heroSlides.length === 0) return null;
+export const HeroSlider = () => {
+  const { heroSlides, setActiveTab, setSelectedCategory } = useApp();
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  const slide = heroSlides[0];
+  useEffect(() => {
+    if (!heroSlides?.length) return;
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    }, 5500);
+    return () => clearInterval(timer);
+  }, [heroSlides?.length]);
+
+  if (!heroSlides?.length) return null;
+  const slide = heroSlides[currentSlide];
+
+  const handleCta = () => {
+    if (slide.category) setSelectedCategory(slide.category);
+    setActiveTab('catalog');
+  };
 
   return (
-    <div className="relative rounded-2xl overflow-hidden border border-[#d4af37]/30 h-44 shadow-lg group">
-      <img
-        src={slide.image}
-        alt={slide.title}
-        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
-        <h2 className="text-sm font-black text-white">{slide.title}</h2>
-        <p className="text-[11px] text-gray-200 mt-0.5">{slide.subtitle}</p>
-        <Link
-          to={slide.link || '/catalog'}
-          className="mt-2.5 inline-flex items-center gap-1 bg-[#d4af37] text-[#042a1b] text-xs font-bold px-3 py-1.5 rounded-lg w-max"
-        >
-          <span>مشاهده و خرید</span>
-          <i className="fa-solid fa-arrow-left text-[10px]" />
-        </Link>
-      </div>
-    </div>
-  );
-}
+    <section className={styles.sliderSection}>
+      <div className={styles.sliderCard}>
+        <img
+          key={currentSlide}
+          src={slide.image}
+          alt={slide.title}
+          className={styles.bgImage}
+        />
 
-export default HeroSlider;
+        <div className={styles.content}>
+          <span className={styles.badge}>{slide.subtitle || 'فروش ویژه طلا رایس'}</span>
+          <h2 className={styles.title}>{slide.title}</h2>
+          <p className={styles.description}>{slide.description}</p>
+        </div>
+
+        <div className={styles.controls}>
+          <button onClick={handleCta} className={styles.ctaButton}>
+            <span>{slide.ctaText || 'مشاهده تخفیف‌های امروز'}</span>
+            <i className="fa-solid fa-arrow-left" />
+          </button>
+
+          <div className={styles.navRow}>
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
+              className={styles.navBtn}
+              aria-label="Previous slide"
+            >
+              <i className="fa-solid fa-chevron-right" />
+            </button>
+            <div className={styles.dots}>
+              {heroSlides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentSlide(idx)}
+                  className={currentSlide === idx ? styles.dotActive : styles.dot}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+            <button
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
+              className={styles.navBtn}
+              aria-label="Next slide"
+            >
+              <i className="fa-solid fa-chevron-left" />
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};

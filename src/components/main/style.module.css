@@ -1,0 +1,12 @@
+.mainContainer {
+  padding-top: 1rem;
+  padding-bottom: 5rem;
+}
+
+.minHeight {
+  min-height: calc(100vh - 140px);
+}
+
+.fullHeight {
+  height: 100vh;
+}

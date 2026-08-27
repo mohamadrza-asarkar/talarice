@@ -1,64 +1,198 @@
-import React from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
+import styles from './style.module.css';
 
-export function ProductPage() {
+export const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { products, addToCart, setIsCartOpen } = useApp();
 
-  const product = products.find((p) => (p._id || p.id) === id);
+  const [product, setProduct] = useState(null);
+  const [selectedWeight, setSelectedWeight] = useState(10);
+  const [activeTab, setActiveTab] = useState('desc');
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    const found = products?.find((p) => p.id === id);
+    if (found) {
+      setProduct(found);
+      setSelectedWeight(found.weight ?? 10);
+    }
+  }, [id, products]);
 
   if (!product) {
     return (
-      <div className="p-8 text-center flex flex-col items-center gap-4">
-        <p className="text-gray-400 text-sm">محصول مورد نظر یافت نشد.</p>
-        <Link to="/catalog" className="bg-[#d4af37] text-[#042a1b] px-4 py-2 rounded-xl text-xs font-bold">
-          بازگشت به کاتالوگ
-        </Link>
+      <div className={styles.pageWrapper}>
+        <header className={styles.header}>
+          <button onClick={() => navigate(-1)} className={styles.backBtn}>
+            <i className="fa-solid fa-arrow-right" />
+            <span>بازگشت</span>
+          </button>
+        </header>
+        <div className={styles.notFoundContainer}>
+          <h2>محصول یافت نشد</h2>
+          <button onClick={() => navigate('/catalog')} className={styles.notFoundBtn}>
+            مشاهده محصولات
+          </button>
+        </div>
       </div>
     );
   }
 
+  const defaultWeight = product.weight ?? 10;
+  const weightOptions = product.weightOptions?.length ? product.weightOptions : [defaultWeight];
+  const ratio = selectedWeight / defaultWeight;
+  const currentPrice = Math.round((product.price ?? 0) * ratio);
+  const currentOldPrice = product.oldPrice ? Math.round(product.oldPrice * ratio) : null;
+
+  const tabs = [
+    { id: 'desc', label: 'معرفی محصول' },
+    { id: 'specs', label: 'مشخصات پخت' },
+    { id: 'reviews', label: `نظرات (${(product.reviewCount ?? 0).toLocaleString('fa-IR')})` }
+  ];
+
   return (
-    <div className="p-4 flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-xs text-gray-300 flex items-center gap-1.5 hover:text-white">
+    <div className={styles.pageWrapper}>
+      <header className={styles.header}>
+        <button onClick={() => navigate(-1)} className={styles.backBtn}>
           <i className="fa-solid fa-arrow-right" />
           <span>بازگشت</span>
         </button>
+        <div className={styles.headerActions}>
+          <button className={styles.actionBtn}><i className="fa-regular fa-heart" /></button>
+          <button className={styles.actionBtn}><i className="fa-solid fa-share-nodes" /></button>
+        </div>
+      </header>
+
+      <div className={styles.imageContainer}>
+        <img src={product.image} alt={product.name} className={styles.productImage} />
+        {product.discountPercent > 0 && (
+          <span className={styles.productBadge}>
+            {product.discountPercent.toLocaleString('fa-IR')}٪ تخفیف
+          </span>
+        )}
       </div>
 
-      <div className="rounded-2xl overflow-hidden border border-[#d4af37]/30 bg-[#073b27]">
-        <img src={product.image} alt={product.name} className="w-full h-64 object-cover" />
-      </div>
+      <main className={styles.detailsContainer}>
+        <div className={styles.titleRow}>
+          <h1 className={styles.productTitle}>{product.name}</h1>
+          <div className={styles.ratingBox}>
+            <i className="fa-solid fa-star" />
+            <span>{product.rating ?? '۵.۰'}</span>
+          </div>
+        </div>
 
-      <div className="bg-[#073b27] border border-[#d4af37]/20 rounded-2xl p-4 flex flex-col gap-3">
-        <h1 className="text-base font-black text-white">{product.name}</h1>
-        <p className="text-xs text-gray-300 leading-relaxed">{product.description}</p>
+        <div className={styles.tagsContainer}>
+          <span className={styles.tag}>برنج اصیل کامفیروز</span>
+          <span className={styles.tag}>بوجاری شده</span>
+          <span className={styles.tag}>بدون خرده</span>
+        </div>
 
-        <div className="flex items-center justify-between pt-3 border-t border-white/10 mt-2">
-          <div className="flex flex-col">
-            <span className="text-xs text-gray-400">قیمت (کیسه ۱۰ کیلویی):</span>
-            <span className="text-base font-black text-[#d4af37]">
-              {Number(product.price || 0).toLocaleString('fa-IR')} تومان
+        <div className={styles.weightSelector}>
+          <h3 className={styles.weightTitle}>وزن کیسه (کیلوگرم):</h3>
+          <div className={styles.weightOptions}>
+            {weightOptions.map((w) => (
+              <button
+                key={w}
+                onClick={() => setSelectedWeight(w)}
+                className={`${styles.weightBtn} ${selectedWeight === w ? styles.weightBtnActive : styles.weightBtnInactive}`}
+              >
+                {w} کیلو
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className={styles.priceContainer}>
+          {currentOldPrice && currentOldPrice > currentPrice && (
+            <div className={styles.oldPriceRow}>
+              <span className={styles.discountBadge}>
+                {Math.round(((currentOldPrice - currentPrice) / currentOldPrice) * 100)}٪
+              </span>
+              <span className={styles.oldPriceValue}>
+                {currentOldPrice.toLocaleString('fa-IR')}
+              </span>
+            </div>
+          )}
+          <div className={styles.currentPriceRow}>
+            <span className={styles.currentPriceValue}>
+              {currentPrice.toLocaleString('fa-IR')}
             </span>
+            <span className={styles.currency}>تومان</span>
+          </div>
+        </div>
+
+        <div className={styles.tabsContainer}>
+          <div className={styles.tabsList}>
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                className={`${styles.tabBtn} ${activeTab === t.id ? styles.tabActive : styles.tabInactive}`}
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
 
-          <button
-            onClick={() => {
-              addToCart(product);
-              setIsCartOpen(true);
-            }}
-            className="bg-[#d4af37] text-[#042a1b] px-5 py-2.5 rounded-xl text-xs font-black hover:bg-yellow-400 transition-colors flex items-center gap-2"
-          >
-            <i className="fa-solid fa-cart-plus" />
-            <span>افزودن به سبد</span>
-          </button>
+          <div className={styles.tabContent}>
+            {activeTab === 'desc' && (
+              <p className={styles.descText}>
+                {product.description ?? 'برنج کامفیروزی اصل با عطر و طعم بی‌نظیر، مستقیماً از شالیزارهای منطقه کامفیروز فارس.'}
+              </p>
+            )}
+            {activeTab === 'specs' && (
+              <ul className={styles.specsList}>
+                <li className={styles.specItem}>
+                  <span className={styles.specLabel}>منطقه کشت:</span>
+                  <strong>{product.origin ?? 'کامفیروز، استان فارس'}</strong>
+                </li>
+                <li className={styles.specItem}>
+                  <span className={styles.specLabel}>شالیکار:</span>
+                  <strong>{product.farmer ?? 'تعاونی شالیکاران'}</strong>
+                </li>
+                <li className={styles.specItem}>
+                  <span className={styles.specLabel}>طریقه پخت:</span>
+                  <strong>{product.cookingRatio ?? '۱ پیمانه برنج به ۱.۳ پیمانه آب'}</strong>
+                </li>
+                <li className={styles.specItem}>
+                  <span className={styles.specLabel}>میزان ری‌کشی:</span>
+                  <strong>{product.elongation ?? 'عالی'}</strong>
+                </li>
+              </ul>
+            )}
+            {activeTab === 'reviews' && (
+              <div className={styles.reviewsList}>
+                <div className={styles.reviewItem}>
+                  <div className={styles.reviewHeader}>
+                    <strong className={styles.reviewerName}>کاربر سایت</strong>
+                    <div className={styles.reviewStars}>
+                      {[...Array(5)].map((_, i) => <i key={i} className="fa-solid fa-star" />)}
+                    </div>
+                  </div>
+                  <p className={styles.reviewText}>
+                    کیفیت محصول بسیار عالی بود. عطر و طعم فوق‌العاده‌ای داشت.
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+      </main>
+
+      <div className={styles.bottomBar}>
+        <button
+          onClick={() => {
+            addToCart(product, selectedWeight);
+            setIsCartOpen(true);
+          }}
+          className={styles.addToCartBtn}
+        >
+          <i className="fa-solid fa-cart-plus" />
+          <span>افزودن به سبد خرید</span>
+        </button>
       </div>
     </div>
   );
-}
-
-export default ProductPage;
+};

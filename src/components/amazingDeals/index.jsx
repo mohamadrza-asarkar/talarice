@@ -1,46 +1,48 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context';
+import { ProductCard } from '../productCard';
+import styles from './style.module.css';
 
-export function AmazingDeals() {
+export const AmazingDeals = () => {
   const { products } = useApp();
-  const deals = products.filter((p) => p.discountPercent > 0 || p.oldPrice > p.price);
-  if (deals.length === 0) return null;
+  const dealProducts = products.filter((p) => p.isDeal);
+  const [secondsLeft, setSecondsLeft] = useState(46785); // ~12:59:45
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsLeft((s) => (s > 0 ? s - 1 : 46785));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  if (!dealProducts.length) return null;
+
+  const h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
+  const m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
+  const s = String(secondsLeft % 60).padStart(2, '0');
 
   return (
-    <section className="bg-gradient-to-r from-red-950/60 to-[#073b27] border border-red-500/30 rounded-2xl p-3.5 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-black animate-pulse">
-            شگفت‌انگیز
-          </span>
-          <h2 className="text-xs font-bold text-white">تخفیف‌های ویژه شالیزار</h2>
+    <section className={styles.dealsSection}>
+      <div className={styles.header}>
+        <div className={styles.titleWrapper}>
+          <i className="fa-solid fa-fire-flame-curved" />
+          <h3 className={styles.title}>پیشنهاد شگفت‌انگیز طلا رایس</h3>
         </div>
-        <Link to="/catalog" className="text-[11px] text-gray-300 hover:text-white">
-          مشاهده همه
-        </Link>
+
+        <div className={styles.timer}>
+          <span className={styles.timeBox}>{s}</span>
+          <span className={styles.colon}>:</span>
+          <span className={styles.timeBox}>{m}</span>
+          <span className={styles.colon}>:</span>
+          <span className={styles.timeBox}>{h}</span>
+        </div>
       </div>
 
-      <div className="flex gap-2.5 overflow-x-auto pb-1 scrollbar-none">
-        {deals.map((item) => (
-          <Link
-            key={item._id || item.id}
-            to={`/product/${item._id || item.id}`}
-            className="min-w-[140px] max-w-[140px] bg-[#042a1b] border border-white/10 rounded-xl p-2 flex flex-col gap-1.5 flex-shrink-0"
-          >
-            <img src={item.image} alt={item.name} className="w-full h-24 object-cover rounded-lg" />
-            <h3 className="text-[11px] font-bold text-white line-clamp-1">{item.name}</h3>
-            <div className="flex items-center justify-between mt-1">
-              <span className="text-xs font-black text-[#d4af37]">
-                {Number(item.price || 0).toLocaleString('fa-IR')}
-              </span>
-              <span className="text-[9px] text-gray-400">تومان</span>
-            </div>
-          </Link>
+      <div className={styles.gridContainer}>
+        {dealProducts.slice(0, 2).map((product) => (
+          <ProductCard key={product.id} product={product} />
         ))}
       </div>
     </section>
   );
-}
-
-export default AmazingDeals;
+};

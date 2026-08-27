@@ -1,12 +1,18 @@
 import React from 'react';
+import styles from './style.module.css';
 import logoImg from '../../assets/logo.png';
 
-export function Logo({ className = '' }) {
+export const Logo = ({ size }) => {
   return (
-    <div className={`w-12 h-12 rounded-full overflow-hidden flex items-center justify-center border border-[#d4af37]/40 ${className}`}>
-      <img src={logoImg} alt="Tala Rice" className="w-full h-full object-cover" />
+    <div
+      className={styles.circleLogo}
+      style={size ? {
+        width: size.width,
+        height: size.height
+      } : null}
+    >
+      <img src={logoImg} alt="Tala Rice" className={styles.logoImage} />
     </div>
   );
-}
+};
 
-export default Logo;

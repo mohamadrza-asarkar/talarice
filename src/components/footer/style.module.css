@@ -1,0 +1,132 @@
+.footer {
+  background-color: #042a1b;
+  color: white;
+  padding: 1.5rem 1rem 4.5rem;
+  border-top: 2px solid rgba(212, 175, 55, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+
+.branding {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.brandTitle {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fef08a;
+  margin: 0;
+}
+
+.brandDesc {
+  font-size: 0.75rem;
+  color: #d1fae5;
+  max-width: 20rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 24rem;
+  text-align: right;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: rgba(6, 56, 34, 0.6);
+  padding: 0.6rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.featureItem i {
+  color: #fef08a;
+  font-size: 1rem;
+}
+
+.featureItem strong {
+  display: block;
+  font-size: 0.75rem;
+  color: #ffffff;
+}
+
+.featureItem small {
+  display: block;
+  font-size: 0.65rem;
+  color: #a7f3d0;
+}
+
+.contactInfo {
+  width: 100%;
+  max-width: 24rem;
+  background-color: rgba(6, 56, 34, 0.6);
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+
+.phoneRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fef08a;
+}
+
+.phoneRow strong {
+  direction: ltr;
+}
+
+.addressRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: #d1fae5;
+  margin: 0;
+  font-size: 0.7rem;
+}
+
+.socials {
+  display: flex;
+  gap: 1rem;
+}
+
+.socialLink {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 9999px;
+  background-color: #073822;
+  border: 1px solid #d4af37;
+  color: #fef08a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.15s;
+}
+
+.socialLink:hover {
+  background-color: #fef08a;
+  color: #073822;
+}
+
+.copyright {
+  font-size: 0.65rem;
+  color: #94a3b8;
+}

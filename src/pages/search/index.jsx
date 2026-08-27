@@ -1,66 +1,87 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
+import styles from './style.module.css';
 
-export function SearchPage() {
-  const { products } = useApp();
+export const SearchPage = () => {
+  const { searchQuery, setSearchQuery, products } = useApp();
   const navigate = useNavigate();
-  const [query, setQuery] = useState('');
+  const inputRef = useRef(null);
 
-  const filtered = !query.trim()
-    ? []
-    : products.filter((p) => p.name?.includes(query) || p.description?.includes(query));
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const query = searchQuery?.trim() ?? '';
+  const filtered = query
+    ? (products ?? []).filter((p) => p.name?.includes(query) || p.description?.includes(query))
+    : [];
 
   return (
-    <div className="p-4 flex flex-col gap-4">
-      <div className="flex items-center gap-2">
-        <button onClick={() => navigate(-1)} className="text-gray-300 hover:text-white p-2">
-          <i className="fa-solid fa-arrow-right text-sm" />
+    <div className={styles.wrapper}>
+      <header className={styles.header}>
+        <button onClick={() => navigate(-1)} className={styles.backBtn}>
+          <i className="fa-solid fa-arrow-right" />
         </button>
-
-        <div className="flex-1 flex items-center bg-[#073b27] border border-[#d4af37]/30 rounded-xl px-3 py-2 text-xs">
+        <div className={styles.inputBox}>
+          <i className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`} />
           <input
+            ref={inputRef}
             type="text"
-            autoFocus
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="جستجوی نام برنج..."
-            className="w-full bg-transparent text-white outline-none placeholder:text-gray-400"
+            placeholder="کیسه ۱۰ کیلویی..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
           />
-          {query && (
-            <button onClick={() => setQuery('')} className="text-gray-400 hover:text-white">
-              <i className="fa-solid fa-xmark text-xs" />
+          {searchQuery && (
+            <button onClick={() => setSearchQuery('')} className={styles.clearBtn}>
+              <i className="fa-solid fa-circle-xmark" />
             </button>
           )}
         </div>
-      </div>
+      </header>
 
-      <div className="flex flex-col gap-2 mt-2">
-        {!query.trim() ? (
-          <p className="text-xs text-gray-400 text-center py-10">نام محصول مورد نظر خود را وارد کنید.</p>
-        ) : filtered.length === 0 ? (
-          <p className="text-xs text-gray-400 text-center py-10">محصولی با این مشخصات یافت نشد.</p>
+      <main className={styles.main}>
+        {!query ? (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>
+              <i className="fa-solid fa-magnifying-glass" />
+            </div>
+            <h4>جستجوی محصولات طلا رایس</h4>
+            <p>نام محصول یا وزن مورد نظر خود را تایپ کنید.</p>
+          </div>
+        ) : !filtered.length ? (
+          <div className={styles.noResults}>
+            <div className={styles.noResultsIcon}>
+              <i className="fa-solid fa-wheat-awn-circle-exclamation" />
+            </div>
+            <h4>محصولی یافت نشد</h4>
+            <p>متأسفانه برای جستجوی شما نتیجه‌ای پیدا نشد.</p>
+          </div>
         ) : (
-          filtered.map((item) => (
-            <Link
-              key={item._id || item.id}
-              to={`/product/${item._id || item.id}`}
-              className="bg-[#073b27] border border-white/10 rounded-xl p-3 flex items-center gap-3 hover:border-[#d4af37]/40 transition-colors"
-            >
-              <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-lg" />
-              <div className="flex-1">
-                <h4 className="text-xs font-bold text-white line-clamp-1">{item.name}</h4>
-                <span className="text-[11px] text-[#d4af37] font-bold">
-                  {Number(item.price || 0).toLocaleString('fa-IR')} تومان
-                </span>
+          <div className={styles.resultsList}>
+            <span className={styles.resultsCount}>
+              نتایج برای «{searchQuery}» ({filtered.length.toLocaleString('fa-IR')} مورد)
+            </span>
+            {filtered.map((product) => (
+              <div
+                key={product.id}
+                onClick={() => navigate(`/product/${product.id}`)}
+                className={styles.resultItem}
+              >
+                <img src={product.image} alt={product.name} className={styles.resultImg} />
+                <div className={styles.resultInfo}>
+                  <h4>{product.name}</h4>
+                  <div className={styles.price}>
+                    <strong>{(product.price ?? 0).toLocaleString('fa-IR')}</strong>
+                    <small>تومان</small>
+                  </div>
+                </div>
+                <i className={`fa-solid fa-chevron-left ${styles.actionIcon}`} />
               </div>
-              <i className="fa-solid fa-chevron-left text-xs text-gray-400" />
-            </Link>
-          ))
+            ))}
+          </div>
         )}
-      </div>
+      </main>
     </div>
   );
-}
-
-export default SearchPage;
+};

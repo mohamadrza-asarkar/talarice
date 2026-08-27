@@ -1,119 +1,304 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
+import styles from './style.module.css';
 
-export function CheckoutModal() {
-  const { isCheckoutOpen, setIsCheckoutOpen, cart, finalAmount, createOrder } = useApp();
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [submitting, setSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
+export const CheckoutModal = () => {
+  const {
+    isCheckoutOpen,
+    setIsCheckoutOpen,
+    cart,
+    cartSubtotal,
+    discountAmount,
+    shippingFee,
+    finalTotal,
+    addOrder,
+    setActiveTab
+  } = useApp();
+
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    recipientName: '',
+    phone: '',
+    province: 'فارس',
+    city: 'شیراز',
+    postalCode: '',
+    fullAddress: '',
+    deliveryNote: '',
+    paymentMethod: 'gateway'
+  });
+  const [createdOrder, setCreatedOrder] = useState(null);
 
   if (!isCheckoutOpen) return null;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!name || !phone || !address) return;
-
-    setSubmitting(true);
-    try {
-      await createOrder({
-        buyerName: name,
-        phone,
-        address,
-      });
-      setSuccess(true);
-    } catch (err) {
-      alert('خطا در ثبت سفارش');
-    } finally {
-      setSubmitting(false);
+  const handleNext = () => {
+    if (step === 3) {
+      const order = addOrder(formData);
+      setCreatedOrder(order);
+      setStep(4);
+    } else {
+      setStep(step + 1);
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !success && setIsCheckoutOpen(false)} />
+  const handleFinish = () => {
+    setIsCheckoutOpen(false);
+    setTimeout(() => {
+      setStep(1);
+      setCreatedOrder(null);
+      setActiveTab('profile');
+    }, 300);
+  };
 
-      <div className="relative w-full max-w-md bg-[#073b27] border border-[#d4af37]/30 rounded-2xl p-5 z-10 text-white flex flex-col gap-4">
-        <div className="flex items-center justify-between border-b border-white/10 pb-3">
-          <h3 className="text-sm font-bold text-[#d4af37]">ثبت نهایی سفارش</h3>
-          {!success && (
-            <button onClick={() => setIsCheckoutOpen(false)} className="text-gray-400 hover:text-white">
-              <i className="fa-solid fa-xmark text-lg" />
+  const stepLabels = ['آدرس', 'بررسی', 'پرداخت'];
+
+  return (
+    <div className={styles.overlay} onClick={() => step !== 4 && setIsCheckoutOpen(false)}>
+      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+        <header className={styles.header}>
+          <div className={styles.headerTitle}>
+            <i className="fa-solid fa-truck-fast" />
+            <span>تکمیل خرید و ارسال</span>
+          </div>
+          {step !== 4 && (
+            <button onClick={() => setIsCheckoutOpen(false)} className={styles.closeBtn}>
+              <i className="fa-solid fa-xmark" />
             </button>
           )}
-        </div>
+        </header>
 
-        {success ? (
-          <div className="text-center py-6 flex flex-col items-center gap-3">
-            <i className="fa-solid fa-circle-check text-4xl text-emerald-400" />
-            <h4 className="text-base font-bold text-white">سفارش شما با موفقیت ثبت شد</h4>
-            <p className="text-xs text-gray-300">همکاران ما به زودی جهت ارسال با شما تماس خواهند گرفت.</p>
-            <button
-              onClick={() => {
-                setSuccess(false);
-                setIsCheckoutOpen(false);
-              }}
-              className="mt-2 bg-[#d4af37] text-[#042a1b] px-6 py-2 rounded-xl text-xs font-bold"
-            >
-              متوجه شدم
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-            <div>
-              <label className="text-xs text-gray-300 block mb-1">نام و نام خانوادگی</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="مثال: محمد رضایی"
-                className="w-full bg-[#042a1b] border border-white/20 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#d4af37]"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-300 block mb-1">شماره تماس</label>
-              <input
-                type="tel"
-                required
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                placeholder="09123456789"
-                className="w-full bg-[#042a1b] border border-white/20 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#d4af37]"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-gray-300 block mb-1">آدرس کامل پستی</label>
-              <textarea
-                required
-                rows={2}
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                placeholder="استان، شهر، خیابان، پلاک..."
-                className="w-full bg-[#042a1b] border border-white/20 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#d4af37] resize-none"
-              />
-            </div>
-
-            <div className="flex justify-between items-center py-2 text-sm border-t border-white/10">
-              <span className="text-gray-300">مبلغ قابل پرداخت:</span>
-              <span className="font-black text-[#d4af37]">{Number(finalAmount).toLocaleString('fa-IR')} تومان</span>
-            </div>
-
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full bg-[#d4af37] text-[#042a1b] py-3 rounded-xl font-bold text-xs hover:bg-yellow-400 transition-colors disabled:opacity-50"
-            >
-              {submitting ? 'در حال ثبت...' : 'تایید و ثبت سفارش'}
-            </button>
-          </form>
+        {step <= 3 && (
+          <nav className={styles.stepper}>
+            {stepLabels.map((lbl, idx) => {
+              const num = idx + 1;
+              return (
+                <React.Fragment key={num}>
+                  <div className={`${styles.step} ${step >= num ? styles.stepActive : ''}`}>
+                    <span className={styles.stepCircle}>{num.toLocaleString('fa-IR')}</span>
+                    <span className={styles.stepLabel}>{lbl}</span>
+                  </div>
+                  {idx < stepLabels.length - 1 && (
+                    <div className={`${styles.stepLine} ${step > num ? styles.stepLineActive : ''}`} />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </nav>
         )}
+
+        <main className={styles.content}>
+          {step === 1 && (
+            <form onSubmit={(e) => { e.preventDefault(); handleNext(); }} className={styles.form}>
+              <h3 className={styles.sectionTitle}>
+                <i className="fa-solid fa-location-dot" />
+                <span>اطلاعات گیرنده و آدرس ارسال:</span>
+              </h3>
+
+              <div className={styles.formGroup}>
+                <label>نام و نام خانوادگی تحویل‌گیرنده</label>
+                <input
+                  required
+                  type="text"
+                  value={formData.recipientName}
+                  onChange={(e) => setFormData({ ...formData, recipientName: e.target.value })}
+                  placeholder="مثال: علی احمدی"
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>شماره موبایل (جهت هماهنگی ارسال)</label>
+                <input
+                  required
+                  type="tel"
+                  dir="ltr"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="09120000000"
+                />
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label>استان</label>
+                  <select
+                    value={formData.province}
+                    onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+                  >
+                    <option>فارس</option>
+                    <option>تهران</option>
+                    <option>اصفهان</option>
+                    <option>خراسان رضوی</option>
+                  </select>
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label>شهر</label>
+                  <select
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                  >
+                    <option>شیراز</option>
+                    <option>مرودشت</option>
+                    <option>کامفیروز</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label>آدرس دقیق پستی</label>
+                <textarea
+                  required
+                  rows={2}
+                  value={formData.fullAddress}
+                  onChange={(e) => setFormData({ ...formData, fullAddress: e.target.value })}
+                  placeholder="خیابان، کوچه، پلاک، واحد..."
+                />
+              </div>
+
+              <button type="submit" className={styles.primaryBtn}>
+                مرحله بعد: بررسی سفارش
+              </button>
+            </form>
+          )}
+
+          {step === 2 && (
+            <div className={styles.form}>
+              <h3 className={styles.sectionTitle}>
+                <i className="fa-solid fa-clipboard-check" />
+                <span>بررسی اقلام انتخابی:</span>
+              </h3>
+
+              <div className={styles.cartItemsList}>
+                {cart.map((item) => {
+                  const baseW = item.product?.weight ?? 10;
+                  const unitP = item.product?.price ?? 0;
+                  const price = item.weightKg === baseW ? unitP : Math.round((unitP / baseW) * item.weightKg);
+                  const total = price * (item.quantity ?? 1);
+
+                  return (
+                    <div key={`${item.product?.id}-${item.weightKg}`} className={styles.cartReviewItem}>
+                      <div>
+                        <strong>{item.product?.name ?? 'برنج کامفیروزی'}</strong>
+                        <div className={styles.variantText}>
+                          کیسه {(item.weightKg ?? 10).toLocaleString('fa-IR')} کیلویی × {(item.quantity ?? 1).toLocaleString('fa-IR')}
+                        </div>
+                      </div>
+                      <span className={styles.itemPrice}>{total.toLocaleString('fa-IR')} تومان</span>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className={styles.addressSummary}>
+                <div><strong>تحویل‌گیرنده:</strong> {formData.recipientName} ({formData.phone})</div>
+                <div><strong>آدرس:</strong> {formData.fullAddress}</div>
+              </div>
+
+              <div className={styles.btnRow}>
+                <button type="button" onClick={() => setStep(1)} className={styles.secondaryBtn}>
+                  ویرایش آدرس
+                </button>
+                <button type="button" onClick={() => setStep(3)} className={styles.primaryBtn}>
+                  تایید و انتخاب روش پرداخت
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className={styles.form}>
+              <h3 className={styles.sectionTitle}>
+                <i className="fa-solid fa-credit-card" />
+                <span>انتخاب روش پرداخت:</span>
+              </h3>
+
+              <div className={styles.paymentList}>
+                <label
+                  onClick={() => setFormData({ ...formData, paymentMethod: 'gateway' })}
+                  className={`${styles.paymentOption} ${formData.paymentMethod === 'gateway' ? styles.paymentOptionActive : ''}`}
+                >
+                  <i className="fa-solid fa-credit-card" />
+                  <div className={styles.paymentInfo}>
+                    <strong>درگاه پرداخت آنلاین شتاب</strong>
+                    <small>پرداخت امن بانکی با تمامی کارت‌های عضو شتاب</small>
+                  </div>
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={formData.paymentMethod === 'gateway'}
+                    onChange={() => {}}
+                  />
+                </label>
+
+                <label
+                  onClick={() => setFormData({ ...formData, paymentMethod: 'card' })}
+                  className={`${styles.paymentOption} ${formData.paymentMethod === 'card' ? styles.paymentOptionActive : ''}`}
+                >
+                  <i className="fa-solid fa-building-columns" />
+                  <div className={styles.paymentInfo}>
+                    <strong>کارت به کارت حساب طلا رایس</strong>
+                    <small>ارسال تصویر فیش واریزی در واتساپ یا تلگرام</small>
+                  </div>
+                  <input
+                    type="radio"
+                    name="payment"
+                    checked={formData.paymentMethod === 'card'}
+                    onChange={() => {}}
+                  />
+                </label>
+              </div>
+
+              <div className={styles.totalsBox}>
+                <div className={styles.totalsRow}>
+                  <span>مبلغ سفارش:</span>
+                  <span>{(cartSubtotal ?? 0).toLocaleString('fa-IR')} تومان</span>
+                </div>
+                {(discountAmount ?? 0) > 0 && (
+                  <div className={styles.discountRow}>
+                    <span>تخفیف:</span>
+                    <span>- {(discountAmount ?? 0).toLocaleString('fa-IR')} تومان</span>
+                  </div>
+                )}
+                <div className={styles.totalsRow}>
+                  <span>هزینه ارسال:</span>
+                  <span>{shippingFee === 0 ? 'رایگان' : `${(shippingFee ?? 0).toLocaleString('fa-IR')} تومان`}</span>
+                </div>
+                <div className={styles.finalTotalRow}>
+                  <span>مبلغ پرداختی:</span>
+                  <strong>{(finalTotal ?? 0).toLocaleString('fa-IR')} تومان</strong>
+                </div>
+              </div>
+
+              <div className={styles.btnRow}>
+                <button type="button" onClick={() => setStep(2)} className={styles.secondaryBtn}>
+                  بازگشت
+                </button>
+                <button type="button" onClick={handleNext} className={styles.primaryBtn}>
+                  پرداخت و ثبت نهایی
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 4 && createdOrder && (
+            <div className={styles.successBox}>
+              <i className={`fa-solid fa-circle-check ${styles.successIcon}`} />
+              <h3>سفارش شما با موفقیت ثبت گردید!</h3>
+              <p>کیسه‌های برنج کامفیروزی در حال آماده‌سازی و ارسال می‌باشند.</p>
+
+              <div className={styles.orderSummaryCard}>
+                <div><span>شماره سفارش:</span><strong>{createdOrder.id}</strong></div>
+                <div><span>کد رهگیری پستی:</span><strong>{createdOrder.trackingCode}</strong></div>
+                <div><span>مبلغ پرداخت شده:</span><strong>{((createdOrder.finalAmount ?? createdOrder.totalAmount) ?? 0).toLocaleString('fa-IR')} تومان</strong></div>
+                <div><span>تحویل‌گیرنده:</span><span>{createdOrder.address?.recipientName ?? formData.recipientName}</span></div>
+              </div>
+
+              <button onClick={handleFinish} className={styles.primaryBtn}>
+                مشاهده در تاریخچه سفارشات
+              </button>
+            </div>
+          )}
+        </main>
       </div>
     </div>
   );
-}
-
-export default CheckoutModal;
+};

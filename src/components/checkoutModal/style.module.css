@@ -1,0 +1,359 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  width: 100%;
+  max-width: 28rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border-radius: 1.25rem;
+  border: 2px solid #d4af37;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background-color: #073822;
+  color: white;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 2px solid #d4af37;
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fef08a;
+}
+
+.headerTitle i {
+  color: #d4af37;
+}
+
+.closeBtn {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1.25rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.stepCircle {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  background-color: #e2e8f0;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.75rem;
+}
+
+.stepActive {
+  color: #073822;
+}
+
+.stepActive .stepCircle {
+  background-color: #073822;
+  color: #fef08a;
+}
+
+.stepLine {
+  flex: 1;
+  height: 2px;
+  background-color: #e2e8f0;
+  margin: 0 0.5rem;
+}
+
+.stepLineActive {
+  background-color: #073822;
+}
+
+.content {
+  padding: 1rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 900;
+  color: #073822;
+  margin: 0;
+}
+
+.sectionTitle i {
+  color: #d4af37;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.formGroup label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #334155;
+}
+
+.formGroup input, .formGroup select, .formGroup textarea {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid #cbd5e1;
+  font-size: 0.8rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.formGroup input:focus, .formGroup select:focus, .formGroup textarea:focus {
+  border-color: #073822;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.primaryBtn {
+  background-color: #073822;
+  color: #fef08a;
+  border: 1px solid #d4af37;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 900;
+  font-size: 0.85rem;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.15s;
+}
+
+.primaryBtn:hover {
+  background-color: #0a4d30;
+}
+
+.secondaryBtn {
+  background-color: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.btnRow {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.cartItemsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.cartReviewItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.cartReviewItem strong {
+  font-size: 0.8rem;
+  color: #073822;
+}
+
+.variantText {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.itemPrice {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #073822;
+}
+
+.addressSummary {
+  background-color: #f0fdf4;
+  padding: 0.75rem;
+  border-radius: 0.6rem;
+  border: 1px solid #bbf7d0;
+  font-size: 0.75rem;
+  color: #166534;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.paymentList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.paymentOption {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  border: 2px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.paymentOptionActive {
+  border-color: #d4af37;
+  background-color: #fefce8;
+}
+
+.paymentInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.paymentInfo strong {
+  font-size: 0.8rem;
+  color: #073822;
+}
+
+.paymentInfo small {
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+.totalsBox {
+  background-color: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.totalsRow, .discountRow, .finalTotalRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+}
+
+.totalsRow { color: #475569; }
+.discountRow { color: #059669; font-weight: 700; }
+.finalTotalRow {
+  color: #073822;
+  border-top: 1px solid #cbd5e1;
+  padding-top: 0.4rem;
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.successBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  padding: 1rem 0;
+}
+
+.successIcon {
+  font-size: 3rem;
+  color: #10b981;
+}
+
+.successBox h3 {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #073822;
+  margin: 0;
+}
+
+.successBox p {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin: 0;
+}
+
+.orderSummaryCard {
+  width: 100%;
+  background-color: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  text-align: right;
+  font-size: 0.75rem;
+}
+
+.orderSummaryCard div {
+  display: flex;
+  justify-content: space-between;
+  color: #475569;
+}

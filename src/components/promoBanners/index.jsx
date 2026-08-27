@@ -1,31 +1,56 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { getPromoBanners } from '../../api/promoBanners';
+import { useApp } from '../../context';
+import styles from './style.module.css';
 
-export function PromoBanners() {
-  const banners = getPromoBanners();
+export const PromoBanners = () => {
+  const { setActiveTab } = useApp();
+
+  const banners = [
+    {
+      id: 'wholesale',
+      theme: 'dark',
+      badge: 'فروش ویژه سازمانی',
+      title: 'خرید عمده تناژ بالا',
+      subtitle: 'تخفیف ویژه رستوران‌ها و هیئت‌ها',
+      actionText: 'استعلام قیمت عمده',
+      onClick: () => setActiveTab('profile')
+    },
+    {
+      id: 'cooking_guide',
+      theme: 'light',
+      badge: 'دانشنامه پخت',
+      title: 'راهنمای پخت مجلسی',
+      subtitle: 'چگونه برنج قد بکشد و دان درآید',
+      actionText: 'مطالعه آموزش',
+      onClick: () => setActiveTab('blog')
+    }
+  ];
 
   return (
-    <section className="grid grid-cols-2 gap-2">
-      {banners.map((banner) => (
-        <Link
-          key={banner.id}
-          to="/catalog"
-          className="bg-[#073b27] border border-[#d4af37]/20 rounded-xl p-3 flex flex-col justify-between gap-2 hover:border-[#d4af37]/40 transition-colors"
-        >
-          <div>
-            <span className="text-[10px] text-[#d4af37] font-bold block">{banner.badge}</span>
-            <h4 className="text-xs font-bold text-white mt-1">{banner.title}</h4>
-            <p className="text-[11px] text-gray-300 mt-0.5">{banner.subtitle}</p>
-          </div>
-          <div className="flex items-center gap-1 text-[11px] text-[#d4af37] font-bold">
-            <span>{banner.actionText}</span>
-            <i className="fa-solid fa-arrow-left text-[9px]" />
-          </div>
-        </Link>
-      ))}
+    <section className={styles.section}>
+      {banners.map((b) => {
+        const isDark = b.theme === 'dark';
+        return (
+          <article
+            key={b.id}
+            onClick={b.onClick}
+            className={`${styles.bannerCard} ${isDark ? styles.bannerDark : styles.bannerLight}`}
+          >
+            <div className={styles.contentWrapper}>
+              <span className={isDark ? styles.badgeDark : styles.badgeLight}>{b.badge}</span>
+              <h4 className={isDark ? styles.titleDark : styles.titleLight}>{b.title}</h4>
+              <p className={isDark ? styles.subtitleDark : styles.subtitleLight}>{b.subtitle}</p>
+            </div>
+
+            <div className={styles.actionRow}>
+              <span className={isDark ? styles.actionTextDark : styles.actionTextLight}>
+                {b.actionText}
+              </span>
+              <i className="fa-solid fa-arrow-left" />
+            </div>
+          </article>
+        );
+      })}
     </section>
   );
-}
-
-export default PromoBanners;
+};

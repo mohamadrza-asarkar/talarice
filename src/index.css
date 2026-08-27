@@ -25,15 +25,6 @@ input, button, textarea, select {
   font: inherit;
 }
 
-input, textarea, select {
-  color: #0f172a !important;
-  caret-color: #042a1b !important;
-}
-
-input:not([type="checkbox"]):not([type="radio"]), textarea {
-  color: #0f172a !important;
-}
-
 button {
   border: none;
   background: none;
@@ -135,33 +126,3 @@ body::-webkit-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
-/* Universal Input & Textarea Placeholder Styling */
-input::placeholder,
-textarea::placeholder {
-  color: #94a3b8 !important; /* slate-400 */
-  opacity: 1 !important;
-  font-weight: 400 !important;
-}
-
-input::-webkit-input-placeholder,
-textarea::-webkit-input-placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
-  font-weight: 400 !important;
-}
-
-input::-moz-placeholder,
-textarea::-moz-placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
-  font-weight: 400 !important;
-}
-
-input:-ms-input-placeholder,
-textarea:-ms-input-placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
-  font-weight: 400 !important;
-}
-

@@ -1,116 +1,110 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
+import { Logo } from '../../components/logo';
+import styles from './style.module.css';
 
-export function AuthPage() {
-  const [isRegister, setIsRegister] = useState(false);
-  const [name, setName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
+export const AuthPage = () => {
+  const [activeTab, setActiveTab] = useState('login');
+  const [formData, setFormData] = useState({ name: '', phone: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
   const { loginUser, registerUser } = useApp();
   const navigate = useNavigate();
 
+  const isLogin = activeTab === 'login';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setErrorMsg('');
 
-    try {
-      if (isRegister) {
-        const res = await registerUser(name, phone, password);
-        if (res.success) navigate('/profile');
-        else setError(res.message);
-      } else {
-        const res = await loginUser(phone, password);
-        if (res.success) navigate(res.user?.role === 'admin' ? '/admin' : '/profile');
-        else setError(res.message);
-      }
-    } catch (err) {
-      setError(err?.message || 'خطا در برقراری ارتباط');
-    } finally {
-      setLoading(false);
+    const res = isLogin
+      ? await loginUser(formData.phone, formData.password)
+      : await registerUser(formData.name, formData.phone, formData.password);
+
+    setLoading(false);
+    if (res?.success) {
+      navigate('/profile');
+    } else {
+      setErrorMsg(res?.message ?? 'خطا در عملیات ورود/ثبت‌نام');
     }
   };
 
   return (
-    <div className="p-6 flex flex-col justify-center items-center min-h-[80vh]">
-      <div className="w-full max-w-sm bg-[#073b27] border border-[#d4af37]/30 rounded-2xl p-6 flex flex-col gap-4 text-white">
-        <div className="text-center">
-          <h1 className="text-lg font-black text-[#d4af37]">{isRegister ? 'ثبت‌نام کاربر جدید' : 'ورود به حساب کاربری'}</h1>
-          <p className="text-xs text-gray-300 mt-1">فروشگاه آنلاین برنج طلا رایس</p>
+    <div className={styles.authWrapper}>
+      <div className={styles.logoContainer}>
+        <Logo />
+      </div>
+
+      <div className={styles.card}>
+        <h2 className={styles.title}>ورود / ثبت نام در طلا رایس</h2>
+
+        <div className={styles.tabsContainer}>
+          <button
+            type="button"
+            onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
+            className={`${styles.tabBtn} ${isLogin ? styles.tabActive : styles.tabInactive}`}
+          >
+            ورود
+          </button>
+          <button
+            type="button"
+            onClick={() => { setActiveTab('register'); setErrorMsg(''); }}
+            className={`${styles.tabBtn} ${!isLogin ? styles.tabActive : styles.tabInactive}`}
+          >
+            ثبت نام
+          </button>
         </div>
 
-        {error && (
-          <div className="bg-red-500/20 border border-red-500 text-red-200 text-xs p-2.5 rounded-xl text-center">
-            {error}
-          </div>
-        )}
+        {errorMsg && <div className={styles.errorBanner}>{errorMsg}</div>}
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-          {isRegister && (
-            <div>
-              <label className="text-xs text-gray-300 block mb-1">نام و نام خانوادگی</label>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          {!isLogin && (
+            <div className={styles.inputGroup}>
+              <label className={styles.label}>نام و نام خانوادگی</label>
               <input
                 type="text"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="علی رضایی"
-                className="w-full bg-[#042a1b] border border-white/20 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#d4af37]"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="مثال: محمد رضایی"
+                className={styles.input}
               />
             </div>
           )}
 
-          <div>
-            <label className="text-xs text-gray-300 block mb-1">شماره موبایل یا ایمیل</label>
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>شماره موبایل</label>
             <input
-              type="text"
+              type="tel"
+              dir="ltr"
               required
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="09123456789"
-              className="w-full bg-[#042a1b] border border-white/20 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#d4af37]"
+              className={styles.input}
             />
           </div>
 
-          <div>
-            <label className="text-xs text-gray-300 block mb-1">رمز عبور</label>
+          <div className={styles.inputGroup}>
+            <label className={styles.label}>رمز عبور</label>
             <input
               type="password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="******"
-              className="w-full bg-[#042a1b] border border-white/20 rounded-xl p-2.5 text-xs text-white outline-none focus:border-[#d4af37]"
+              value={formData.password}
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              placeholder={isLogin ? 'رمز عبور خود را وارد کنید' : 'حداقل ۶ کاراکتر'}
+              className={styles.input}
             />
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-[#d4af37] text-[#042a1b] py-2.5 rounded-xl font-bold text-xs hover:bg-yellow-400 transition-colors disabled:opacity-50 mt-2"
-          >
-            {loading ? 'در حال ارسال...' : isRegister ? 'ثبت‌نام' : 'ورود'}
+          <button type="submit" disabled={loading} className={styles.primaryButton}>
+            {loading ? 'درحال پردازش...' : isLogin ? 'ورود به حساب کاربری' : 'ثبت نام در طلا رایس'}
           </button>
         </form>
-
-        <div className="text-center pt-2 border-t border-white/10 text-xs">
-          <button
-            onClick={() => {
-              setIsRegister(!isRegister);
-              setError('');
-            }}
-            className="text-[#d4af37] hover:underline"
-          >
-            {isRegister ? 'قبلاً ثبت‌نام کرده‌اید؟ وارد شوید' : 'حساب کاربری ندارید؟ ثبت‌نام کنید'}
-          </button>
-        </div>
       </div>
     </div>
   );
-}
-
-export default AuthPage;
+};

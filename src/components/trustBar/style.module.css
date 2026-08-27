@@ -1,0 +1,138 @@
+.section {
+  padding: 0 1rem;
+  margin: 0.75rem 0;
+}
+
+.trustGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.trustItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  background-color: white;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: all 150ms ease;
+  font-family: inherit;
+}
+
+.trustItem:hover {
+  background-color: rgba(255, 255, 255, 0.8);
+  border-color: #d4af37;
+}
+
+.iconWrapper {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: #073822;
+  color: #fef08a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.25rem;
+}
+
+.iconWrapper i {
+  font-size: 1rem;
+}
+
+.itemTitle {
+  font-size: 10px;
+  font-weight: 900;
+  color: #073822;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  max-width: 24rem;
+  width: 100%;
+  border: 2px solid #d4af37;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  text-align: right;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+}
+
+.modalIcon {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 9999px;
+  background-color: #073822;
+  color: #fef08a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalIcon i {
+  font-size: 1.125rem;
+}
+
+.modalTitle {
+  font-size: 0.875rem;
+  font-weight: 900;
+  color: #073822;
+}
+
+.modalDescription {
+  font-size: 0.75rem;
+  color: #1e3a29;
+  line-height: 1.625;
+  margin-bottom: 1rem;
+  text-align: justify;
+}
+
+.closeButton {
+  width: 100%;
+  background-color: #073822;
+  color: #fef08a;
+  font-weight: 900;
+  font-size: 0.75rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #d4af37;
+  cursor: pointer;
+  transition: background-color 150ms;
+}
+
+.closeButton:hover {
+  background-color: #0a4d30;
+}

@@ -1,39 +1,41 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
+import styles from './style.module.css';
 
-export function TrustBar() {
+export const TrustBar = () => {
   const { trustItems } = useApp();
   const [selectedTrust, setSelectedTrust] = useState(null);
 
-  if (!trustItems || trustItems.length === 0) return null;
+  if (!trustItems?.length) return null;
 
   return (
-    <section>
-      <div className="grid grid-cols-4 gap-2">
+    <section className={styles.section}>
+      <div className={styles.trustGrid}>
         {trustItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setSelectedTrust(item)}
-            className="bg-[#073b27] border border-[#d4af37]/20 rounded-xl p-2 flex flex-col items-center gap-1.5 text-center hover:border-[#d4af37]/40 transition-colors"
+            className={styles.trustItem}
           >
-            <div className="w-8 h-8 rounded-full bg-[#d4af37]/20 flex items-center justify-center text-[#d4af37]">
+            <div className={styles.iconWrapper}>
               <i className={item.iconClass} />
             </div>
-            <span className="text-[10px] font-bold text-white line-clamp-1">{item.title}</span>
+            <span className={styles.itemTitle}>{item.title}</span>
           </button>
         ))}
       </div>
 
       {selectedTrust && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedTrust(null)} />
-          <div className="relative bg-[#073b27] border border-[#d4af37]/30 rounded-2xl p-4 max-w-xs w-full z-10 text-white flex flex-col gap-2 text-center">
-            <h3 className="text-xs font-bold text-[#d4af37]">{selectedTrust.title}</h3>
-            <p className="text-xs text-gray-300 leading-relaxed">{selectedTrust.description}</p>
-            <button
-              onClick={() => setSelectedTrust(null)}
-              className="mt-2 bg-[#d4af37] text-[#042a1b] py-1.5 rounded-lg text-xs font-bold"
-            >
+        <div className={styles.modalOverlay} onClick={() => setSelectedTrust(null)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <div className={styles.modalIcon}>
+                <i className={selectedTrust.iconClass} />
+              </div>
+              <h3 className={styles.modalTitle}>{selectedTrust.title}</h3>
+            </div>
+            <p className={styles.modalDescription}>{selectedTrust.description}</p>
+            <button onClick={() => setSelectedTrust(null)} className={styles.closeButton}>
               بستن
             </button>
           </div>
@@ -41,6 +43,4 @@ export function TrustBar() {
       )}
     </section>
   );
-}
-
-export default TrustBar;
+};
