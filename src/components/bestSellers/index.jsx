@@ -9,7 +9,7 @@ export const BestSellers = () => {
 
   return (
     <section className={styles.section}>
-      <div className={styles.headerRow}>
+      <header className={styles.headerRow}>
         <h3 className={styles.title}>
           <i className="fa-solid fa-wheat-awn" />
           <span>پرفروش‌ترین گونی‌های برنج</span>
@@ -18,7 +18,7 @@ export const BestSellers = () => {
           <span>مشاهده همه</span>
           <i className="fa-solid fa-arrow-left" />
         </Link>
-      </div>
+      </header>
 
       <div className={styles.gridContainer}>
         {products.slice(0, 2).map((product) => (
@@ -28,4 +28,5 @@ export const BestSellers = () => {
     </section>
   );
 };
+
 

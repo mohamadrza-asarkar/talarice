@@ -1,12 +1,9 @@
-.section {
-  padding: 0 1rem;
-  margin: 0.75rem 0;
-}
-
 .trustGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.5rem;
+  padding: 0 1rem;
+  margin: 0.75rem 0;
 }
 
 .trustItem {
@@ -29,7 +26,7 @@
   border-color: #d4af37;
 }
 
-.iconWrapper {
+.trustItem i {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 9999px;
@@ -39,13 +36,10 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 0.25rem;
-}
-
-.iconWrapper i {
   font-size: 1rem;
 }
 
-.itemTitle {
+.trustItem span {
   font-size: 10px;
   font-weight: 900;
   color: #073822;
@@ -91,7 +85,7 @@
   border-bottom: 1px solid rgba(212, 175, 55, 0.3);
 }
 
-.modalIcon {
+.modalHeader i {
   width: 2.75rem;
   height: 2.75rem;
   border-radius: 9999px;
@@ -100,13 +94,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.modalIcon i {
   font-size: 1.125rem;
 }
 
-.modalTitle {
+.modalHeader h3 {
   font-size: 0.875rem;
   font-weight: 900;
   color: #073822;
@@ -136,3 +127,4 @@
 .closeButton:hover {
   background-color: #0a4d30;
 }
+

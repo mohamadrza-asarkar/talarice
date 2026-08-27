@@ -79,7 +79,9 @@
   flex-direction: column;
   gap: 0.4rem;
   font-size: 0.75rem;
+  font-style: normal;
 }
+
 
 .phoneRow {
   display: flex;

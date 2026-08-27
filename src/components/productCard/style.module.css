@@ -129,10 +129,15 @@
 .oldPrice {
   font-size: 0.75rem;
   color: #9ca3af;
-  text-decoration: line-through;
   text-align: left;
   font-weight: 700;
   height: 1rem;
+  display: block;
+}
+
+.emptyPrice {
+  height: 1rem;
+  display: block;
 }
 
 .currentPrice {
@@ -148,11 +153,12 @@
   height: 1.25rem;
 }
 
-.currency {
+.currentPrice small {
   font-size: 0.75rem;
   color: #6b7280;
   font-weight: 700;
 }
+
 
 .addButton {
   width: 100%;

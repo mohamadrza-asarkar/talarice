@@ -1,9 +1,5 @@
-.section {
-  padding: 0 1rem;
-  margin: 0.75rem 0;
-}
-
 .storyCard {
+  margin: 0.75rem 1rem;
   background-color: #063822;
   border-radius: 1.5rem;
   padding: 1rem;
@@ -62,20 +58,21 @@
   padding: 0 0.25rem;
 }
 
-.featureBorder {
-  border-left: 1px solid rgba(212, 175, 55, 0.3);
-  border-right: 1px solid rgba(212, 175, 55, 0.3);
-}
-
-.featureValue {
+.featureItem strong {
   font-size: 0.875rem;
   font-weight: 900;
   color: #fef08a;
   line-height: 1.25;
 }
 
-.featureLabel {
+.featureItem span {
   font-size: 10px;
   color: #a7f3d0;
   margin-top: 0.125rem;
 }
+
+.featureBorder {
+  border-left: 1px solid rgba(212, 175, 55, 0.3);
+  border-right: 1px solid rgba(212, 175, 55, 0.3);
+}
+

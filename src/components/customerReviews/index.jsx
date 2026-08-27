@@ -8,40 +8,37 @@ export const CustomerReviews = () => {
   if (!reviews?.length) return null;
 
   return (
-    <section className={styles.section}>
-      <div className={styles.reviewsContainer}>
-        <div className={styles.header}>
-          <div className={styles.titleWrapper}>
-            <i className="fa-solid fa-star" />
-            <h3 className={styles.title}>نظرات خریداران واقعی</h3>
-          </div>
-          <span className={styles.ratingBadge}>۴.۹ از ۵</span>
-        </div>
+    <section className={styles.reviewsContainer}>
+      <header className={styles.header}>
+        <h3 className={styles.title}>
+          <i className="fa-solid fa-star" />
+          <span>نظرات خریداران واقعی</span>
+        </h3>
+        <span className={styles.ratingBadge}>۴.۹ از ۵</span>
+      </header>
 
-        <div className={styles.reviewsList}>
-          {reviews.map((rev, index) => (
-            <div key={rev.id ?? index} className={styles.reviewItem}>
-              <div className={styles.reviewHeader}>
-                <div className={styles.stars}>
-                  {Array.from({ length: rev.rating ?? 5 }).map((_, i) => (
-                    <i key={i} className="fa-solid fa-star" />
-                  ))}
-                </div>
-                <strong className={styles.userName}>{rev.userName}</strong>
+      <div className={styles.reviewsList}>
+        {reviews.map((rev, index) => (
+          <article key={rev.id ?? index} className={styles.reviewItem}>
+            <header className={styles.reviewHeader}>
+              <strong className={styles.userName}>{rev.userName}</strong>
+              <div className={styles.stars}>
+                {Array.from({ length: rev.rating ?? 5 }).map((_, i) => (
+                  <i key={i} className="fa-solid fa-star" />
+                ))}
               </div>
+            </header>
 
-              <div>
-                <span className={styles.productTag}>
-                  {rev.productName ?? 'خریدار برنج کامفیروزی ممتاز'}
-                </span>
-                <p className={styles.commentText}>{rev.comment}</p>
-              </div>
+            <span className={styles.productTag}>
+              {rev.productName ?? 'خریدار برنج کامفیروزی ممتاز'}
+            </span>
+            <p className={styles.commentText}>{rev.comment}</p>
 
-              {index < reviews.length - 1 && <hr className={styles.divider} />}
-            </div>
-          ))}
-        </div>
+            {index < reviews.length - 1 && <hr className={styles.divider} />}
+          </article>
+        ))}
       </div>
     </section>
   );
 };
+

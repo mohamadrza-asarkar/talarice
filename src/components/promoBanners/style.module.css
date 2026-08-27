@@ -18,6 +18,7 @@
   flex-direction: column;
   justify-content: space-between;
   min-height: 125px;
+  text-decoration: none;
 }
 
 .bannerCard:hover {
@@ -35,11 +36,6 @@
   color: #073b27;
 }
 
-.contentWrapper {
-  position: relative;
-  z-index: 10;
-}
-
 .badgeDark {
   background-color: #d4af37;
   color: #073822;
@@ -50,6 +46,7 @@
   display: inline-block;
   margin-bottom: 0.25rem;
   border: 1px solid white;
+  align-self: flex-start;
 }
 
 .badgeLight {
@@ -62,6 +59,7 @@
   display: inline-block;
   margin-bottom: 0.25rem;
   border: 1px solid #d4af37;
+  align-self: flex-start;
 }
 
 .titleDark {
@@ -116,3 +114,4 @@
 .actionRow i {
   font-size: 10px;
 }
+

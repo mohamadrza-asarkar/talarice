@@ -1,56 +1,30 @@
 import React from 'react';
-import { useApp } from '../../context';
+import { Link } from 'react-router-dom';
 import styles from './style.module.css';
 
 export const PromoBanners = () => {
-  const { setActiveTab } = useApp();
-
-  const banners = [
-    {
-      id: 'wholesale',
-      theme: 'dark',
-      badge: 'فروش ویژه سازمانی',
-      title: 'خرید عمده تناژ بالا',
-      subtitle: 'تخفیف ویژه رستوران‌ها و هیئت‌ها',
-      actionText: 'استعلام قیمت عمده',
-      onClick: () => setActiveTab('profile')
-    },
-    {
-      id: 'cooking_guide',
-      theme: 'light',
-      badge: 'دانشنامه پخت',
-      title: 'راهنمای پخت مجلسی',
-      subtitle: 'چگونه برنج قد بکشد و دان درآید',
-      actionText: 'مطالعه آموزش',
-      onClick: () => setActiveTab('blog')
-    }
-  ];
-
   return (
     <section className={styles.section}>
-      {banners.map((b) => {
-        const isDark = b.theme === 'dark';
-        return (
-          <article
-            key={b.id}
-            onClick={b.onClick}
-            className={`${styles.bannerCard} ${isDark ? styles.bannerDark : styles.bannerLight}`}
-          >
-            <div className={styles.contentWrapper}>
-              <span className={isDark ? styles.badgeDark : styles.badgeLight}>{b.badge}</span>
-              <h4 className={isDark ? styles.titleDark : styles.titleLight}>{b.title}</h4>
-              <p className={isDark ? styles.subtitleDark : styles.subtitleLight}>{b.subtitle}</p>
-            </div>
+      <Link to="/profile" className={`${styles.bannerCard} ${styles.bannerDark}`}>
+        <span className={styles.badgeDark}>فروش ویژه سازمانی</span>
+        <h4 className={styles.titleDark}>خرید عمده تناژ بالا</h4>
+        <p className={styles.subtitleDark}>تخفیف ویژه رستوران‌ها و هیئت‌ها</p>
+        <footer className={styles.actionRow}>
+          <span className={styles.actionTextDark}>استعلام قیمت عمده</span>
+          <i className="fa-solid fa-arrow-left" />
+        </footer>
+      </Link>
 
-            <div className={styles.actionRow}>
-              <span className={isDark ? styles.actionTextDark : styles.actionTextLight}>
-                {b.actionText}
-              </span>
-              <i className="fa-solid fa-arrow-left" />
-            </div>
-          </article>
-        );
-      })}
+      <Link to="/blog" className={`${styles.bannerCard} ${styles.bannerLight}`}>
+        <span className={styles.badgeLight}>دانشنامه پخت</span>
+        <h4 className={styles.titleLight}>راهنمای پخت مجلسی</h4>
+        <p className={styles.subtitleLight}>چگونه برنج قد بکشد و دان درآید</p>
+        <footer className={styles.actionRow}>
+          <span className={styles.actionTextLight}>مطالعه آموزش</span>
+          <i className="fa-solid fa-arrow-left" />
+        </footer>
+      </Link>
     </section>
   );
 };
+

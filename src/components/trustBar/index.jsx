@@ -9,33 +9,28 @@ export const TrustBar = () => {
   if (!trustItems?.length) return null;
 
   return (
-    <section className={styles.section}>
-      <div className={styles.trustGrid}>
-        {trustItems.map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setSelectedTrust(item)}
-            className={styles.trustItem}
-          >
-            <div className={styles.iconWrapper}>
-              <i className={item.iconClass} />
-            </div>
-            <span className={styles.itemTitle}>{item.title}</span>
-          </button>
-        ))}
-      </div>
+    <section className={styles.trustGrid}>
+      {trustItems.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          onClick={() => setSelectedTrust(item)}
+          className={styles.trustItem}
+        >
+          <i className={item.iconClass} />
+          <span>{item.title}</span>
+        </button>
+      ))}
 
       {selectedTrust && (
         <div className={styles.modalOverlay} onClick={() => setSelectedTrust(null)}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <div className={styles.modalIcon}>
-                <i className={selectedTrust.iconClass} />
-              </div>
-              <h3 className={styles.modalTitle}>{selectedTrust.title}</h3>
-            </div>
+            <header className={styles.modalHeader}>
+              <i className={selectedTrust.iconClass} />
+              <h3>{selectedTrust.title}</h3>
+            </header>
             <p className={styles.modalDescription}>{selectedTrust.description}</p>
-            <button onClick={() => setSelectedTrust(null)} className={styles.closeButton}>
+            <button type="button" onClick={() => setSelectedTrust(null)} className={styles.closeButton}>
               بستن
             </button>
           </div>
@@ -44,3 +39,4 @@ export const TrustBar = () => {
     </section>
   );
 };
+

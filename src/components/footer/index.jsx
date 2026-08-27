@@ -11,20 +11,20 @@ export const Footer = () => {
   ];
 
   const socials = [
-    { icon: 'fa-brands fa-telegram', href: 'https://t.me' },
-    { icon: 'fa-brands fa-instagram', href: 'https://instagram.com' },
-    { icon: 'fa-brands fa-whatsapp', href: 'https://whatsapp.com' }
+    { icon: 'fa-brands fa-telegram', href: 'https://t.me', label: 'Telegram' },
+    { icon: 'fa-brands fa-instagram', href: 'https://instagram.com', label: 'Instagram' },
+    { icon: 'fa-brands fa-whatsapp', href: 'https://whatsapp.com', label: 'WhatsApp' }
   ];
 
   return (
     <footer className={styles.footer}>
-      <div className={styles.branding}>
+      <header className={styles.branding}>
         <Logo />
         <h3 className={styles.brandTitle}>فروشگاه آنلاین برنج طلا رایس</h3>
         <p className={styles.brandDesc}>
           عرضه‌کننده مستقیم برنج ۱۰۰٪ اصل و معطر کامفیروز شیراز در گونی‌های نخی سفید سفارشی
         </p>
-      </div>
+      </header>
 
       <div className={styles.featuresGrid}>
         {features.map((f, i) => (
@@ -38,7 +38,7 @@ export const Footer = () => {
         ))}
       </div>
 
-      <div className={styles.contactInfo}>
+      <address className={styles.contactInfo}>
         <div className={styles.phoneRow}>
           <span><i className="fa-solid fa-phone" /> شماره پشتیبانی:</span>
           <strong>۰۹۱۷۰۰۰۰۰۰۰</strong>
@@ -46,15 +46,22 @@ export const Footer = () => {
         <p className={styles.addressRow}>
           <i className="fa-solid fa-location-dot" /> استان فارس، مرودشت، منطقه کامفیروز
         </p>
-      </div>
+      </address>
 
-      <div className={styles.socials}>
+      <nav className={styles.socials} aria-label="شبکه‌های اجتماعی">
         {socials.map((s, i) => (
-          <a key={i} href={s.href} target="_blank" rel="noreferrer" className={styles.socialLink}>
+          <a
+            key={i}
+            href={s.href}
+            target="_blank"
+            rel="noreferrer"
+            className={styles.socialLink}
+            aria-label={s.label}
+          >
             <i className={s.icon} />
           </a>
         ))}
-      </div>
+      </nav>
 
       <small className={styles.copyright}>
         تمامی حقوق برای برند طلا رایس (Tala Rice) محفوظ است.
@@ -62,3 +69,4 @@ export const Footer = () => {
     </footer>
   );
 };
+

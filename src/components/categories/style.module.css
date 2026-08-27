@@ -73,7 +73,7 @@
   border-color: #d4af37;
 }
 
-.iconWrapper {
+.categoryButton i {
   width: 3rem;
   height: 3rem;
   border-radius: 0.75rem;
@@ -84,13 +84,10 @@
   justify-content: center;
   margin-bottom: 0.25rem;
   color: #073822;
-}
-
-.iconWrapper i {
   font-size: 1.25rem;
 }
 
-.categoryName {
+.categoryButton span {
   font-size: 11px;
   font-weight: 900;
   color: #073822;
@@ -98,3 +95,4 @@
   text-align: center;
   line-height: 1.25;
 }
+

@@ -47,13 +47,10 @@ export const ProductCard = ({ product }) => {
         </div>
 
         <div className={styles.priceContainer}>
-          <div className={styles.oldPrice}>
-            {currentOldPrice ? `${currentOldPrice.toLocaleString('fa-IR')}` : ''}
-          </div>
-          <div className={styles.currentPrice}>
-            <span>{currentPrice.toLocaleString('fa-IR')}</span>
-            <span className={styles.currency}>تومان</span>
-          </div>
+          {currentOldPrice ? <del className={styles.oldPrice}>{currentOldPrice.toLocaleString('fa-IR')}</del> : <span className={styles.emptyPrice} />}
+          <strong className={styles.currentPrice}>
+            {currentPrice.toLocaleString('fa-IR')} <small>تومان</small>
+          </strong>
         </div>
 
         <button
@@ -68,4 +65,5 @@ export const ProductCard = ({ product }) => {
     </article>
   );
 };
+
 

@@ -8,35 +8,31 @@ export const Categories = () => {
 
   return (
     <section className={styles.section}>
-      <div className={styles.headerRow}>
+      <header className={styles.headerRow}>
         <h3 className={styles.title}>
           <i className="fa-solid fa-wheat-awn" />
           <span>محصولات طلا رایس</span>
         </h3>
         <span className={styles.subtitle}>۱۰۰٪ خالص کامفیروزی</span>
-      </div>
+      </header>
 
       <div className={styles.categoryGrid}>
         {categories
           .filter((c) => c.id !== 'all')
-          .map((cat) => {
-            const isSelected = selectedCategory === cat.id;
-            return (
-              <Link
-                key={cat.id}
-                to="/catalog"
-                onClick={() => setSelectedCategory(cat.id)}
-                className={`${styles.categoryButton} ${isSelected ? styles.categoryButtonSelected : styles.categoryButtonUnselected}`}
-              >
-                <div className={styles.iconWrapper}>
-                  <i className={cat.iconClass} />
-                </div>
-                <span className={styles.categoryName}>{cat.name}</span>
-              </Link>
-            );
-          })}
+          .map((cat) => (
+            <Link
+              key={cat.id}
+              to="/catalog"
+              onClick={() => setSelectedCategory(cat.id)}
+              className={`${styles.categoryButton} ${selectedCategory === cat.id ? styles.categoryButtonSelected : styles.categoryButtonUnselected}`}
+            >
+              <i className={cat.iconClass} />
+              <span>{cat.name}</span>
+            </Link>
+          ))}
       </div>
     </section>
   );
 };
+
 

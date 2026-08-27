@@ -24,57 +24,58 @@ export const HeroSlider = () => {
     navigate('/catalog');
   };
 
-
   return (
-    <section className={styles.sliderSection}>
-      <div className={styles.sliderCard}>
-        <img
-          key={currentSlide}
-          src={slide.image}
-          alt={slide.title}
-          className={styles.bgImage}
-        />
+    <section className={styles.sliderCard}>
+      <img
+        key={currentSlide}
+        src={slide.image}
+        alt={slide.title}
+        className={styles.bgImage}
+      />
 
-        <div className={styles.content}>
-          <span className={styles.badge}>{slide.subtitle || 'فروش ویژه طلا رایس'}</span>
-          <h2 className={styles.title}>{slide.title}</h2>
-          <p className={styles.description}>{slide.description}</p>
-        </div>
-
-        <div className={styles.controls}>
-          <button onClick={handleCta} className={styles.ctaButton}>
-            <span>{slide.ctaText || 'مشاهده تخفیف‌های امروز'}</span>
-            <i className="fa-solid fa-arrow-left" />
-          </button>
-
-          <div className={styles.navRow}>
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
-              className={styles.navBtn}
-              aria-label="Previous slide"
-            >
-              <i className="fa-solid fa-chevron-right" />
-            </button>
-            <div className={styles.dots}>
-              {heroSlides.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentSlide(idx)}
-                  className={currentSlide === idx ? styles.dotActive : styles.dot}
-                  aria-label={`Slide ${idx + 1}`}
-                />
-              ))}
-            </div>
-            <button
-              onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
-              className={styles.navBtn}
-              aria-label="Next slide"
-            >
-              <i className="fa-solid fa-chevron-left" />
-            </button>
-          </div>
-        </div>
+      <div className={styles.content}>
+        <span className={styles.badge}>{slide.subtitle || 'فروش ویژه طلا رایس'}</span>
+        <h2 className={styles.title}>{slide.title}</h2>
+        <p className={styles.description}>{slide.description}</p>
       </div>
+
+      <footer className={styles.controls}>
+        <button type="button" onClick={handleCta} className={styles.ctaButton}>
+          <span>{slide.ctaText || 'مشاهده تخفیف‌های امروز'}</span>
+          <i className="fa-solid fa-arrow-left" />
+        </button>
+
+        <div className={styles.navRow}>
+          <button
+            type="button"
+            onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
+            className={styles.navBtn}
+            aria-label="Previous slide"
+          >
+            <i className="fa-solid fa-chevron-right" />
+          </button>
+          <div className={styles.dots}>
+            {heroSlides.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setCurrentSlide(idx)}
+                className={currentSlide === idx ? styles.dotActive : styles.dot}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
+            className={styles.navBtn}
+            aria-label="Next slide"
+          >
+            <i className="fa-solid fa-chevron-left" />
+          </button>
+        </div>
+      </footer>
     </section>
   );
 };
+
