@@ -21,11 +21,12 @@ import { OrdersTab } from './OrdersTab';
 import { UsersTab } from './UsersTab';
 import { SlidersTab } from './SlidersTab';
 import { BlogTab } from './BlogTab';
+import { HealthStatusIndicator } from '../../components/healthStatus';
 import styles from './style.module.css';
 
 export function AdminPage() {
   const navigate = useNavigate();
-  const { isAdmin, currentUser, products, orders, heroSlides, articles } = useApp();
+  const { isAdmin, currentUser, products, orders, heroSlides, articles, serverHealth, checkHealth } = useApp();
   const [activeTab, setActiveTab] = useState('products');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -43,7 +44,7 @@ export function AdminPage() {
   const totalSales = orders.reduce(function (sum, o) {
     return sum + (Number(o.finalAmount || o.totalPrice || 0));
   }, 0);
-  const pendingOrders = orders.filter(function (o) { return o.status === 'reviewing' || o.status === 'processing'; }).length;
+  const pendingOrders = orders.filter(function (o) { return o.status === 'reviewing' || o.status === 'processing' || o.status === 'pending'; }).length;
   const inStockProducts = products.filter(function (p) { return (p.stock || 0) > 0; }).length;
 
   const todayPersian = new Intl.DateTimeFormat('fa-IR', {
@@ -157,6 +158,7 @@ export function AdminPage() {
             </div>
 
             <div className={styles.topBarActions}>
+              <HealthStatusIndicator health={serverHealth} onRetry={checkHealth} />
               <a href="/" className={styles.liveStoreBtn}>
                 <ExternalLink size={16} />
                 <span>مشاهده سایت فروشگاه</span>
@@ -173,7 +175,7 @@ export function AdminPage() {
               <div className={styles.statInfo}>
                 <span className={styles.statLabel}>گردش مالی سفارشات</span>
                 <span className={styles.statValue}>
-                  {totalSales > 0 ? totalSales.toLocaleString() : '۱,۴۵۰,۰۰۰'} <small style={{ fontSize: '0.7rem', color: '#64748b' }}>تومان</small>
+                  {(totalSales ?? 0).toLocaleString('fa-IR')} <small style={{ fontSize: '0.7rem', color: '#64748b' }}>تومان</small>
                 </span>
                 <span className={styles.statSubtitle}>درگاه فعال و متصل</span>
               </div>

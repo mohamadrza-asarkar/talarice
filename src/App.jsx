@@ -9,8 +9,22 @@ import Profile from './pages/Profile.jsx';
 import Auth from './pages/Auth.jsx';
 import Admin from './pages/Admin.jsx';
 import { Layout, SimpleLayout } from './components/Layout.jsx';
+import { MaintenanceScreen, InitialLoadingScreen } from './components/maintenanceScreen';
+import { useApp } from './context';
 
 function App() {
+  const { serverHealth, checkHealth } = useApp();
+
+  // If server is unhealthy, do not show the site at all
+  if (serverHealth.status === 'unhealthy') {
+    return <MaintenanceScreen health={serverHealth} onRetry={checkHealth} />;
+  }
+
+  // If initial health check is still running
+  if (serverHealth.status === 'checking') {
+    return <InitialLoadingScreen />;
+  }
+
   return (
     <Routes>
       <Route element={<Layout />}>
@@ -34,3 +48,4 @@ function App() {
 }
 
 export default App;
+

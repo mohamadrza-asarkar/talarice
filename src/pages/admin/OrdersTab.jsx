@@ -17,22 +17,19 @@ import {
 import styles from './style.module.css';
 
 export function OrdersTab() {
-  const { orders, setOrders } = useApp();
+  const { orders, setOrders, updateOrderStatus, showError, showSuccess } = useApp();
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  function updateStatus(id, newStatus) {
-    const updated = orders.map(function (o) {
-      const orderId = o.id || o._id;
-      if (orderId === id) {
-        return { ...o, status: newStatus };
+  async function updateStatus(id, newStatus) {
+    try {
+      await updateOrderStatus(id, newStatus);
+      if (selectedOrder && (selectedOrder.id === id || selectedOrder._id === id)) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus });
       }
-      return o;
-    });
-    setOrders(updated);
-    if (selectedOrder && (selectedOrder.id === id || selectedOrder._id === id)) {
-      setSelectedOrder({ ...selectedOrder, status: newStatus });
+    } catch (err) {
+      // Handled in context
     }
   }
 

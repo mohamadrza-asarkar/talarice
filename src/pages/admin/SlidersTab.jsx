@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
-import { Plus, Trash2, Image as ImageIcon, ExternalLink, X, Sparkles } from 'lucide-react';
+import { Plus, Trash2, Image as ImageIcon, ExternalLink, X, Loader2 } from 'lucide-react';
 import styles from './style.module.css';
 
 export function SlidersTab() {
-  const { heroSlides: sliders, setHeroSlides: setSliders } = useApp();
+  const { heroSlides: sliders, setHeroSlides: setSliders, slidersApi, showError, showSuccess } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const initialForm = {
     title: '',
@@ -24,12 +25,11 @@ export function SlidersTab() {
     { label: 'کیسه نخی و پخت', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=1200' },
   ];
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const newId = `slide_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-    const newSlider = {
-      _id: newId,
-      id: newId,
+    setIsSubmitting(true);
+
+    const payload = {
       title: formData.title,
       subtitle: formData.subtitle,
       description: formData.description,
@@ -38,14 +38,34 @@ export function SlidersTab() {
       link: formData.link || '/products'
     };
 
-    setSliders([newSlider, ...sliders]);
-    setIsModalOpen(false);
-    setFormData(initialForm);
+    try {
+      const res = await slidersApi.addSlider(payload);
+      const created = res.data || {
+        _id: `slide_${Date.now()}`,
+        id: `slide_${Date.now()}`,
+        ...payload
+      };
+
+      setSliders([created, ...sliders]);
+      showSuccess('اسلایدر جدید با موفقیت ذخیره گردید.');
+      setIsModalOpen(false);
+      setFormData(initialForm);
+    } catch (err) {
+      showError(err, 'افزودن اسلایدر');
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('آیا از حذف این بنر نمایشی اطمینان دارید؟')) return;
-    setSliders(sliders.filter(function (s) { return s._id !== id && s.id !== id; }));
+    try {
+      await slidersApi.deleteSlider(id);
+      setSliders(sliders.filter(s => s._id !== id && s.id !== id));
+      showSuccess('اسلایدر با موفقیت حذف گردید.');
+    } catch (err) {
+      showError(err, 'حذف اسلایدر');
+    }
   }
 
   return (
@@ -82,7 +102,7 @@ export function SlidersTab() {
               <div key={id} className={styles.gridCard}>
                 <div className={styles.cardImageWrap}>
                   <img
-                    src={s.image || sampleImages[0].url}
+                    src={s.image || s.imageUrl || sampleImages[0].url}
                     alt={s.title}
                     onError={function (e) {
                       e.target.onerror = null;
@@ -94,6 +114,7 @@ export function SlidersTab() {
                       onClick={function () { handleDelete(id); }}
                       className={styles.overlayActionBtn}
                       title="حذف بنر"
+                      aria-label="حذف بنر"
                     >
                       <Trash2 size={16} />
                     </button>
@@ -160,6 +181,7 @@ export function SlidersTab() {
                 type="button"
                 onClick={function () { setIsModalOpen(false); }}
                 className={styles.modalCloseBtn}
+                aria-label="بستن"
               >
                 <X size={20} />
               </button>
@@ -269,11 +291,19 @@ export function SlidersTab() {
                     type="button"
                     onClick={function () { setIsModalOpen(false); }}
                     className={styles.cancelBtn}
+                    disabled={isSubmitting}
                   >
                     انصراف
                   </button>
-                  <button type="submit" className={styles.submitBtn}>
-                    افزودن و فعال‌سازی بنر
+                  <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>در حال ارسال...</span>
+                      </span>
+                    ) : (
+                      <span>افزودن و فعال‌سازی بنر</span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -284,3 +314,5 @@ export function SlidersTab() {
     </div>
   );
 }
+
+export default SlidersTab;

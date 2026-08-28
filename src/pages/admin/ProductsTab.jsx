@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
-import { Plus, Trash2, Search, PackageOpen, Edit3, X, Filter, CheckCircle2 } from 'lucide-react';
+import { Plus, Trash2, Search, PackageOpen, Edit3, X, Filter, CheckCircle2, Loader2 } from 'lucide-react';
 import styles from './style.module.css';
 
 export function ProductsTab() {
-  const { products, setProducts } = useApp();
+  const { products, setProducts, productsApi, showError, showSuccess } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [search, setSearch] = useState('');
   const [stockFilter, setStockFilter] = useState('all');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const initialFormState = {
+    title: '',
     name: '',
     price: '',
     oldPrice: '',
-    stock: '',
+    discount: '0',
+    stock: '20',
+    category: 'all',
     origin: 'کامفیروز، استان فارس',
     image: '',
     description: '',
@@ -32,10 +36,13 @@ export function ProductsTab() {
   function openEditModal(product) {
     setEditingProduct(product);
     setFormData({
-      name: product.name || '',
+      title: product.title || product.name || '',
+      name: product.title || product.name || '',
       price: product.price ? String(product.price) : '',
       oldPrice: product.oldPrice ? String(product.oldPrice) : '',
-      stock: product.stock !== undefined ? String(product.stock) : '20',
+      discount: product.discount !== undefined ? String(product.discount) : (product.discountPercent ? String(product.discountPercent) : '0'),
+      stock: product.stock !== undefined ? String(product.stock) : (product.count !== undefined ? String(product.count) : '20'),
+      category: product.category || 'all',
       origin: product.origin || 'کامفیروز، استان فارس',
       image: typeof product.image === 'string' ? product.image : '',
       description: product.description || '',
@@ -44,80 +51,82 @@ export function ProductsTab() {
     setIsModalOpen(true);
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setIsSubmitting(true);
 
     const priceNum = Number(formData.price);
     const oldPriceNum = formData.oldPrice ? Number(formData.oldPrice) : Math.round(priceNum * 1.12);
     const stockNum = Number(formData.stock);
+    const discountNum = Number(formData.discount || 0);
 
-    if (editingProduct) {
-      // Edit existing product
-      const updatedProducts = products.map(function (p) {
-        if (p._id === editingProduct._id || p.id === editingProduct.id) {
-          return {
-            ...p,
-            name: formData.name,
-            price: priceNum,
-            oldPrice: oldPriceNum,
-            discountPercent: Math.max(0, Math.round(((oldPriceNum - priceNum) / oldPriceNum) * 100)),
-            stock: stockNum,
-            inStock: stockNum > 0,
-            origin: formData.origin,
-            image: formData.image || p.image || '/images/products/hashemi.jpg',
-            description: formData.description,
-            farmer: formData.farmer
-          };
-        }
-        return p;
-      });
-      setProducts(updatedProducts);
-    } else {
-      // Create new product
-      const newId = `prod_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
-      const newProduct = {
-        _id: newId,
-        id: newId,
-        name: formData.name,
-        price: priceNum,
-        oldPrice: oldPriceNum,
-        discountPercent: Math.max(0, Math.round(((oldPriceNum - priceNum) / oldPriceNum) * 100)),
-        stock: stockNum,
-        inStock: stockNum > 0,
-        origin: formData.origin,
-        image: formData.image || '/images/products/hashemi.jpg',
-        description: formData.description,
-        farmer: formData.farmer,
-        features: ['۱۰۰٪ خالص و اصیل', 'کیسه نخی سفید اعلا', 'سورت لیزری'],
-        rating: 5,
-        reviewCount: 1,
-        isFeatured: true,
-        isDeal: false
-      };
-      setProducts([newProduct, ...products]);
+    const payload = {
+      title: formData.title || formData.name,
+      name: formData.title || formData.name,
+      description: formData.description,
+      price: priceNum,
+      oldPrice: oldPriceNum,
+      discount: discountNum,
+      count: stockNum,
+      stock: stockNum,
+      category: formData.category,
+      origin: formData.origin,
+      image: formData.image,
+      farmer: formData.farmer
+    };
+
+    try {
+      if (editingProduct) {
+        const prodId = editingProduct._id || editingProduct.id;
+        const res = await productsApi.updateProduct(prodId, payload);
+        const updated = res.data || res.product;
+        setProducts(prev => prev.map(p => (p._id === prodId || p.id === prodId ? { ...p, ...payload, ...updated } : p)));
+        showSuccess('محصول با موفقیت ویرایش گردید.');
+      } else {
+        const res = await productsApi.createProduct(payload);
+        const created = res.data || res.product || {
+          _id: `prod_${Date.now()}`,
+          id: `prod_${Date.now()}`,
+          ...payload
+        };
+        setProducts(prev => [created, ...prev]);
+        showSuccess('محصول جدید با موفقیت ثبت شد.');
+      }
+
+      setIsModalOpen(false);
+      setEditingProduct(null);
+      setFormData(initialFormState);
+    } catch (err) {
+      showError(err, editingProduct ? 'ویرایش محصول' : 'ثبت محصول جدید');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsModalOpen(false);
-    setEditingProduct(null);
-    setFormData(initialFormState);
   }
 
-  function handleDelete(id) {
+  async function handleDelete(id) {
     if (!window.confirm('آیا از حذف این محصول اطمینان دارید؟ این عمل غیرقابل بازگشت است.')) return;
-    setProducts(products.filter(function (p) { return p._id !== id && p.id !== id; }));
+    try {
+      await productsApi.deleteProduct(id);
+      setProducts(products.filter(p => p._id !== id && p.id !== id));
+      showSuccess('محصول با موفقیت حذف گردید.');
+    } catch (err) {
+      showError(err, 'حذف محصول');
+    }
   }
 
   // Filter products
   const filteredProducts = products.filter(function (p) {
+    const title = p.title || p.name || '';
+    const origin = p.origin || '';
     const matchesSearch =
       !search ||
-      p.name?.toLowerCase().includes(search.toLowerCase()) ||
-      p.origin?.toLowerCase().includes(search.toLowerCase());
+      title.toLowerCase().includes(search.toLowerCase()) ||
+      origin.toLowerCase().includes(search.toLowerCase());
 
     const matchesStock =
       stockFilter === 'all' ||
-      (stockFilter === 'inStock' && (p.stock || 0) > 0) ||
-      (stockFilter === 'outOfStock' && (p.stock || 0) <= 0);
+      (stockFilter === 'inStock' && (p.stock || p.count || 0) > 0) ||
+      (stockFilter === 'outOfStock' && (p.stock || p.count || 0) <= 0);
 
     return matchesSearch && matchesStock;
   });
@@ -194,77 +203,76 @@ export function ProductsTab() {
                 <tbody>
                   {filteredProducts.map(function (p) {
                     const id = p._id || p.id;
-                    const stock = p.stock ?? 0;
+                    const stock = p.stock ?? p.count ?? 0;
+                    const title = p.title || p.name || 'بدون عنوان';
                     return (
                       <tr key={id} className={styles.tr}>
                         {/* Product info */}
                         <td className={styles.td}>
                           <div className={styles.productCell}>
-                            <div className={styles.productThumb}>
-                              <img
-                                src={p.image || '/images/products/hashemi.jpg'}
-                                alt={p.name}
-                                onError={function (e) {
-                                  e.target.onerror = null;
-                                  e.target.src = '/images/products/hashemi.jpg';
-                                }}
-                              />
-                            </div>
+                            <img
+                              src={p.image || p.imageUrl || '/images/products/hashemi.jpg'}
+                              alt={title}
+                              className={styles.productThumb}
+                              onError={function (e) {
+                                e.target.src = 'https://images.unsplash.com/photo-1586201375761-83865001e31c?w=120&auto=format&fit=crop&q=60';
+                              }}
+                            />
                             <div>
-                              <div className={styles.productName}>{p.name}</div>
-                              <div className={styles.productTag}>
-                                {p.origin || 'کامفیروز، استان فارس'}
-                              </div>
+                              <strong className={styles.productName}>{title}</strong>
+                              <span className={styles.productMeta}>
+                                {p.origin || 'کامفیروز، فارس'} {p.farmer ? `| کشاورز: ${p.farmer}` : ''}
+                              </span>
                             </div>
                           </div>
                         </td>
 
-                        {/* Stock */}
+                        {/* Stock status */}
                         <td className={styles.td}>
-                          <span
-                            className={`${styles.stockBadge} ${
-                              stock > 15
-                                ? styles.stockHigh
-                                : stock > 0
-                                ? styles.stockLow
-                                : styles.stockOut
-                            }`}
-                          >
-                            {stock > 0 ? `${stock} کیسه` : 'ناموجود'}
-                          </span>
+                          <div className={styles.stockBadgeWrapper}>
+                            {stock > 0 ? (
+                              <span className={styles.stockIn}>
+                                <CheckCircle2 size={13} />
+                                <span>{stock} گونی ۱۰ کیلویی</span>
+                              </span>
+                            ) : (
+                              <span className={styles.stockOut}>ناموجود</span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Price */}
                         <td className={styles.td}>
-                          <div>
-                            <span className={styles.priceText}>
-                              {(p.price || 0).toLocaleString()}
-                            </span>{' '}
-                            <span className={styles.currency}>تومان</span>
+                          <div className={styles.priceCell}>
+                            <span className={styles.priceCurrent}>
+                              {(p.price ?? 0).toLocaleString('fa-IR')}
+                            </span>
+                            {p.oldPrice && p.oldPrice > p.price && (
+                              <del className={styles.priceOld}>
+                                {(p.oldPrice ?? 0).toLocaleString('fa-IR')}
+                              </del>
+                            )}
                           </div>
-                          {p.oldPrice && p.oldPrice > p.price && (
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8', textDecoration: 'line-through', marginTop: '0.125rem' }}>
-                              {p.oldPrice.toLocaleString()} تومان
-                            </div>
-                          )}
                         </td>
 
-                        {/* Action buttons */}
+                        {/* Actions */}
                         <td className={styles.td} style={{ textAlign: 'center' }}>
-                          <div className={styles.actionBtnGroup}>
+                          <div className={styles.actionsCell}>
                             <button
                               onClick={function () { openEditModal(p); }}
                               className={styles.editBtn}
-                              title="ویرایش مشخصات و قیمت"
+                              title="ویرایش محصول"
+                              aria-label="ویرایش محصول"
                             >
-                              <Edit3 size={16} strokeWidth={2.2} />
+                              <Edit3 size={16} />
                             </button>
                             <button
                               onClick={function () { handleDelete(id); }}
                               className={styles.deleteBtn}
-                              title="حذف از انبار"
+                              title="حذف محصول"
+                              aria-label="حذف محصول"
                             >
-                              <Trash2 size={16} strokeWidth={2.2} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </td>
@@ -278,143 +286,161 @@ export function ProductsTab() {
         </div>
       </div>
 
-      {/* Add / Edit Modal */}
+      {/* Modal for Add / Edit */}
       {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={function () { setIsModalOpen(false); }}>
-          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <div>
-                <h3 className={styles.modalTitle}>
-                  {editingProduct ? 'ویرایش اطلاعات محصول' : 'افزودن محصول جدید به انبار'}
-                </h3>
-                <p className={styles.modalDesc}>
-                  {editingProduct
-                    ? `در حال ویرایش: ${editingProduct.name}`
-                    : 'مشخصات برنج، شالیزار و قیمت را وارد کنید.'}
-                </p>
-              </div>
+              <h2 className={styles.modalTitle}>
+                {editingProduct ? 'ویرایش مشخصات محصول' : 'افزودن برنج اعلا به انبار'}
+              </h2>
               <button
                 type="button"
                 onClick={function () { setIsModalOpen(false); }}
                 className={styles.modalCloseBtn}
+                aria-label="بستن پنجره"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className={styles.modalContent}>
-              <form onSubmit={handleSubmit} className={styles.form}>
-                <div className={styles.formGrid}>
-                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>نام کامل محصول</label>
-                    <input
-                      required
-                      type="text"
-                      placeholder="مثال: برنج کامفیروزی اعلا کشت اول طلا رایس"
-                      value={formData.name}
-                      onChange={function (e) { setFormData({ ...formData, name: e.target.value }); }}
-                      className={styles.input}
-                    />
-                  </div>
+            <form onSubmit={handleSubmit} className={styles.modalForm}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>عنوان کامل محصول *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="مثال: برنج کامفیروزی اصل طلا رایس"
+                  value={formData.title}
+                  onChange={function (e) { setFormData({ ...formData, title: e.target.value, name: e.target.value }); }}
+                  className={styles.formInput}
+                />
+              </div>
 
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>محل کشت و شالیزار</label>
-                    <input
-                      type="text"
-                      placeholder="مثال: کامفیروز مرودشت، استان فارس"
-                      value={formData.origin}
-                      onChange={function (e) { setFormData({ ...formData, origin: e.target.value }); }}
-                      className={styles.input}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>نام شالیکار / تولیدکننده</label>
-                    <input
-                      type="text"
-                      placeholder="مثال: شالیکاران نمونه حوزه رود کُر"
-                      value={formData.farmer}
-                      onChange={function (e) { setFormData({ ...formData, farmer: e.target.value }); }}
-                      className={styles.input}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>قیمت نهایی فروش (تومان)</label>
-                    <input
-                      required
-                      type="number"
-                      placeholder="مثال: 1450000"
-                      value={formData.price}
-                      onChange={function (e) { setFormData({ ...formData, price: e.target.value }); }}
-                      className={styles.input}
-                    />
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label className={styles.label}>قیمت قبل از تخفیف (اختیاری)</label>
-                    <input
-                      type="number"
-                      placeholder="مثال: 1650000"
-                      value={formData.oldPrice}
-                      onChange={function (e) { setFormData({ ...formData, oldPrice: e.target.value }); }}
-                      className={styles.input}
-                    />
-                  </div>
-
-                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>موجودی انبار (تعداد کیسه)</label>
-                    <input
-                      required
-                      type="number"
-                      placeholder="مثال: 30"
-                      value={formData.stock}
-                      onChange={function (e) { setFormData({ ...formData, stock: e.target.value }); }}
-                      className={styles.input}
-                    />
-                  </div>
-
-                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>آدرس اینترنتی عکس محصول (URL)</label>
-                    <input
-                      type="text"
-                      placeholder="https://... یا خالی برای تصویر پیش‌فرض"
-                      value={formData.image}
-                      onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
-                      dir="ltr"
-                      className={styles.input}
-                    />
-                  </div>
-
-                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>توضیحات و مشخصات پخت</label>
-                    <textarea
-                      placeholder="توضیحاتی درباره عطر، قد کشیدن، و نحوه پخت این برنج بنویسید..."
-                      value={formData.description}
-                      onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
-                      rows="3"
-                      className={styles.textarea}
-                    />
-                  </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>قیمت فروش (تومان) *</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="مثال: 1450000"
+                    value={formData.price}
+                    onChange={function (e) { setFormData({ ...formData, price: e.target.value }); }}
+                    className={styles.formInput}
+                  />
                 </div>
 
-                <div className={styles.modalActions}>
-                  <button
-                    type="button"
-                    onClick={function () { setIsModalOpen(false); }}
-                    className={styles.cancelBtn}
-                  >
-                    انصراف
-                  </button>
-                  <button type="submit" className={styles.submitBtn}>
-                    {editingProduct ? 'ذخیره تغییرات محصول' : 'ثبت و انتشار محصول در فروشگاه'}
-                  </button>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>قیمت قبل از تخفیف (اختیاری)</label>
+                  <input
+                    type="number"
+                    placeholder="مثال: 1650000"
+                    value={formData.oldPrice}
+                    onChange={function (e) { setFormData({ ...formData, oldPrice: e.target.value }); }}
+                    className={styles.formInput}
+                  />
                 </div>
-              </form>
-            </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>موجودی انبار (تعداد کیسه ۱۰ کیلویی) *</label>
+                  <input
+                    type="number"
+                    required
+                    placeholder="مثال: 45"
+                    value={formData.stock}
+                    onChange={function (e) { setFormData({ ...formData, stock: e.target.value }); }}
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>درصد تخفیف (%)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="مثال: 10"
+                    value={formData.discount}
+                    onChange={function (e) { setFormData({ ...formData, discount: e.target.value }); }}
+                    className={styles.formInput}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>منطقه کشت و شالیزار</label>
+                  <input
+                    type="text"
+                    placeholder="مثال: کامفیروز، مرودشت، استان فارس"
+                    value={formData.origin}
+                    onChange={function (e) { setFormData({ ...formData, origin: e.target.value }); }}
+                    className={styles.formInput}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>کشاورز معتمد</label>
+                  <input
+                    type="text"
+                    placeholder="مثال: حاج رضا زارع کامفیروزی"
+                    value={formData.farmer}
+                    onChange={function (e) { setFormData({ ...formData, farmer: e.target.value }); }}
+                    className={styles.formInput}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>لینک تصویر محصول یا آدرس اینترنتی</label>
+                <input
+                  type="text"
+                  placeholder="https://... یا /images/products/..."
+                  value={formData.image}
+                  onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
+                  className={styles.formInput}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>توضیحات و ویژگی‌های پخت</label>
+                <textarea
+                  rows="3"
+                  placeholder="توضیحات عطر، قدکشیدن، نوع بوجار و تضمین کیفیت..."
+                  value={formData.description}
+                  onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
+                  className={styles.formTextarea}
+                />
+              </div>
+
+              <div className={styles.modalActions}>
+                <button
+                  type="button"
+                  onClick={function () { setIsModalOpen(false); }}
+                  className={styles.modalCancelBtn}
+                  disabled={isSubmitting}
+                >
+                  انصراف
+                </button>
+                <button type="submit" className={styles.modalSubmitBtn} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      <span>در حال ذخیره...</span>
+                    </>
+                  ) : (
+                    <span>{editingProduct ? 'ذخیره تغییرات' : 'ثبت نهایی کالا'}</span>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
     </div>
   );
 }
+
+export default ProductsTab;

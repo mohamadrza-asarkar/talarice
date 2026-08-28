@@ -1,9 +1,8 @@
 import client from './client';
+import { parseApiError } from '../utils/errorHandler';
 
 function parseSlide(s, index = 0) {
   if (!s) return null;
-  
-  // If s is a string (direct image URL)
   if (typeof s === 'string') {
     return {
       id: `slide-${index}`,
@@ -12,101 +11,139 @@ function parseSlide(s, index = 0) {
       description: '',
       subtitle: '',
       image: s,
+      imageUrl: s,
+      fullImageUrl: s,
       link: '/catalog',
       ctaText: 'مشاهده محصولات'
     };
   }
-  
-  // Otherwise, if s is an object
+
+  const id = String(s._id || s.id || `slide-${index}`);
+  const img = s.fullImageUrl || s.imageUrl || s.image || s.url || '';
+
   return {
-    id: String(s.id || s._id || `slide-${index}`),
-    _id: String(s._id || s.id || `slide-${index}`),
+    id,
+    _id: id,
     title: s.title || '',
     description: s.description || '',
     subtitle: s.subtitle || '',
-    image: s.image || s.url || s.imageUrl || '',
+    image: img,
+    imageUrl: img,
+    fullImageUrl: img,
     link: s.link || '/catalog',
-    ctaText: s.ctaText || 'مشاهده محصولات'
+    ctaText: s.ctaText || 'مشاهده محصولات',
+    createdAt: s.createdAt || ''
   };
 }
 
 export const slidersApi = {
   /**
-   * Fetch home slider banners
+   * Fetch all slides
+   * GET /api/slides
    */
   async getSliders() {
     try {
-      const response = await client.get('/slides');
-      
-      // Case 1: Backend returns direct array of URLs or slide objects
-      if (Array.isArray(response)) {
-        return {
-          success: true,
-          data: response.map((item, idx) => parseSlide(item, idx))
-        };
-      }
-      
-      // Case 2: Backend returns standard { success: true, data: [...] } wrapper
-      if (response && response.success && Array.isArray(response.data)) {
-        return {
-          success: true,
-          data: response.data.map((item, idx) => parseSlide(item, idx))
-        };
-      }
-      
-      // Case 3: Backend returns { success: true } but with raw array of urls as response.data
-      if (response && Array.isArray(response.data)) {
-        return {
-          success: true,
-          data: response.data.map((item, idx) => parseSlide(item, idx))
-        };
-      }
-      
-      // Case 4: Single string or object slide
-      if (response && (typeof response === 'string' || response.image)) {
-        return {
-          success: true,
-          data: [parseSlide(response, 0)]
-        };
+      let response;
+      try {
+        response = await client.get('/slides');
+      } catch (err) {
+        // Fallback to /sliders if server uses /sliders
+        if (err.statusCode === 404) {
+          response = await client.get('/sliders');
+        } else {
+          throw err;
+        }
       }
 
-      return { success: false, data: [], message: 'خطا در دریافت بنرها' };
+      let slides = [];
+      if (response && response.success) {
+        if (Array.isArray(response.data)) {
+          slides = response.data;
+        } else if (response.data?.slides && Array.isArray(response.data.slides)) {
+          slides = response.data.slides;
+        }
+      } else if (Array.isArray(response)) {
+        slides = response;
+      }
+
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        data: slides.map(parseSlide).filter(Boolean),
+        message: response?.message || 'اسلایدرها با موفقیت دریافت شدند'
+      };
     } catch (err) {
-      console.error('[slidersApi] Fetch slides error:', err.message || err);
-      throw err;
+      const parsed = parseApiError(err);
+      throw parsed;
     }
   },
 
   /**
-   * Create new slide (Admin)
+   * Add new slide (Admin)
+   * POST /api/slides
+   * Body: { imageBase64 } or { image, title, description, link }
    */
-  async createSlide(slideData) {
+  async addSlider(slideData) {
     try {
-      const response = await client.post('/slides', slideData);
-      if (response && response.success && response.data) {
-        return {
-          success: true,
-          data: parseSlide(response.data),
-          message: response.message || 'اسلاید جدید با موفقیت ایجاد شد.'
-        };
+      const payload = {
+        imageBase64: slideData.imageBase64 || (typeof slideData.image === 'string' && slideData.image.startsWith('data:') ? slideData.image : undefined),
+        image: typeof slideData.image === 'string' ? slideData.image : undefined,
+        title: slideData.title,
+        description: slideData.description,
+        link: slideData.link
+      };
+
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+      let response;
+      try {
+        response = await client.post('/slides', payload);
+      } catch (err) {
+        if (err.statusCode === 404) {
+          response = await client.post('/sliders', payload);
+        } else {
+          throw err;
+        }
       }
-      return { success: false, message: 'خطا در ثبت اسلاید جدید.' };
+
+      const raw = response?.data?.slide || response?.data;
+      return {
+        success: true,
+        statusCode: response?.statusCode || 201,
+        data: parseSlide(raw),
+        message: response?.message || 'اسلاید جدید با موفقیت ایجاد شد'
+      };
     } catch (err) {
-      console.error('[slidersApi] Create slide error:', err.message || err);
-      throw err;
+      const parsed = parseApiError(err);
+      throw parsed;
     }
   },
 
   /**
    * Delete slide (Admin)
+   * DELETE /api/slides/:id
    */
-  async deleteSlide(id) {
+  async deleteSlider(id) {
     try {
-      const response = await client.delete(`/slides/${id}`);
-      return response || { success: true, message: 'اسلاید با موفقیت حذف شد.' };
+      let response;
+      try {
+        response = await client.delete(`/slides/${id}`);
+      } catch (err) {
+        if (err.statusCode === 404) {
+          response = await client.delete(`/sliders/${id}`);
+        } else {
+          throw err;
+        }
+      }
+
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        message: response?.message || 'اسلاید حذف گردید'
+      };
     } catch (err) {
-      console.error(`[slidersApi] Delete slide ${id} error:`, err.message || err);
-      throw err;
+      const parsed = parseApiError(err);
+      throw parsed;
     }
   }
 };

@@ -1,75 +1,74 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AlertCircle, Eye, EyeOff, Lock, Phone, User } from 'lucide-react';
+import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Wrench, FileWarning, RefreshCw } from 'lucide-react';
 import { useApp } from '../../context';
 import { Logo } from '../../components/logo';
 import styles from './style.module.css';
 
-function toEnglishDigits(str) {
-  if (!str) return '';
-  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
-  const arabicDigits = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-  let res = str.toString();
-  for (let i = 0; i < 10; i++) {
-    res = res.replaceAll(persianDigits[i], i.toString()).replaceAll(arabicDigits[i], i.toString());
-  }
-  return res;
-}
-
 export function AuthPage() {
-  const [activeTab, setActiveTab] = useState('login');
-  const [formData, setFormData] = useState({ name: '', phone: '', password: '' });
+  const navigate = useNavigate();
+  const { loginUser, registerUser, serverHealth, checkHealth } = useApp();
+  const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    password: ''
+  });
+
   const [errors, setErrors] = useState({});
-
-  const { loginUser, registerUser } = useApp();
-  const navigate = useNavigate();
-
-  const isLogin = activeTab === 'login';
+  const [errorMeta, setErrorMeta] = useState(null); // { isServerError, isValidationError, title, advice }
 
   function handleTabChange(tab) {
-    setActiveTab(tab);
+    setIsLogin(tab === 'login');
     setErrors({});
+    setErrorMeta(null);
   }
 
   function handleInputChange(field, value) {
     setFormData(function (prev) {
       return { ...prev, [field]: value };
     });
-    if (errors[field] || errors.general) {
+    if (errors[field]) {
       setErrors(function (prev) {
         const next = { ...prev };
         delete next[field];
-        delete next.general;
         return next;
       });
     }
   }
 
+  function toEnglishDigits(str) {
+    if (!str) return '';
+    const persianNumbers = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /۸/g, /۹/g];
+    const arabicNumbers = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+    let res = String(str);
+    for (let i = 0; i < 10; i++) {
+      res = res.replace(persianNumbers[i], i).replace(arabicNumbers[i], i);
+    }
+    return res;
+  }
+
   function validate() {
     const newErrors = {};
 
-    if (!isLogin) {
-      const trimmedName = formData.name.trim();
-      if (!trimmedName) {
-        newErrors.name = 'لطفاً نام و نام خانوادگی خود را وارد کنید.';
-      } else if (trimmedName.length < 3) {
-        newErrors.name = 'نام و نام خانوادگی باید حداقل ۳ حرف باشد.';
-      }
+    if (!isLogin && !formData.name.trim()) {
+      newErrors.name = 'لطفاً نام و نام خانوادگی را وارد کنید.';
     }
 
     const cleanPhone = toEnglishDigits(formData.phone).replace(/[\s-]/g, '');
     if (!cleanPhone) {
       newErrors.phone = 'لطفاً شماره موبایل خود را وارد کنید.';
     } else if (!/^09\d{9}$/.test(cleanPhone)) {
-      newErrors.phone = 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.';
+      newErrors.phone = 'شماره موبایل باید ۱۱ رقم با فرمت ۰۹xxxxxxxx باشد (خطا در فرمت انتخابی).';
     }
 
     if (!formData.password) {
       newErrors.password = 'لطفاً رمز عبور را وارد کنید.';
     } else if (formData.password.length < 8) {
-      newErrors.password = 'رمز عبور باید حداقل ۸ رقم (کاراکتر) باشد.';
+      newErrors.password = 'رمز عبور باید حداقل ۸ رقم (کاراکتر) باشد (خطا در فرمت انتخابی).';
     }
 
     return newErrors;
@@ -80,11 +79,18 @@ export function AuthPage() {
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      setErrorMeta({
+        isValidationError: true,
+        title: 'خطا در فرمت‌های انتخابی',
+        message: 'برخی اطلاعات وارد شده مطابق الگوی صحیح نیستند. لطفاً موارد مشخص شده را اصلاح فرمایید.',
+        advice: 'شماره موبایل باید ۱۱ رقم با ۰۹ شروع شود و رمز عبور حداقل ۸ کاراکتر باشد.'
+      });
       return;
     }
 
     setLoading(true);
     setErrors({});
+    setErrorMeta(null);
 
     const cleanPhone = toEnglishDigits(formData.phone).replace(/[\s-]/g, '');
     const res = isLogin
@@ -95,16 +101,34 @@ export function AuthPage() {
     if (res?.success) {
       navigate('/profile');
     } else {
-      const msg = res?.message || 'خطا در عملیات ورود/ثبت‌نام';
-      const lower = msg.toLowerCase();
-      if (lower.includes('رمز') || lower.includes('کلمه عبور') || lower.includes('پسورد')) {
-        setErrors({ password: msg });
-      } else if (lower.includes('شماره') || lower.includes('موبایل') || lower.includes('کاربر') || lower.includes('یافت نشد') || lower.includes('تکراری')) {
-        setErrors({ phone: msg });
-      } else if (lower.includes('نام') && !isLogin) {
-        setErrors({ name: msg });
+      const isServer = res?.isServerError || (res?.statusCode >= 500) || res?.errorType === 'NETWORK_ERROR' || res?.errorType === 'SERVER_MAINTENANCE';
+      const isValidation = res?.isUserError || res?.errorType === 'VALIDATION_ERROR';
+
+      const msg = res?.displayText || res?.message || 'خطا در عملیات ورود/ثبت‌نام';
+      const rawMsg = (res?.message || '').toLowerCase();
+
+      if (isServer) {
+        setErrorMeta({
+          isServerError: true,
+          title: '🛠️ سرور در حال به‌روزرسانی است',
+          message: 'سرویس‌دهنده موقتاً در حال به‌روزرسانی زیرساخت است یا ارتباط شبکه قطع شده است. لطفاً بعداً مجدداً امتحان کنید.',
+          advice: 'اطلاعات شما محفوظ است. می‌توانید دقایقی دیگر مجدداً تلاش فرمایید.'
+        });
       } else {
-        setErrors({ general: msg });
+        setErrorMeta({
+          isValidationError: true,
+          title: '⚠️ خطا در اطلاعات ارسالی یا مشخصات کاربری',
+          message: msg,
+          advice: 'لطفاً فرمت شماره موبایل و صحت رمز عبور را مجدداً بررسی فرمایید.'
+        });
+
+        if (rawMsg.includes('رمز') || rawMsg.includes('کلمه عبور') || rawMsg.includes('پسورد')) {
+          setErrors({ password: 'کلمه عبور وارد شده نادرست یا نامعتبر است.' });
+        } else if (rawMsg.includes('شماره') || rawMsg.includes('موبایل') || rawMsg.includes('کاربر') || rawMsg.includes('یافت نشد') || rawMsg.includes('تکراری')) {
+          setErrors({ phone: msg });
+        } else if (rawMsg.includes('نام') && !isLogin) {
+          setErrors({ name: msg });
+        }
       }
     }
   }
@@ -137,7 +161,39 @@ export function AuthPage() {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} noValidate className={styles.form}>
+        {/* Server Maintenance Box */}
+        {errorMeta?.isServerError && (
+          <div className={styles.serverMaintenanceBox} role="alert">
+            <div className={styles.serverMaintenanceHeader}>
+              <Wrench size={16} />
+              <span>{errorMeta.title}</span>
+            </div>
+            <p className={styles.serverMaintenanceDesc}>{errorMeta.message}</p>
+            {errorMeta.advice && (
+              <span style={{ fontSize: '0.72rem', color: '#1e3a8a', fontWeight: 700 }}>
+                💡 {errorMeta.advice}
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Validation / User Error Box */}
+        {errorMeta?.isValidationError && (
+          <div className={styles.validationErrorBox} role="alert">
+            <div className={styles.validationErrorHeader}>
+              <FileWarning size={16} />
+              <span>{errorMeta.title}</span>
+            </div>
+            <p style={{ margin: 0, fontSize: '0.78rem' }}>{errorMeta.message}</p>
+            {errorMeta.advice && (
+              <span className={styles.validationErrorAdvice}>
+                💡 {errorMeta.advice}
+              </span>
+            )}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} noValidate className={styles.form} style={{ marginTop: errorMeta ? '0.75rem' : 0 }}>
           {!isLogin && (
             <div className={styles.inputGroup}>
               <label
@@ -183,7 +239,7 @@ export function AuthPage() {
                 dir="ltr"
                 value={formData.phone}
                 onChange={function (e) { handleInputChange('phone', e.target.value); }}
-                placeholder="شماره موبایل خود را وارد کنید"
+                placeholder="09121234567"
                 className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
                 autoComplete="tel"
               />
@@ -238,13 +294,6 @@ export function AuthPage() {
             )}
           </div>
 
-          {errors.general && (
-            <div className={styles.generalError} id="auth-general-error">
-              <AlertCircle size={16} />
-              <span>{errors.general}</span>
-            </div>
-          )}
-
           <button
             type="submit"
             id="auth-submit-btn"
@@ -260,4 +309,3 @@ export function AuthPage() {
 }
 
 export default AuthPage;
-

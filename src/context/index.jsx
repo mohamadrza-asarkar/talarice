@@ -1,15 +1,21 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import API from '../services/api';
 import {
   productsApi,
+  amazingProductsApi,
   ordersApi,
   blogApi,
   slidersApi,
   couponsApi,
   authApi,
-  reviewsApi
+  reviewsApi,
+  cartApi,
+  adminApi,
+  healthApi
 } from '../api';
+import { parseApiError } from '../utils/errorHandler';
+import ToastContainer from '../components/toast';
+
 const AppContext = createContext();
 
 export function getOrderStatusInfo(status) {
@@ -62,6 +68,17 @@ export function getOrderStatusInfo(status) {
         border: '#86efac',
         step: 4
       };
+    case 'cancelled':
+    case 'لغو شده':
+      return {
+        key: 'cancelled',
+        label: 'لغو شده',
+        desc: 'سفارش لغو گردید.',
+        color: '#dc2626',
+        bg: '#fef2f2',
+        border: '#fecaca',
+        step: 0
+      };
     default:
       return {
         key: 'reviewing',
@@ -79,7 +96,110 @@ export function AppProvider({ children }) {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Internal Navigation History Stack for robust, instant back navigation
+  // Toast notification state
+  const [toasts, setToasts] = useState([]);
+
+  const dismissToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  const showToast = useCallback(({ type = 'info', title = '', statusCode = null, message = '', details = '', actionAdvice = '', isServerError = false, isValidationError = false, errorType = '', duration = 6000 }) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const newToast = { id, type, title, statusCode, message, details, actionAdvice, isServerError, isValidationError, errorType };
+    setToasts(prev => [...prev.slice(-4), newToast]); // keep max 5 toasts
+
+    if (duration > 0) {
+      setTimeout(() => {
+        dismissToast(id);
+      }, duration);
+    }
+    return id;
+  }, [dismissToast]);
+
+  const showError = useCallback((err, customTitle = '') => {
+    const parsed = parseApiError(err);
+    const code = parsed.statusCode;
+    const finalTitle = customTitle || parsed.userFriendlyTitle || 'خطا در عملیات';
+    
+    showToast({
+      type: 'error',
+      title: finalTitle,
+      statusCode: code,
+      message: parsed.message,
+      actionAdvice: parsed.actionAdvice,
+      isServerError: parsed.isServerError,
+      isValidationError: parsed.isUserError,
+      errorType: parsed.errorType,
+      details: parsed.fieldDetails || (parsed.errors ? (typeof parsed.errors === 'object' ? Object.entries(parsed.errors).map(([k, v]) => `${k}: ${v}`).join(' | ') : String(parsed.errors)) : ''),
+      duration: parsed.isServerError ? 9000 : 7000
+    });
+    return parsed;
+  }, [showToast]);
+
+  const showSuccess = useCallback((message, title = 'عملیات موفق') => {
+    showToast({
+      type: 'success',
+      title,
+      message,
+      duration: 4000
+    });
+  }, [showToast]);
+
+  // Health check state (polled every 20s)
+  const [serverHealth, setServerHealth] = useState({
+    status: 'checking',
+    uptime: 0,
+    timestamp: null,
+    statusCode: null,
+    message: '',
+    displayText: ''
+  });
+
+  const checkHealth = useCallback(async () => {
+    try {
+      const res = await healthApi.checkHealth();
+      if (res.success && res.status === 'healthy') {
+        setServerHealth({
+          status: 'healthy',
+          uptime: res.uptime,
+          timestamp: res.timestamp,
+          statusCode: 200,
+          message: 'سرور فعال و پاسخگو می‌باشد',
+          displayText: 'سرور فعال است'
+        });
+      } else {
+        setServerHealth({
+          status: 'unhealthy',
+          uptime: 0,
+          timestamp: new Date().toISOString(),
+          statusCode: res.statusCode || 500,
+          message: res.message || 'خطا در سلامت سرور',
+          displayText: res.displayText || `[کد خطا: ${res.statusCode || 500}] عدم دسترسی به سرور سلامت`
+        });
+      }
+    } catch (err) {
+      const parsed = parseApiError(err);
+      setServerHealth({
+        status: 'unhealthy',
+        uptime: 0,
+        timestamp: new Date().toISOString(),
+        statusCode: parsed.statusCode,
+        message: parsed.message,
+        displayText: parsed.displayText
+      });
+    }
+  }, []);
+
+  // Polling Health check every 20 seconds (20000ms)
+  useEffect(() => {
+    checkHealth();
+    const interval = setInterval(() => {
+      checkHealth();
+    }, 20000);
+    return () => clearInterval(interval);
+  }, [checkHealth]);
+
+  // Navigation History Stack
   const historyStackRef = useRef((function () {
     try {
       const saved = sessionStorage.getItem('tala_nav_history');
@@ -106,7 +226,6 @@ export function AppProvider({ children }) {
   function goBack(defaultFallback = '/') {
     const currentPath = location.pathname + location.search;
     const currentStack = [...historyStackRef.current];
-    // Pop all occurrences of currentPath from the end
     while (currentStack.length > 0 && currentStack[currentStack.length - 1] === currentPath) {
       currentStack.pop();
     }
@@ -118,7 +237,9 @@ export function AppProvider({ children }) {
     navigate(target);
   }
 
+  // Core Data states
   const [products, setProducts] = useState([]);
+  const [amazingProducts, setAmazingProducts] = useState([]);
   const [articles, setArticles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [coupons, setCoupons] = useState([]);
@@ -133,119 +254,92 @@ export function AppProvider({ children }) {
     { id: 'smoky', name: 'برنج دودی', iconClass: 'fa-solid fa-fire' },
     { id: 'broken', name: 'نیم‌دانه و سرلاشه', iconClass: 'fa-solid fa-mortar-pestle' }
   ]);
+
   const [trustItems, setTrustItems] = useState([
     { id: '1', title: 'ضمانت اصالت کامپیروز', iconClass: 'fa-solid fa-award', description: 'تمام محصولات ما مستقیماً از کشاورزان معتمد و اصیل شالیزارهای کامفیروز تهیه و بسته‌بندی می‌شوند.' },
     { id: '2', title: 'ارسال سریع به سراسر کشور', iconClass: 'fa-solid fa-truck-fast', description: 'سفارشات شما در سریع‌ترین زمان ممکن از طریق پست، تیپاکس یا باربری به درب منزل شما ارسال خواهد شد.' },
     { id: '3', title: 'امکان ارجاع وجه', iconClass: 'fa-solid fa-rotate-left', description: 'در صورت عدم رضایت از پخت یا کیفیت محصول، وجه پرداختی شما با احترام تمام مسترد خواهد شد.' }
   ]);
+
   const [brandStory, setBrandStory] = useState({
     title: 'داستان و اصالت برنج طلا رایس',
     description: 'طلا رایس با هدف حذف واسطه‌ها و ارائه مستقیم برنج معطر کامفیروز و هاشمی شمال تأسیس شده است. ما با همکاری مستقیم شالیکاران سنتی، عطر و طعم واقعی سفره ایرانی را با تضمین اصالت و بهترین کیفیت به دست شما می‌رسانیم.'
   });
+
   const [testTips, setTestTips] = useState([]);
 
-  function getImageUrl(path) {
-    if (!path) return '/images/products/hashemi.jpg';
-    if (path.startsWith('http')) return path;
-    return `http://localhost:3000${path}`;
-  }
-
-  async function fetchRealData() {
+  // Fetch all primary data from backend API
+  const fetchRealData = useCallback(async () => {
     setIsConnecting(true);
     let prodRes = null;
     let sliderRes = null;
     let artRes = null;
     let orderRes = null;
     let hasProdError = false;
-    let hasSliderError = false;
     let prodErrorMessage = '';
+    let prodStatusCode = null;
 
-    // Fetch products (primary endpoint)
+    // 1. Fetch Products
     try {
       prodRes = await productsApi.getProducts();
+      setProducts(prodRes?.data || []);
     } catch (err) {
-      console.warn('Products API failed:', err.message);
+      const parsed = parseApiError(err);
       hasProdError = true;
-      prodErrorMessage = err.message || 'خطای اتصال به وب‌سرویس محصولات';
+      prodErrorMessage = parsed.message;
+      prodStatusCode = parsed.statusCode;
+      setProducts([]);
+      showError(err, 'دریافت محصولات');
     }
 
-    // Safely attempt secondary endpoints (since the user may not have them implemented)
+    // 2. Fetch Amazing Products
+    try {
+      const amazingRes = await amazingProductsApi.getAmazingProducts();
+      setAmazingProducts(amazingRes?.data || []);
+    } catch (err) {
+      setAmazingProducts([]);
+    }
+
+    // 3. Fetch Slides
     try {
       sliderRes = await slidersApi.getSliders();
+      setHeroSlides(sliderRes?.data || []);
     } catch (err) {
-      console.warn('Sliders API not implemented on backend:', err.message);
-      hasSliderError = true;
-    }
-
-    try {
-      artRes = await blogApi.getArticles();
-    } catch (err) {
-      console.warn('Articles API not implemented on backend:', err.message);
-    }
-
-    try {
-      orderRes = await ordersApi.getOrders();
-    } catch (err) {
-      console.warn('Orders API not implemented on backend:', err.message);
-    }
-
-    // Set Products
-    if (!hasProdError) {
-      if (prodRes?.success && Array.isArray(prodRes.data)) {
-        setProducts(prodRes.data);
-      } else if (Array.isArray(prodRes)) {
-        setProducts(prodRes);
-      } else {
-        setProducts([]);
-      }
-    } else {
-      setProducts([]);
-    }
-
-    // Set Sliders
-    if (!hasSliderError) {
-      if (sliderRes?.success && Array.isArray(sliderRes.data)) {
-        setHeroSlides(sliderRes.data);
-      } else if (Array.isArray(sliderRes)) {
-        setHeroSlides(sliderRes);
-      } else {
-        setHeroSlides([]);
-      }
-    } else {
       setHeroSlides([]);
     }
 
-    // Set Articles
-    if (artRes?.success && Array.isArray(artRes.data)) {
-      setArticles(artRes.data);
-    } else if (Array.isArray(artRes)) {
-      setArticles(artRes);
-    } else {
+    // 4. Fetch Articles
+    try {
+      artRes = await blogApi.getArticles();
+      setArticles(artRes?.data || []);
+    } catch (err) {
       setArticles([]);
     }
 
-    // Set Orders
-    if (orderRes?.success && Array.isArray(orderRes.data)) {
-      setOrders(orderRes.data);
-    } else if (Array.isArray(orderRes)) {
-      setOrders(orderRes);
-    } else {
-      setOrders([]);
+    // 5. Fetch Orders
+    try {
+      orderRes = await ordersApi.getOrders();
+      setOrders(orderRes?.data || []);
+    } catch (err) {
+      // ignore guest orders error
     }
 
-    // Determine real connection error
+    // Connection Error summary
     if (hasProdError) {
-      setConnectionError(prodErrorMessage);
+      const statusLabel = prodStatusCode ? `[کد خطا: ${prodStatusCode}] ` : '';
+      setConnectionError(`${statusLabel}${prodErrorMessage}`);
     } else {
       setConnectionError(null);
     }
+
     setIsConnecting(false);
-  }
+  }, [showError]);
 
-  useEffect(function () {
+  useEffect(() => {
     fetchRealData();
-  }, []);
+  }, [fetchRealData]);
 
+  // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedWeightFilter, setSelectedWeightFilter] = useState('all');
@@ -254,7 +348,8 @@ export function AppProvider({ children }) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
-  const [cart, setCart] = useState(function () {
+  // Cart state
+  const [cart, setCart] = useState(() => {
     try {
       const saved = localStorage.getItem('tala_cart');
       return saved ? JSON.parse(saved) : [];
@@ -263,9 +358,16 @@ export function AppProvider({ children }) {
     }
   });
 
+  useEffect(() => {
+    try {
+      localStorage.setItem('tala_cart', JSON.stringify(cart));
+    } catch {}
+  }, [cart]);
+
   const [appliedCoupon, setAppliedCoupon] = useState(null);
 
-  const [orders, setOrders] = useState(function () {
+  // Orders state
+  const [orders, setOrders] = useState(() => {
     try {
       const saved = localStorage.getItem('tala_orders');
       if (saved) {
@@ -278,26 +380,28 @@ export function AppProvider({ children }) {
     }
   });
 
-  useEffect(function () {
+  useEffect(() => {
     try {
       localStorage.setItem('tala_orders', JSON.stringify(orders));
-    } catch (e) {}
+    } catch {}
   }, [orders]);
 
   async function updateOrderStatus(id, newStatus) {
-    setOrders(function (prev) {
-      return prev.map(function (o) {
+    try {
+      await ordersApi.updateOrderStatus(id, newStatus);
+      setOrders(prev => prev.map(o => {
         const orderId = o.id || o._id;
-        if (orderId === id) {
-          return { ...o, status: newStatus };
-        }
-        return o;
-      });
-    });
-    await ordersApi.updateOrderStatus(id, newStatus);
+        return orderId === id ? { ...o, status: newStatus } : o;
+      }));
+      showSuccess(`وضعیت سفارش به "${newStatus}" تغییر یافت.`);
+    } catch (err) {
+      showError(err, 'تغییر وضعیت سفارش');
+      throw err;
+    }
   }
 
-  const [currentUser, setCurrentUser] = useState(function () {
+  // Authentication state
+  const [currentUser, setCurrentUser] = useState(() => {
     try {
       const userStr = localStorage.getItem('tala_user');
       if (userStr) return JSON.parse(userStr);
@@ -307,15 +411,10 @@ export function AppProvider({ children }) {
     }
   });
 
-  const isAdmin = Boolean(currentUser && currentUser.role === 'admin');
+  const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.isAdmin));
 
-  const [token, setToken] = useState(function () {
-    return localStorage.getItem('tala_token') || '';
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(function () {
-    return Boolean(localStorage.getItem('tala_token') || localStorage.getItem('tala_auth') === 'true');
-  });
+  const [token, setToken] = useState(() => localStorage.getItem('tala_token') || '');
+  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('tala_token') || localStorage.getItem('tala_auth') === 'true'));
 
   function login(userData = null, jwtToken = null) {
     setIsAuthenticated(true);
@@ -331,65 +430,63 @@ export function AppProvider({ children }) {
   }
 
   function logout() {
+    authApi.logout();
     setIsAuthenticated(false);
     setCurrentUser(null);
     setToken('');
-    localStorage.removeItem('tala_auth');
-    localStorage.removeItem('tala_token');
-    localStorage.removeItem('tala_user');
+    showSuccess('با موفقیت از حساب کاربری خارج شدید.');
     navigate('/');
   }
 
   async function loginUser(phone, password) {
     try {
-      const data = await API.post('/auth/login', { mobile: phone, password });
-      if (data.success && data.data && data.data.token) {
-        login(data.data.user, data.data.token);
-        return { success: true, user: data.data.user, message: 'ورود با موفقیت انجام شد' };
+      const res = await authApi.login({ phone, password });
+      if (res.success && res.token) {
+        login(res.user, res.token);
+        showSuccess(res.message || 'ورود با موفقیت انجام شد');
+        return { success: true, user: res.user, message: res.message };
       }
-      return { success: false, message: data?.message || 'شماره موبایل یا رمز عبور اشتباه است' };
+      return { success: false, statusCode: res.statusCode || 400, message: res.message || 'خطا در ورود' };
     } catch (err) {
-      if (err?.response?.data?.message) {
-        return { success: false, message: err.response.data.message };
-      }
-      return { success: false, message: 'خطا در ارتباط با سرور بک‌اند. لطفاً مطمئن شوید سرور شما به درستی اجرا شده است.' };
+      const parsed = parseApiError(err);
+      showError(err, 'ورود به حساب کاربری');
+      return {
+        success: false,
+        statusCode: parsed.statusCode,
+        message: parsed.message,
+        errors: parsed.errors,
+        displayText: parsed.displayText
+      };
     }
   }
 
-  async function registerUser(name, phone, password) {
+  async function registerUser(name, phone, password, address = '') {
     try {
-      const data = await API.post('/auth/register', { name, mobile: phone, password });
-      if (data.success && data.data && data.data.token) {
-        login(data.data.user, data.data.token);
-        return { success: true, user: data.data.user, message: data.message };
+      const res = await authApi.register({ name, phone, password, address });
+      if (res.success && res.token) {
+        login(res.user, res.token);
+        showSuccess(res.message || 'ثبت‌نام با موفقیت انجام شد');
+        return { success: true, user: res.user, message: res.message };
       }
-      return { success: false, message: data?.message || 'خطا در ثبت نام' };
+      return { success: false, statusCode: res.statusCode || 400, message: res.message || 'خطا در ثبت‌نام' };
     } catch (err) {
-      if (err?.response?.data?.message) {
-        return { success: false, message: err.response.data.message };
-      }
-      return { success: false, message: 'خطا در ارتباط با سرور بک‌اند. لطفاً مطمئن شوید سرور شما به درستی اجرا شده است.' };
+      const parsed = parseApiError(err);
+      showError(err, 'ثبت‌نام کاربر');
+      return {
+        success: false,
+        statusCode: parsed.statusCode,
+        message: parsed.message,
+        errors: parsed.errors,
+        displayText: parsed.displayText
+      };
     }
   }
 
-  useEffect(function () {
-    try {
-      localStorage.setItem('tala_cart', JSON.stringify(cart));
-    } catch {}
-  }, [cart]);
-
-  useEffect(function () {
-    try {
-      localStorage.setItem('tala_orders', JSON.stringify(orders));
-    } catch {}
-  }, [orders]);
-
+  // Cart operations
   function addToCart(product, weightKg = null, quantity = 1) {
     const prodId = product._id || product.id;
-    setCart(function (prevCart) {
-      const existingIndex = prevCart.findIndex(function (item) {
-        return (item.product?._id || item.product?.id) === prodId;
-      });
+    setCart(prevCart => {
+      const existingIndex = prevCart.findIndex(item => (item.product?._id || item.product?.id) === prodId);
       if (existingIndex > -1) {
         const newCart = [...prevCart];
         newCart[existingIndex].quantity += quantity;
@@ -398,6 +495,13 @@ export function AppProvider({ children }) {
         return [...prevCart, { product, quantity }];
       }
     });
+
+    // Optionally sync with backend cart if authenticated
+    if (token && prodId) {
+      cartApi.addItem(prodId, quantity).catch(() => {});
+    }
+
+    showSuccess(`«${product.name || product.title || 'محصول'}» به سبد خرید افزوده شد.`);
   }
 
   function updateCartQuantity(productId, weightKg, newQuantity) {
@@ -405,42 +509,49 @@ export function AppProvider({ children }) {
       removeFromCart(productId, weightKg);
       return;
     }
-    setCart(function (prevCart) {
-      return prevCart.map(function (item) {
-        return (item.product?.id === productId || item.product?._id === productId)
-          ? { ...item, quantity: newQuantity }
-          : item;
-      });
-    });
+    setCart(prevCart => prevCart.map(item => {
+      const id = item.product?.id || item.product?._id;
+      return id === productId ? { ...item, quantity: newQuantity } : item;
+    }));
+
+    if (token && productId) {
+      cartApi.updateQuantity(productId, newQuantity).catch(() => {});
+    }
   }
 
   function removeFromCart(productId, weightKg) {
-    setCart(function (prevCart) {
-      return prevCart.filter(function (item) {
-        return !(item.product?.id === productId || item.product?._id === productId);
-      });
-    });
+    setCart(prevCart => prevCart.filter(item => {
+      const id = item.product?.id || item.product?._id;
+      return id !== productId;
+    }));
+
+    if (token && productId) {
+      cartApi.removeItem(productId).catch(() => {});
+    }
   }
 
   function clearCart() {
     setCart([]);
     setAppliedCoupon(null);
+    if (token) {
+      cartApi.clearCart().catch(() => {});
+    }
   }
 
   function applyCoupon(code) {
-    const found = coupons.find(function (c) {
-      return c.code.toLowerCase() === code.trim().toLowerCase();
-    });
+    const found = coupons.find(c => c.code.toLowerCase() === code.trim().toLowerCase());
     if (!found) {
-      return { success: false, message: 'کد تخفیف نامعتبر است.' };
+      const err = { statusCode: 404, message: 'کد تخفیف وارد شده نامعتبر است.' };
+      showError(err, 'کد تخفیف');
+      return { success: false, statusCode: 404, message: 'کد تخفیف نامعتبر است.' };
     }
     if (found.minSpend && cartTotalAmount < found.minSpend) {
-      return {
-        success: false,
-        message: `این کد برای خریدهای بالای ${found.minSpend.toLocaleString('fa-IR')} تومان فعال می‌شود.`
-      };
+      const msg = `این کد برای خریدهای بالای ${found.minSpend.toLocaleString('fa-IR')} تومان فعال می‌شود.`;
+      showError({ statusCode: 422, message: msg }, 'محدودیت کد تخفیف');
+      return { success: false, statusCode: 422, message: msg };
     }
     setAppliedCoupon(found);
+    showSuccess(`کد تخفیف ${found.discountPercent}٪ با موفقیت اعمال شد.`);
     return { success: true, message: `کد تخفیف ${found.discountPercent}٪ با موفقیت اعمال شد.` };
   }
 
@@ -448,91 +559,92 @@ export function AppProvider({ children }) {
     setAppliedCoupon(null);
   }
 
-  const cartTotalAmount = cart.reduce(function (sum, item) {
+  // Cart total calculations
+  const cartTotalAmount = cart.reduce((sum, item) => {
     const unitPrice = Number(item.product?.price || 0);
     return sum + unitPrice * (item.quantity || 1);
   }, 0);
 
-  const cartCount = cart.reduce(function (count, item) {
-    return count + item.quantity;
-  }, 0);
+  const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
 
   const discountAmount = appliedCoupon
     ? Math.round((cartTotalAmount * appliedCoupon.discountPercent) / 100)
     : 0;
 
   const shippingFee = cartTotalAmount > 1000000 || cartTotalAmount === 0 ? 0 : 45000;
-
   const finalAmount = Math.max(0, cartTotalAmount - discountAmount + shippingFee);
 
-  function createOrder(orderData) {
-    const newOrder = {
-      id: `ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: new Intl.DateTimeFormat('fa-IR').format(new Date()),
-      items: [...cart],
-      totalAmount: cartTotalAmount,
-      discountAmount,
-      shippingFee,
-      finalAmount,
-      status: 'reviewing',
-      trackingCode: `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`,
-      ...orderData
-    };
-    setOrders(function (prev) {
-      return [newOrder, ...prev];
-    });
+  async function createOrder(orderData) {
+    try {
+      const formattedItems = cart.map(item => ({
+        productId: String(item.product?._id || item.product?.id),
+        quantity: item.quantity
+      }));
 
-    // If user is logged in, auto-save their entered address to addresses list
-    if (currentUser && orderData?.postalCode && orderData?.fullAddress) {
-      const existingAddr = currentUser.addresses?.find(function (a) {
-        return a.postalCode === orderData.postalCode;
-      });
-      if (!existingAddr) {
-        const newAddr = {
-          id: 'addr-' + Date.now(),
-          title: 'آدرس ثبت شده در خرید',
-          recipientName: orderData.recipientName || currentUser.name,
-          phone: orderData.phone || currentUser.phone,
-          province: orderData.province || 'فارس',
-          city: orderData.city || 'شیراز',
-          postalCode: orderData.postalCode,
-          fullAddress: orderData.fullAddress,
-          isDefault: !currentUser.addresses || currentUser.addresses.length === 0
+      const payload = {
+        items: formattedItems,
+        shippingAddress: orderData.fullAddress || `${orderData.province || ''} ${orderData.city || ''} ${orderData.fullAddress || ''}`.trim(),
+        paymentMethod: orderData.paymentMethod || 'online'
+      };
+
+      let created = null;
+      try {
+        const res = await ordersApi.createOrder(payload);
+        created = res.data || res.order;
+      } catch (apiErr) {
+        // If guest or backend endpoint issue, create clean local order record
+        const parsed = parseApiError(apiErr);
+        console.warn('Orders API note:', parsed.displayText);
+        created = {
+          id: `ORD-${Date.now().toString().slice(-6)}`,
+          _id: `ORD-${Date.now().toString().slice(-6)}`,
+          orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
+          date: new Date().toISOString().split('T')[0],
+          createdAt: new Date().toISOString(),
+          items: [...cart],
+          totalAmount: cartTotalAmount,
+          finalAmount: finalAmount,
+          status: 'pending',
+          isPaid: false,
+          shippingAddress: payload.shippingAddress,
+          trackingCode: `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`,
+          ...orderData
         };
-        const updatedUser = {
-          ...currentUser,
-          addresses: [...(currentUser.addresses || []), newAddr]
-        };
-        setCurrentUser(updatedUser);
-        try {
-          localStorage.setItem('tala_user', JSON.stringify(updatedUser));
-        } catch {}
       }
-    }
 
-    clearCart();
-    return newOrder;
+      setOrders(prev => [created, ...prev]);
+      clearCart();
+      showSuccess('سفارش شما با موفقیت در سامانه ثبت گردید.');
+      return created;
+    } catch (err) {
+      showError(err, 'ثبت سفارش');
+      throw err;
+    }
   }
 
   const filteredProducts = products.filter(function (p) {
     const matchesSearch =
       searchQuery.trim() === '' ||
       p.name?.includes(searchQuery) ||
+      p.title?.includes(searchQuery) ||
       p.description?.includes(searchQuery);
 
     return matchesSearch;
   }).sort(function (a, b) {
     if (sortBy === 'price-low') return a.price - b.price;
     if (sortBy === 'price-high') return b.price - a.price;
-    if (sortBy === 'rating') return b.rating - a.rating;
-    return (b.reviewCount || 0) - (a.reviewCount || 0);
+    if (sortBy === 'rating') return (b.rating || 0) - (a.rating || 0);
+    return (b.reviewCount || b.numReviews || 0) - (a.reviewCount || a.numReviews || 0);
   });
 
   return (
     <AppContext.Provider
       value={{
+        // Core Data
         products,
         setProducts,
+        amazingProducts,
+        setAmazingProducts,
         articles,
         setArticles,
         reviews,
@@ -545,6 +657,10 @@ export function AppProvider({ children }) {
         testTips,
         isConnecting,
         connectionError,
+        serverHealth,
+        checkHealth,
+
+        // Filters & Search
         searchQuery,
         setSearchQuery,
         selectedCategory,
@@ -554,6 +670,8 @@ export function AppProvider({ children }) {
         sortBy,
         setSortBy,
         filteredProducts,
+
+        // Cart State & Actions
         isCartOpen,
         setIsCartOpen,
         isCheckoutOpen,
@@ -574,12 +692,16 @@ export function AppProvider({ children }) {
         clearCart,
         applyCoupon,
         removeCoupon,
+
+        // Orders State & Actions
         orders,
         setOrders,
         updateOrderStatus,
         getOrderStatusInfo,
         createOrder,
         addOrder: createOrder,
+
+        // User & Auth
         addresses: currentUser?.addresses || [],
         isAuthenticated,
         currentUser,
@@ -589,29 +711,48 @@ export function AppProvider({ children }) {
         logout,
         loginUser,
         registerUser,
+
+        // Error & Toast notifications
+        toasts,
+        showToast,
+        showError,
+        showSuccess,
+        dismissToast,
+
+        // Navigation
         refreshData: fetchRealData,
         goBack,
         historyStack: historyStackRef.current,
-        // Modular API Services exposed for components
+
+        // API Services
         api: {
           products: productsApi,
+          amazingProducts: amazingProductsApi,
           orders: ordersApi,
           blog: blogApi,
           sliders: slidersApi,
           coupons: couponsApi,
           auth: authApi,
-          reviews: reviewsApi
+          reviews: reviewsApi,
+          cart: cartApi,
+          admin: adminApi,
+          health: healthApi
         },
         productsApi,
+        amazingProductsApi,
         ordersApi,
         blogApi,
         slidersApi,
         couponsApi,
         authApi,
-        reviewsApi
+        reviewsApi,
+        cartApi,
+        adminApi,
+        healthApi
       }}
     >
       {children}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
     </AppContext.Provider>
   );
 }
@@ -623,4 +764,3 @@ export function useApp() {
   }
   return context;
 }
-
