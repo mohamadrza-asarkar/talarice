@@ -21,7 +21,7 @@ export function BestSellers() {
       </header>
 
       <div className={styles.gridContainer}>
-        {products.slice(0, 2).map(function (product) {
+        {(products || []).slice(0, 2).map(function (product) {
           return <ProductCard key={product.id} product={product} />;
         })}
       </div>

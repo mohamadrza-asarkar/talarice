@@ -5,7 +5,7 @@ import styles from './style.module.css';
 
 export function AmazingDeals() {
   const { products } = useApp();
-  const dealProducts = products.filter(function (p) { return p.isDeal; });
+  const dealProducts = (products || []).filter(function (p) { return p.isDeal; });
   const [secondsLeft, setSecondsLeft] = useState(46785);
 
   useEffect(function () {
