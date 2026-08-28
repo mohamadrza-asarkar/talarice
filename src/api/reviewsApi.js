@@ -3,13 +3,13 @@ import client from './client';
 function parseReview(r) {
   if (!r) return null;
   return {
-    id: String(r.id || r._id || `rev-${Date.now()}`),
-    productId: String(r.productId || 'prod-1'),
-    userName: r.userName || r.user || 'خریدار محترم',
+    id: String(r.id || r._id || ''),
+    productId: String(r.productId || ''),
+    userName: r.userName || r.user || 'کاربر',
     rating: Number(r.rating || 5),
-    comment: r.comment || r.text || 'پخت و عطر برنج عالی بود.',
-    date: r.date || 'بهمن ۱۴۰۳',
-    isVerifiedPurchase: Boolean(r.isVerifiedPurchase ?? true)
+    comment: r.comment || r.text || '',
+    date: r.date || '',
+    isVerifiedPurchase: Boolean(r.isVerifiedPurchase ?? false)
   };
 }
 

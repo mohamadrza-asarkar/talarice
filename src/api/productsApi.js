@@ -3,17 +3,17 @@ import client from './client';
 function parseProduct(p) {
   if (!p) return null;
   const price = typeof p.price === 'number' ? p.price : Number(p.price) || 0;
-  const oldPrice = typeof p.originalPrice === 'number' ? p.originalPrice : (p.oldPrice ? Number(p.oldPrice) : Math.round(price * 1.15));
-  const discountPercent = p.discountPercent ?? (oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0);
-  const stock = p.countInStock !== undefined ? p.countInStock : (p.stock ?? 25);
+  const oldPrice = typeof p.originalPrice === 'number' ? p.originalPrice : (p.oldPrice ? Number(p.oldPrice) : (p.discountPercent ? Math.round(price / (1 - p.discountPercent / 100)) : null));
+  const discountPercent = p.discountPercent ?? (oldPrice && oldPrice > price ? Math.round(((oldPrice - price) / oldPrice) * 100) : 0);
+  const stock = p.countInStock !== undefined ? p.countInStock : (p.stock ?? 0);
   const inStock = p.isAvailable !== undefined ? p.isAvailable : (stock > 0);
-  const image = p.fullImageUrl || p.imageUrl || p.image || p.images?.[0] || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80';
+  const image = p.fullImageUrl || p.imageUrl || p.image || p.images?.[0] || '';
   
   return {
-    id: String(p._id || p.id || `prod-${Date.now()}`),
-    _id: String(p._id || p.id || `prod-${Date.now()}`),
-    name: p.name || p.title || 'برنج کامفیروزی ممتاز',
-    description: p.description || 'برنج اصیل کامفیروز شالیزارهای استان فارس با عطر و طعم ماندگار',
+    id: String(p._id || p.id || ''),
+    _id: String(p._id || p.id || ''),
+    name: p.name || p.title || '',
+    description: p.description || '',
     price: price,
     oldPrice: oldPrice,
     discountPercent: discountPercent,
@@ -21,16 +21,16 @@ function parseProduct(p) {
     inStock: inStock,
     category: p.category || 'all',
     image: image,
-    origin: p.origin || 'کامفیروز، استان فارس',
-    farmer: p.farmer || 'تعاونی شالیکاران کامفیروز',
-    cookingRatio: p.cookingRatio || '۱ پیمانه برنج به ۱.۳ پیمانه آب',
-    rating: Number(p.rating || 5.0),
-    reviewCount: Number(p.reviewCount || p.numReviews || 12),
-    gallery: Array.isArray(p.gallery) && p.gallery.length ? p.gallery : [image],
-    features: Array.isArray(p.features) ? p.features : ['۱۰۰٪ خالص کامفیروز', 'سورت لیزری دو الک', 'ارسال مستقیم از شالیزار'],
-    cookingTime: p.cookingTime || '۳۰ دقیقه',
-    smellLevel: p.smellLevel || 'عالی و طبیعی',
-    grainType: p.grainType || 'دانه بلند کامفیروزی',
+    origin: p.origin || '',
+    farmer: p.farmer || '',
+    cookingRatio: p.cookingRatio || '',
+    rating: Number(p.rating || 0),
+    reviewCount: Number(p.reviewCount || p.numReviews || 0),
+    gallery: Array.isArray(p.gallery) && p.gallery.length ? p.gallery : (image ? [image] : []),
+    features: Array.isArray(p.features) ? p.features : [],
+    cookingTime: p.cookingTime || '',
+    smellLevel: p.smellLevel || '',
+    grainType: p.grainType || '',
     isFeatured: Boolean(p.isFeatured || p.isAmazing),
     isDeal: Boolean(p.isDeal || p.isAmazing)
   };

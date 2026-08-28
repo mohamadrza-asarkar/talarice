@@ -9,9 +9,13 @@ const client = axios.create({
   timeout: 10000
 });
 
-// Request interceptor to attach bearer token
+// Request interceptor to attach bearer token and dynamic baseURL if customized
 client.interceptors.request.use(
   function (config) {
+    const customUrl = localStorage.getItem('tala_api_url');
+    if (customUrl) {
+      config.baseURL = customUrl.trim();
+    }
     const token = localStorage.getItem('tala_token') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

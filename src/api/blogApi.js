@@ -3,21 +3,21 @@ import client from './client';
 function parseArticle(a) {
   if (!a) return null;
   return {
-    id: String(a.id || a._id || `art-${Date.now()}`),
-    _id: String(a._id || a.id || `art-${Date.now()}`),
-    title: a.title || 'دانشنامه تخصصی کشت برنج کامفیروز',
-    summary: a.summary || 'مرجع اصیل آشنایی با مراحل کاشت، داشت و برداشت برنج معطر کامفیروز',
-    content: a.content || 'توضیحات جامع و علمی درباره شالیزارهای کامفیروز...',
-    image: a.image || 'https://images.unsplash.com/photo-1536657464919-892534f60d6e?auto=format&fit=crop&w=1000&q=80',
-    readTime: a.readTime || '۶ دقیقه مطالعه',
-    author: a.author || 'مهندس زارعی (کارشناس شالیکاری)',
-    date: a.date || 'بهمن ۱۴۰۳',
-    category: a.category || 'دانشنامه شالیکاری',
+    id: String(a.id || a._id || ''),
+    _id: String(a._id || a.id || ''),
+    title: a.title || '',
+    summary: a.summary || '',
+    content: a.content || '',
+    image: a.image || '',
+    readTime: a.readTime || '',
+    author: a.author || '',
+    date: a.date || '',
+    category: a.category || '',
     comments: Array.isArray(a.comments) ? a.comments.map(c => ({
       id: c.id || `c-${Math.random()}`,
-      name: c.name || 'کاربر گرامی',
+      name: c.name || 'کاربر',
       text: c.text || c.comment || '',
-      date: c.date || 'امروز'
+      date: c.date || ''
     })) : []
   };
 }

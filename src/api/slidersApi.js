@@ -8,24 +8,24 @@ function parseSlide(s, index = 0) {
     return {
       id: `slide-${index}`,
       _id: `slide-${index}`,
-      title: 'برنج کامفیروزی ممتاز طلا رایس',
-      description: 'برنج اصیل و معطر مستقیم از شالیکارهای معتمد فارس و گیلان',
-      subtitle: 'پیشنهاد ویژه',
+      title: '',
+      description: '',
+      subtitle: '',
       image: s,
-      link: '/products',
+      link: '/catalog',
       ctaText: 'مشاهده محصولات'
     };
   }
   
   // Otherwise, if s is an object
   return {
-    id: String(s.id || s._id || `slide-${index}-${Date.now()}`),
-    _id: String(s._id || s.id || `slide-${index}-${Date.now()}`),
-    title: s.title || 'برنج کامفیروزی ممتاز طلا رایس',
-    description: s.description || 'برنج اصیل و معطر مستقیم از شالیکارهای معتمد فارس و گیلان',
-    subtitle: s.subtitle || 'پیشنهاد ویژه',
-    image: s.image || s.url || s.imageUrl || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=1200&q=80',
-    link: s.link || '/products',
+    id: String(s.id || s._id || `slide-${index}`),
+    _id: String(s._id || s.id || `slide-${index}`),
+    title: s.title || '',
+    description: s.description || '',
+    subtitle: s.subtitle || '',
+    image: s.image || s.url || s.imageUrl || '',
+    link: s.link || '/catalog',
     ctaText: s.ctaText || 'مشاهده محصولات'
   };
 }

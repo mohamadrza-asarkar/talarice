@@ -4,28 +4,28 @@ function parseOrder(o) {
   if (!o) return null;
   const status = o.status || 'pending';
   return {
-    id: String(o.id || o._id || `order-${Date.now()}`),
-    _id: String(o._id || o.id || `order-${Date.now()}`),
-    orderCode: o.orderCode || o.code || `TR-${Math.floor(100000 + Math.random() * 900000)}`,
-    date: o.date || new Date().toISOString().split('T')[0],
-    createdAt: o.createdAt || new Date().toISOString(),
+    id: String(o.id || o._id || ''),
+    _id: String(o._id || o.id || ''),
+    orderCode: o.orderCode || o.code || '',
+    date: o.date || (o.createdAt ? o.createdAt.split('T')[0] : ''),
+    createdAt: o.createdAt || '',
     status: status,
-    customerName: o.customerName || o.fullName || o.receiverName || 'خریدار محترم',
-    customerPhone: o.customerPhone || o.phone || o.receiverPhone || '۰۹۱۲۰۰۰۰۰۰۰',
-    customerAddress: o.customerAddress || o.address || o.shippingAddress || 'استان فارس، شیراز',
+    customerName: o.customerName || o.fullName || o.receiverName || '',
+    customerPhone: o.customerPhone || o.phone || o.receiverPhone || '',
+    customerAddress: o.customerAddress || o.address || o.shippingAddress || '',
     items: Array.isArray(o.items) ? o.items.map(item => ({
-      id: item.id || item.productId,
-      name: item.name || item.title || 'برنج کامفیروزی',
+      id: item.id || item.productId || '',
+      name: item.name || item.title || '',
       price: Number(item.price || 0),
       quantity: Number(item.quantity || item.qty || 1),
-      image: item.image || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=800&q=80',
+      image: item.image || '',
       weight: item.weight || 10
     })) : [],
     totalAmount: Number(o.totalAmount || o.totalPrice || o.finalAmount || 0),
     discountAmount: Number(o.discountAmount || 0),
-    shippingFee: Number(o.shippingFee ?? 49000),
-    paymentMethod: o.paymentMethod || 'پرداخت آنلاین کارت به کارت',
-    trackingCode: o.trackingCode || (status === 'shipped' || status === 'completed' ? `POST-${Math.floor(100000000 + Math.random() * 900000000)}` : null)
+    shippingFee: Number(o.shippingFee ?? 0),
+    paymentMethod: o.paymentMethod || '',
+    trackingCode: o.trackingCode || null
   };
 }
 

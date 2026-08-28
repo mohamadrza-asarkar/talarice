@@ -157,6 +157,7 @@ export function AppProvider({ children }) {
     let artRes = null;
     let orderRes = null;
     let hasProdError = false;
+    let hasSliderError = false;
     let prodErrorMessage = '';
 
     // Fetch products (primary endpoint)
@@ -173,6 +174,7 @@ export function AppProvider({ children }) {
       sliderRes = await slidersApi.getSliders();
     } catch (err) {
       console.warn('Sliders API not implemented on backend:', err.message);
+      hasSliderError = true;
     }
 
     try {
@@ -188,19 +190,27 @@ export function AppProvider({ children }) {
     }
 
     // Set Products
-    if (prodRes?.success && Array.isArray(prodRes.data)) {
-      setProducts(prodRes.data);
-    } else if (Array.isArray(prodRes)) {
-      setProducts(prodRes);
+    if (!hasProdError) {
+      if (prodRes?.success && Array.isArray(prodRes.data)) {
+        setProducts(prodRes.data);
+      } else if (Array.isArray(prodRes)) {
+        setProducts(prodRes);
+      } else {
+        setProducts([]);
+      }
     } else {
       setProducts([]);
     }
 
     // Set Sliders
-    if (sliderRes?.success && Array.isArray(sliderRes.data)) {
-      setHeroSlides(sliderRes.data);
-    } else if (Array.isArray(sliderRes)) {
-      setHeroSlides(sliderRes);
+    if (!hasSliderError) {
+      if (sliderRes?.success && Array.isArray(sliderRes.data)) {
+        setHeroSlides(sliderRes.data);
+      } else if (Array.isArray(sliderRes)) {
+        setHeroSlides(sliderRes);
+      } else {
+        setHeroSlides([]);
+      }
     } else {
       setHeroSlides([]);
     }
@@ -219,6 +229,8 @@ export function AppProvider({ children }) {
       setOrders(orderRes.data);
     } else if (Array.isArray(orderRes)) {
       setOrders(orderRes);
+    } else {
+      setOrders([]);
     }
 
     // Determine real connection error
@@ -588,8 +600,7 @@ export function AppProvider({ children }) {
           sliders: slidersApi,
           coupons: couponsApi,
           auth: authApi,
-          reviews: reviewsApi,
-          categories: categoriesApi
+          reviews: reviewsApi
         },
         productsApi,
         ordersApi,
@@ -597,8 +608,7 @@ export function AppProvider({ children }) {
         slidersApi,
         couponsApi,
         authApi,
-        reviewsApi,
-        categoriesApi
+        reviewsApi
       }}
     >
       {children}
