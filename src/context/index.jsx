@@ -289,7 +289,6 @@ export function AppProvider({ children }) {
       prodErrorMessage = parsed.message;
       prodStatusCode = parsed.statusCode;
       setProducts([]);
-      showError(err, 'دریافت محصولات');
     }
 
     // 2. Fetch Amazing Products
