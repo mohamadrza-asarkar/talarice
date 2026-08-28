@@ -8,8 +8,7 @@ import {
   slidersApi,
   couponsApi,
   authApi,
-  reviewsApi,
-  categoriesApi
+  reviewsApi
 } from '../api';
 const AppContext = createContext();
 
@@ -128,10 +127,21 @@ export function AppProvider({ children }) {
   const [connectionError, setConnectionError] = useState(null);
 
   const [categories, setCategories] = useState([
-    { id: 'all', name: 'همه محصولات', iconClass: 'fa-solid fa-border-all' }
+    { id: 'all', name: 'همه محصولات', iconClass: 'fa-solid fa-border-all' },
+    { id: 'hashemi', name: 'برنج هاشمی', iconClass: 'fa-solid fa-wheat-awn' },
+    { id: 'tarom', name: 'برنج طارم', iconClass: 'fa-solid fa-seedling' },
+    { id: 'smoky', name: 'برنج دودی', iconClass: 'fa-solid fa-fire' },
+    { id: 'broken', name: 'نیم‌دانه و سرلاشه', iconClass: 'fa-solid fa-mortar-pestle' }
   ]);
-  const [trustItems, setTrustItems] = useState([]);
-  const [brandStory, setBrandStory] = useState('');
+  const [trustItems, setTrustItems] = useState([
+    { id: '1', title: 'ضمانت اصالت کامپیروز', iconClass: 'fa-solid fa-award', description: 'تمام محصولات ما مستقیماً از کشاورزان معتمد و اصیل شالیزارهای کامفیروز تهیه و بسته‌بندی می‌شوند.' },
+    { id: '2', title: 'ارسال سریع به سراسر کشور', iconClass: 'fa-solid fa-truck-fast', description: 'سفارشات شما در سریع‌ترین زمان ممکن از طریق پست، تیپاکس یا باربری به درب منزل شما ارسال خواهد شد.' },
+    { id: '3', title: 'امکان ارجاع وجه', iconClass: 'fa-solid fa-rotate-left', description: 'در صورت عدم رضایت از پخت یا کیفیت محصول، وجه پرداختی شما با احترام تمام مسترد خواهد شد.' }
+  ]);
+  const [brandStory, setBrandStory] = useState({
+    title: 'داستان و اصالت برنج طلا رایس',
+    description: 'طلا رایس با هدف حذف واسطه‌ها و ارائه مستقیم برنج معطر کامفیروز و هاشمی شمال تأسیس شده است. ما با همکاری مستقیم شالیکاران سنتی، عطر و طعم واقعی سفره ایرانی را با تضمین اصالت و بهترین کیفیت به دست شما می‌رسانیم.'
+  });
   const [testTips, setTestTips] = useState([]);
 
   function getImageUrl(path) {
@@ -142,52 +152,86 @@ export function AppProvider({ children }) {
 
   async function fetchRealData() {
     setIsConnecting(true);
-    try {
-      const [prodRes, sliderRes, artRes, orderRes, catRes, metaRes] = await Promise.all([
-        productsApi.getProducts(),
-        slidersApi.getSliders(),
-        blogApi.getArticles(),
-        ordersApi.getOrders(),
-        categoriesApi.getCategories(),
-        categoriesApi.getHomeMeta()
-      ]);
+    let prodRes = null;
+    let sliderRes = null;
+    let artRes = null;
+    let orderRes = null;
+    let hasProdError = false;
+    let prodErrorMessage = '';
 
-      if (prodRes?.success && Array.isArray(prodRes.data)) {
-        setProducts(prodRes.data);
-      }
-      if (sliderRes?.success && Array.isArray(sliderRes.data)) {
-        setHeroSlides(sliderRes.data);
-      }
-      if (artRes?.success && Array.isArray(artRes.data)) {
-        setArticles(artRes.data);
-      }
-      if (orderRes?.success && Array.isArray(orderRes.data)) {
-        setOrders(orderRes.data);
-      }
-      if (catRes?.success && Array.isArray(catRes.data)) {
-        setCategories(catRes.data);
-      }
-      if (metaRes?.success) {
-        setTrustItems(metaRes.trustItems || []);
-        setBrandStory(metaRes.brandStory || '');
-        setTestTips(metaRes.testTips || []);
-      }
-      setConnectionError(null);
+    // Fetch products (primary endpoint)
+    try {
+      prodRes = await productsApi.getProducts();
     } catch (err) {
-      console.warn('[fetchRealData] API fetch warning:', err);
-      setConnectionError(err.message || 'خطای اتصال به سرور بک‌اند');
-    } finally {
-      setIsConnecting(false);
+      console.warn('Products API failed:', err.message);
+      hasProdError = true;
+      prodErrorMessage = err.message || 'خطای اتصال به وب‌سرویس محصولات';
     }
+
+    // Safely attempt secondary endpoints (since the user may not have them implemented)
+    try {
+      sliderRes = await slidersApi.getSliders();
+    } catch (err) {
+      console.warn('Sliders API not implemented on backend:', err.message);
+    }
+
+    try {
+      artRes = await blogApi.getArticles();
+    } catch (err) {
+      console.warn('Articles API not implemented on backend:', err.message);
+    }
+
+    try {
+      orderRes = await ordersApi.getOrders();
+    } catch (err) {
+      console.warn('Orders API not implemented on backend:', err.message);
+    }
+
+    // Set Products
+    if (prodRes?.success && Array.isArray(prodRes.data)) {
+      setProducts(prodRes.data);
+    } else if (Array.isArray(prodRes)) {
+      setProducts(prodRes);
+    } else {
+      setProducts([]);
+    }
+
+    // Set Sliders
+    if (sliderRes?.success && Array.isArray(sliderRes.data)) {
+      setHeroSlides(sliderRes.data);
+    } else if (Array.isArray(sliderRes)) {
+      setHeroSlides(sliderRes);
+    } else {
+      setHeroSlides([]);
+    }
+
+    // Set Articles
+    if (artRes?.success && Array.isArray(artRes.data)) {
+      setArticles(artRes.data);
+    } else if (Array.isArray(artRes)) {
+      setArticles(artRes);
+    } else {
+      setArticles([]);
+    }
+
+    // Set Orders
+    if (orderRes?.success && Array.isArray(orderRes.data)) {
+      setOrders(orderRes.data);
+    } else if (Array.isArray(orderRes)) {
+      setOrders(orderRes);
+    }
+
+    // Determine real connection error
+    if (hasProdError) {
+      setConnectionError(prodErrorMessage);
+    } else {
+      setConnectionError(null);
+    }
+    setIsConnecting(false);
   }
 
   useEffect(function () {
     fetchRealData();
-    // Poll the backend every 6 seconds to automatically detect when it's booted and populated!
-    const interval = setInterval(function () {
-      fetchRealData();
-    }, 6000);
-    return function () { clearInterval(interval); };
   }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
