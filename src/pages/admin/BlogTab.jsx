@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import { Plus, Trash2, BookOpen, Clock, Calendar, X, Eye } from 'lucide-react';
 import styles from './style.module.css';
 
-export const BlogTab = () => {
+export function BlogTab() {
   const { articles: posts, setArticles: setPosts } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewPost, setPreviewPost] = useState(null);
@@ -26,7 +26,7 @@ export const BlogTab = () => {
     { label: 'نگهداری کیسه نخی', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=800' }
   ];
 
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
     const newId = `art_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newPost = {
@@ -38,7 +38,7 @@ export const BlogTab = () => {
       author: formData.author || 'تیم طلا رایس',
       excerpt: formData.excerpt,
       summary: formData.excerpt,
-      content: formData.content.split('\n').filter((p) => p.trim()),
+      content: formData.content.split('\n').filter(function (p) { return p.trim(); }),
       image: formData.image || sampleBlogImages[0].url,
       date: new Intl.DateTimeFormat('fa-IR').format(new Date()),
       proTips: ['نکات مهم پخت و نگهداری این مقاله را در آشپزی خانگی به کار بگیرید.']
@@ -47,12 +47,12 @@ export const BlogTab = () => {
     setPosts([newPost, ...posts]);
     setIsModalOpen(false);
     setFormData(initialForm);
-  };
+  }
 
-  const handleDelete = (id) => {
+  function handleDelete(id) {
     if (!window.confirm('آیا از حذف این مقاله آموزشی اطمینان دارید؟')) return;
-    setPosts(posts.filter((p) => p._id !== id && p.id !== id));
-  };
+    setPosts(posts.filter(function (p) { return p._id !== id && p.id !== id; }));
+  }
 
   return (
     <div>
@@ -60,13 +60,13 @@ export const BlogTab = () => {
       <div className={styles.tabHeader}>
         <div>
           <h1 className={styles.tabTitle}>
-            <span>وبلاگ و مقالات آموزشی</span>
+            <span>دانشنامه و مقالات آموزشی</span>
           </h1>
           <p className={styles.tabSubtitle}>
             انتشار راهنماهای پخت مجلسی، ترفندهای نگهداری و معرفی شالیزارهای کامفیروز
           </p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className={styles.addBtn}>
+        <button onClick={function () { setIsModalOpen(true); }} className={styles.addBtn}>
           <Plus size={19} strokeWidth={2.5} />
           <span>نگارش مقاله جدید</span>
         </button>
@@ -82,7 +82,7 @@ export const BlogTab = () => {
         </div>
       ) : (
         <div className={styles.cardsGrid}>
-          {posts.map((post) => {
+          {posts.map(function (post) {
             const id = post._id || post.id;
             return (
               <div key={id} className={styles.gridCard}>
@@ -90,14 +90,14 @@ export const BlogTab = () => {
                   <img
                     src={post.image || sampleBlogImages[0].url}
                     alt={post.title}
-                    onError={(e) => {
+                    onError={function (e) {
                       e.target.onerror = null;
                       e.target.src = sampleBlogImages[0].url;
                     }}
                   />
                   <div className={styles.cardOverlay}>
                     <button
-                      onClick={() => handleDelete(id)}
+                      onClick={function () { handleDelete(id); }}
                       className={styles.overlayActionBtn}
                       title="حذف مقاله"
                     >
@@ -146,7 +146,7 @@ export const BlogTab = () => {
                     </span>
 
                     <button
-                      onClick={() => setPreviewPost(post)}
+                      onClick={function () { setPreviewPost(post); }}
                       className={styles.detailBtn}
                       style={{ padding: '0.25rem 0.625rem', fontSize: '0.72rem' }}
                     >
@@ -163,8 +163,8 @@ export const BlogTab = () => {
 
       {/* Add Article Modal */}
       {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={function () { setIsModalOpen(false); }}>
+          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
             <div className={styles.modalHeader}>
               <div>
                 <h3 className={styles.modalTitle}>نگارش و انتشار مقاله جدید</h3>
@@ -172,7 +172,7 @@ export const BlogTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={function () { setIsModalOpen(false); }}
                 className={styles.modalCloseBtn}
               >
                 <X size={20} />
@@ -189,7 +189,7 @@ export const BlogTab = () => {
                       type="text"
                       placeholder="مثال: ۱۰ فوت و فن قد کشیدن برنج اصیل کامفیروز در مجالس"
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, title: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -198,7 +198,7 @@ export const BlogTab = () => {
                     <label className={styles.label}>دسته‌بندی موضوعی</label>
                     <select
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, category: e.target.value }); }}
                       className={styles.select}
                     >
                       <option value="رازهای پخت">رازهای پخت</option>
@@ -214,7 +214,7 @@ export const BlogTab = () => {
                       type="text"
                       placeholder="مثال: ۵ دقیقه مطالعه"
                       value={formData.readTime}
-                      onChange={(e) => setFormData({ ...formData, readTime: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, readTime: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -226,7 +226,7 @@ export const BlogTab = () => {
                       type="text"
                       placeholder="https://..."
                       value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
                       dir="ltr"
                       className={styles.input}
                     />
@@ -234,24 +234,26 @@ export const BlogTab = () => {
                       <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>
                         تصاویر پیشنهادی:
                       </span>
-                      {sampleBlogImages.map((img, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, image: img.url })}
-                          style={{
-                            fontSize: '0.6875rem',
-                            fontWeight: 700,
-                            padding: '0.2rem 0.5rem',
-                            borderRadius: '0.375rem',
-                            border: '1px solid #cbd5e1',
-                            background: '#f8fafc',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {img.label}
-                        </button>
-                      ))}
+                      {sampleBlogImages.map(function (img, idx) {
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={function () { setFormData({ ...formData, image: img.url }); }}
+                            style={{
+                              fontSize: '0.6875rem',
+                              fontWeight: 700,
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              border: '1px solid #cbd5e1',
+                              background: '#f8fafc',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {img.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -261,7 +263,7 @@ export const BlogTab = () => {
                       required
                       placeholder="یک یا دو خط توضیح مختصر درباره موضوع مقاله..."
                       value={formData.excerpt}
-                      onChange={(e) => setFormData({ ...formData, excerpt: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, excerpt: e.target.value }); }}
                       rows="2"
                       className={styles.textarea}
                     />
@@ -273,7 +275,7 @@ export const BlogTab = () => {
                       required
                       placeholder="متن کامل پاراگراف‌های مقاله را اینجا بنویسید (پاراگراف‌ها را با Enter جدا کنید)..."
                       value={formData.content}
-                      onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, content: e.target.value }); }}
                       rows="6"
                       className={styles.textarea}
                     />
@@ -283,13 +285,13 @@ export const BlogTab = () => {
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={function () { setIsModalOpen(false); }}
                     className={styles.cancelBtn}
                   >
                     انصراف
                   </button>
                   <button type="submit" className={styles.submitBtn}>
-                    انتشار مقاله در وبلاگ
+                    انتشار مقاله در دانشنامه
                   </button>
                 </div>
               </form>
@@ -300,8 +302,8 @@ export const BlogTab = () => {
 
       {/* Article Preview Modal */}
       {previewPost && (
-        <div className={styles.modalOverlay} onClick={() => setPreviewPost(null)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={function () { setPreviewPost(null); }}>
+          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
             <div className={styles.modalHeader}>
               <div>
                 <h3 className={styles.modalTitle}>{previewPost.title}</h3>
@@ -311,7 +313,7 @@ export const BlogTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setPreviewPost(null)}
+                onClick={function () { setPreviewPost(null); }}
                 className={styles.modalCloseBtn}
               >
                 <X size={20} />
@@ -329,11 +331,13 @@ export const BlogTab = () => {
 
               <div style={{ fontSize: '0.875rem', lineHeight: '1.8', color: '#334155' }}>
                 {Array.isArray(previewPost.content) ? (
-                  previewPost.content.map((p, idx) => (
-                    <p key={idx} style={{ marginBottom: '0.75rem' }}>
-                      {p}
-                    </p>
-                  ))
+                  previewPost.content.map(function (p, idx) {
+                    return (
+                      <p key={idx} style={{ marginBottom: '0.75rem' }}>
+                        {p}
+                      </p>
+                    );
+                  })
                 ) : (
                   <p>{previewPost.content}</p>
                 )}
@@ -353,9 +357,9 @@ export const BlogTab = () => {
                     💡 نکته طلایی سرآشپز طلا رایس:
                   </h4>
                   <ul style={{ margin: 0, paddingRight: '1.25rem', fontSize: '0.8125rem', color: '#065f46' }}>
-                    {previewPost.proTips.map((tip, idx) => (
-                      <li key={idx}>{tip}</li>
-                    ))}
+                    {previewPost.proTips.map(function (tip, idx) {
+                      return <li key={idx}>{tip}</li>;
+                    })}
                   </ul>
                 </div>
               )}
@@ -363,7 +367,7 @@ export const BlogTab = () => {
               <div className={styles.modalActions}>
                 <button
                   type="button"
-                  onClick={() => setPreviewPost(null)}
+                  onClick={function () { setPreviewPost(null); }}
                   className={styles.cancelBtn}
                   style={{ width: '100%' }}
                 >
@@ -376,4 +380,4 @@ export const BlogTab = () => {
       )}
     </div>
   );
-};
+}

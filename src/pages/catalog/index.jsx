@@ -4,7 +4,7 @@ import { useApp } from '../../context';
 import { ProductCard } from '../../components/productCard';
 import styles from './style.module.css';
 
-export const CatalogPage = () => {
+export function CatalogPage() {
   const { products, goBack } = useApp();
 
   return (
@@ -13,7 +13,7 @@ export const CatalogPage = () => {
         <div className={styles.headerTopRow}>
           <button
             type="button"
-            onClick={() => goBack('/')}
+            onClick={function () { goBack('/'); }}
             className={styles.backBtn}
             aria-label="بازگشت"
           >
@@ -49,12 +49,14 @@ export const CatalogPage = () => {
         </div>
       ) : (
         <main className={styles.gridContainer}>
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {products.map(function (product) {
+            return <ProductCard key={product.id} product={product} />;
+          })}
         </main>
       )}
     </div>
   );
-};
+}
+
+export default CatalogPage;
 

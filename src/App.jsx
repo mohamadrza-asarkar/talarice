@@ -1,70 +1,36 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AppProvider, useApp } from './context';
-import { Header } from './components/header';
-import { BottomNav } from './components/bottomNav';
-import { CartDrawer } from './components/cartDrawer';
-import { CheckoutModal } from './components/checkoutModal';
-import { HomePage } from './pages/home';
-import { CatalogPage } from './pages/catalog';
-import { BlogPage } from './pages/blog';
-import { ProfilePage } from './pages/profile';
-import { SearchPage } from './pages/search';
-import { ProductPage } from './pages/product';
-import { AuthPage } from './pages/auth';
-import { AdminPage } from './pages/admin';
-import styles from './App.module.css';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Home from './pages/Home.jsx';
+import Catalog from './pages/Catalog.jsx';
+import Product from './pages/Product.jsx';
+import Search from './pages/Search.jsx';
+import Blog from './pages/Blog.jsx';
+import Profile from './pages/Profile.jsx';
+import Auth from './pages/Auth.jsx';
+import Admin from './pages/Admin.jsx';
+import { Layout, SimpleLayout } from './components/Layout.jsx';
 
-const AppLayout = () => {
-  const { isAuthenticated } = useApp();
-  const location = useLocation();
-
-  const isSearchPage = location.pathname === '/search';
-  const isProductPage = location.pathname.startsWith('/product/');
-  const isAdminPage = location.pathname.startsWith('/admin');
-
-  const hideHeaderAndNav = isSearchPage || isProductPage || isAdminPage;
-
-  const routes = [
-    { path: '/', element: <HomePage /> },
-    { path: '/catalog', element: <CatalogPage /> },
-    { path: '/blog', element: <BlogPage /> },
-    { path: '/profile', element: isAuthenticated ? <ProfilePage /> : <Navigate to="/auth" replace /> },
-    { path: '/auth', element: !isAuthenticated ? <AuthPage /> : <Navigate to="/profile" replace /> },
-    { path: '/search', element: <SearchPage /> },
-    { path: '/product/:id', element: <ProductPage /> },
-    { path: '/admin/*', element: <AdminPage /> },
-    { path: '/admin', element: <AdminPage /> },
-    { path: '*', element: <Navigate to="/" replace /> }
-  ];
-
+function App() {
   return (
-    <div className={styles.appWrapper}>
-      {!hideHeaderAndNav && <Header />}
-      
-      <main className={!hideHeaderAndNav ? `${styles.mainContainer} ${styles.minHeight}` : styles.fullHeight}>
-        <Routes>
-          {routes.map((route, idx) => (
-            <Route key={idx} path={route.path} element={route.element} />
-          ))}
-        </Routes>
-      </main>
+    <Routes>
+      <Route element={<Layout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/catalog" element={<Catalog />} />
+        <Route path="/blog" element={<Blog />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/auth" element={<Auth />} />
+      </Route>
 
-      {!hideHeaderAndNav && <BottomNav />}
-      <CartDrawer />
-      <CheckoutModal />
-    </div>
-  );
-};
+      <Route element={<SimpleLayout />}>
+        <Route path="/product/:id" element={<Product />} />
+        <Route path="/search" element={<Search />} />
+      </Route>
 
-export default function App() {
-  return (
-    <BrowserRouter>
-      <AppProvider>
-        <AppLayout />
-      </AppProvider>
-    </BrowserRouter>
+      <Route path="/admin/*" element={<Admin />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
-
+export default App;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const CartDrawer = () => {
+export function CartDrawer() {
   const {
     isCartOpen,
     setIsCartOpen,
@@ -25,29 +25,29 @@ export const CartDrawer = () => {
 
   if (!isCartOpen) return null;
 
-  const handleApplyCoupon = (e) => {
+  function handleApplyCoupon(e) {
     e.preventDefault();
     if (!couponInput.trim()) return;
     const res = applyCoupon(couponInput);
     setCouponMessage({ success: res.success, text: res.message });
     if (res.success) setCouponInput('');
-    setTimeout(() => setCouponMessage(null), 3000);
-  };
+    setTimeout(function () { setCouponMessage(null); }, 3000);
+  }
 
-  const openCheckout = () => {
+  function openCheckout() {
     setIsCartOpen(false);
     setIsCheckoutOpen(true);
-  };
+  }
 
   return (
-    <aside className={styles.overlay} onClick={() => setIsCartOpen(false)}>
-      <section className={styles.drawer} onClick={(e) => e.stopPropagation()}>
+    <aside className={styles.overlay} onClick={function () { setIsCartOpen(false); }}>
+      <section className={styles.drawer} onClick={function (e) { e.stopPropagation(); }}>
         <header className={styles.header}>
           <h3 className={styles.title}>
             <i className="fa-solid fa-cart-flatbed-suitcases" />
             <span>سبد خرید شما</span>
           </h3>
-          <button onClick={() => setIsCartOpen(false)} className={styles.closeBtn} aria-label="بستن سبد خرید">
+          <button onClick={function () { setIsCartOpen(false); }} className={styles.closeBtn} aria-label="بستن سبد خرید">
             <i className="fa-solid fa-xmark" />
           </button>
         </header>
@@ -56,7 +56,7 @@ export const CartDrawer = () => {
           <div className={styles.emptyState}>
             <i className={`fa-solid fa-bag-shopping ${styles.emptyIcon}`} />
             <p>سبد خرید شما در حال حاضر خالی است.</p>
-            <button onClick={() => setIsCartOpen(false)} className={styles.returnBtn}>
+            <button onClick={function () { setIsCartOpen(false); }} className={styles.returnBtn}>
               بازگشت به فروشگاه
             </button>
           </div>
@@ -71,7 +71,7 @@ export const CartDrawer = () => {
             </div>
 
             <ul className={styles.itemsList}>
-              {cart.map((item) => {
+              {cart.map(function (item) {
                 const unitPrice = Number(item.product?.price ?? 0);
                 const itemTotal = unitPrice * (item.quantity ?? 1);
 
@@ -82,7 +82,7 @@ export const CartDrawer = () => {
                       <div className={styles.itemTop}>
                         <h4>{item.product?.name}</h4>
                         <button
-                          onClick={() => removeFromCart(item.product.id, item.weightKg)}
+                          onClick={function () { removeFromCart(item.product.id, item.weightKg); }}
                           className={styles.deleteBtn}
                           aria-label="حذف"
                         >
@@ -100,9 +100,9 @@ export const CartDrawer = () => {
                         </strong>
 
                         <div className={styles.qtyControl}>
-                          <button onClick={() => updateQuantity(item.product.id, item.weightKg, item.quantity - 1)}>-</button>
+                          <button onClick={function () { updateQuantity(item.product.id, item.weightKg, item.quantity - 1); }}>-</button>
                           <span>{(item.quantity ?? 1).toLocaleString('fa-IR')}</span>
-                          <button onClick={() => updateQuantity(item.product.id, item.weightKg, item.quantity + 1)}>+</button>
+                          <button onClick={function () { updateQuantity(item.product.id, item.weightKg, item.quantity + 1); }}>+</button>
                         </div>
                       </div>
                     </div>
@@ -123,7 +123,7 @@ export const CartDrawer = () => {
                     type="text"
                     placeholder="کد تخفیف..."
                     value={couponInput}
-                    onChange={(e) => setCouponInput(e.target.value)}
+                    onChange={function (e) { setCouponInput(e.target.value); }}
                   />
                   <button type="submit">اعمال</button>
                 </form>
@@ -165,4 +165,4 @@ export const CartDrawer = () => {
       </section>
     </aside>
   );
-};
+}

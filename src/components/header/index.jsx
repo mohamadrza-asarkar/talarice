@@ -6,7 +6,7 @@ import { SearchBar } from '../searchBar';
 import { Sparkles } from 'lucide-react';
 import styles from './style.module.css';
 
-export const Header = () => {
+export function Header() {
   const { isAdmin } = useApp();
 
   return (

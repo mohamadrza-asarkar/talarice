@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import { Plus, Trash2, Image as ImageIcon, ExternalLink, X, Sparkles } from 'lucide-react';
 import styles from './style.module.css';
 
-export const SlidersTab = () => {
+export function SlidersTab() {
   const { heroSlides: sliders, setHeroSlides: setSliders } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -24,7 +24,7 @@ export const SlidersTab = () => {
     { label: 'کیسه نخی و پخت', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=1200' },
   ];
 
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
     const newId = `slide_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newSlider = {
@@ -41,12 +41,12 @@ export const SlidersTab = () => {
     setSliders([newSlider, ...sliders]);
     setIsModalOpen(false);
     setFormData(initialForm);
-  };
+  }
 
-  const handleDelete = (id) => {
+  function handleDelete(id) {
     if (!window.confirm('آیا از حذف این بنر نمایشی اطمینان دارید؟')) return;
-    setSliders(sliders.filter((s) => s._id !== id && s.id !== id));
-  };
+    setSliders(sliders.filter(function (s) { return s._id !== id && s.id !== id; }));
+  }
 
   return (
     <div>
@@ -60,7 +60,7 @@ export const SlidersTab = () => {
             تنظیم بنرهای تبلیغاتی، جشنواره‌های تخفیف و اسلایدر صفحه نخست طلا رایس
           </p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className={styles.addBtn}>
+        <button onClick={function () { setIsModalOpen(true); }} className={styles.addBtn}>
           <Plus size={19} strokeWidth={2.5} />
           <span>افزودن بنر جدید</span>
         </button>
@@ -76,7 +76,7 @@ export const SlidersTab = () => {
         </div>
       ) : (
         <div className={styles.cardsGrid}>
-          {sliders.map((s) => {
+          {sliders.map(function (s) {
             const id = s._id || s.id;
             return (
               <div key={id} className={styles.gridCard}>
@@ -84,14 +84,14 @@ export const SlidersTab = () => {
                   <img
                     src={s.image || sampleImages[0].url}
                     alt={s.title}
-                    onError={(e) => {
+                    onError={function (e) {
                       e.target.onerror = null;
                       e.target.src = sampleImages[0].url;
                     }}
                   />
                   <div className={styles.cardOverlay}>
                     <button
-                      onClick={() => handleDelete(id)}
+                      onClick={function () { handleDelete(id); }}
                       className={styles.overlayActionBtn}
                       title="حذف بنر"
                     >
@@ -149,8 +149,8 @@ export const SlidersTab = () => {
 
       {/* Modal */}
       {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={function () { setIsModalOpen(false); }}>
+          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
             <div className={styles.modalHeader}>
               <div>
                 <h3 className={styles.modalTitle}>افزودن بنر جدید به ویترین</h3>
@@ -158,7 +158,7 @@ export const SlidersTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={function () { setIsModalOpen(false); }}
                 className={styles.modalCloseBtn}
               >
                 <X size={20} />
@@ -175,7 +175,7 @@ export const SlidersTab = () => {
                       type="text"
                       placeholder="مثال: جشنواره پاییزه برنج اصل کامفیروز"
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, title: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -186,7 +186,7 @@ export const SlidersTab = () => {
                       type="text"
                       placeholder="مثال: فروش ویژه فصل جدید"
                       value={formData.subtitle}
-                      onChange={(e) => setFormData({ ...formData, subtitle: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, subtitle: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -197,7 +197,7 @@ export const SlidersTab = () => {
                       type="text"
                       placeholder="مثال: خرید کیسه ۱۰ کیلویی"
                       value={formData.ctaText}
-                      onChange={(e) => setFormData({ ...formData, ctaText: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, ctaText: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -208,7 +208,7 @@ export const SlidersTab = () => {
                       type="text"
                       placeholder="مثال: تضمین پخت عالی، عطر نوستالژیک و ارسال سریع در گونی نخی"
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -220,7 +220,7 @@ export const SlidersTab = () => {
                       type="text"
                       placeholder="https://..."
                       value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
                       dir="ltr"
                       className={styles.input}
                     />
@@ -228,24 +228,26 @@ export const SlidersTab = () => {
                       <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>
                         تصاویر آماده:
                       </span>
-                      {sampleImages.map((img, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, image: img.url })}
-                          style={{
-                            fontSize: '0.6875rem',
-                            fontWeight: 700,
-                            padding: '0.2rem 0.5rem',
-                            borderRadius: '0.375rem',
-                            border: '1px solid #cbd5e1',
-                            background: '#f8fafc',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          {img.label}
-                        </button>
-                      ))}
+                      {sampleImages.map(function (img, idx) {
+                        return (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={function () { setFormData({ ...formData, image: img.url }); }}
+                            style={{
+                              fontSize: '0.6875rem',
+                              fontWeight: 700,
+                              padding: '0.2rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              border: '1px solid #cbd5e1',
+                              background: '#f8fafc',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {img.label}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -255,7 +257,7 @@ export const SlidersTab = () => {
                       type="text"
                       placeholder="/products"
                       value={formData.link}
-                      onChange={(e) => setFormData({ ...formData, link: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, link: e.target.value }); }}
                       dir="ltr"
                       className={styles.input}
                     />
@@ -265,7 +267,7 @@ export const SlidersTab = () => {
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={function () { setIsModalOpen(false); }}
                     className={styles.cancelBtn}
                   >
                     انصراف
@@ -281,4 +283,4 @@ export const SlidersTab = () => {
       )}
     </div>
   );
-};
+}

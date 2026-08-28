@@ -4,7 +4,7 @@ import { useApp } from '../../context';
 import { ProductCard } from '../productCard';
 import styles from './style.module.css';
 
-export const BestSellers = () => {
+export function BestSellers() {
   const { products } = useApp();
 
   return (
@@ -21,12 +21,12 @@ export const BestSellers = () => {
       </header>
 
       <div className={styles.gridContainer}>
-        {products.slice(0, 2).map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+        {products.slice(0, 2).map(function (product) {
+          return <ProductCard key={product.id} product={product} />;
+        })}
       </div>
     </section>
   );
-};
+}
 
 

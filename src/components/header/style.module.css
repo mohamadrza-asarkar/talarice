@@ -17,19 +17,26 @@
 }
 
 .topRow {
+  position: relative;
   display: flex;
   width: 100%;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .logoLink {
   cursor: pointer;
   text-decoration: none;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .adminBtn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -47,5 +54,5 @@
 }
 
 .adminBtn:hover {
-  transform: scale(1.03);
+  transform: translateY(-50%) scale(1.03);
 }

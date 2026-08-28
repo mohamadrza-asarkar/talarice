@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const Categories = () => {
+export function Categories() {
   const { categories, selectedCategory, setSelectedCategory } = useApp();
 
   return (
@@ -18,21 +18,23 @@ export const Categories = () => {
 
       <div className={styles.categoryGrid}>
         {categories
-          .filter((c) => c.id !== 'all')
-          .map((cat) => (
-            <Link
-              key={cat.id}
-              to="/catalog"
-              onClick={() => setSelectedCategory(cat.id)}
-              className={`${styles.categoryButton} ${selectedCategory === cat.id ? styles.categoryButtonSelected : styles.categoryButtonUnselected}`}
-            >
-              <i className={cat.iconClass} />
-              <span>{cat.name}</span>
-            </Link>
-          ))}
+          .filter(function (c) { return c.id !== 'all'; })
+          .map(function (cat) {
+            return (
+              <Link
+                key={cat.id}
+                to="/catalog"
+                onClick={function () { setSelectedCategory(cat.id); }}
+                className={`${styles.categoryButton} ${selectedCategory === cat.id ? styles.categoryButtonSelected : styles.categoryButtonUnselected}`}
+              >
+                <i className={cat.iconClass} />
+                <span>{cat.name}</span>
+              </Link>
+            );
+          })}
       </div>
     </section>
   );
-};
+}
 
 

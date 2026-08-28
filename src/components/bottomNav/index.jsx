@@ -3,11 +3,12 @@ import { NavLink } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const BottomNav = () => {
+export function BottomNav() {
   const { cartCount, setIsCartOpen, isAuthenticated } = useApp();
 
-  const getLinkClass = ({ isActive }) => 
-    `${styles.navButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
+  function getLinkClass({ isActive }) {
+    return `${styles.navButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
+  }
 
   return (
     <nav className={styles.bottomNav}>
@@ -23,7 +24,7 @@ export const BottomNav = () => {
 
       <button
         type="button"
-        onClick={() => setIsCartOpen(true)}
+        onClick={function () { setIsCartOpen(true); }}
         className={`${styles.navButton} ${styles.navButtonUnselected} ${styles.cartButton}`}
       >
         <i className="fa-solid fa-cart-shopping" />
@@ -33,7 +34,7 @@ export const BottomNav = () => {
 
       <NavLink to="/blog" className={getLinkClass}>
         <i className="fa-solid fa-book-open" />
-        <span>بلاگ</span>
+        <span>دانشنامه</span>
       </NavLink>
 
       <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
@@ -42,5 +43,5 @@ export const BottomNav = () => {
       </NavLink>
     </nav>
   );
-};
+}
 

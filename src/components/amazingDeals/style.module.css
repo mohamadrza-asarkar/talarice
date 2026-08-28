@@ -41,18 +41,39 @@
   gap: 0.25rem;
   direction: ltr;
   color: #fef08a;
-  font-weight: 700;
-  font-size: 0.75rem;
 }
 
-.timer span {
+.timerSegment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background-color: #fef08a;
   color: #073822;
-  font-weight: 900;
-  font-size: 0.75rem;
-  padding: 0.125rem 0.5rem;
   border-radius: 0.5rem;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  padding: 0.2rem 0.45rem;
+  min-width: 2.2rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.timerSegment span {
+  font-weight: 900;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.timerLabel {
+  font-size: 0.55rem;
+  font-weight: 800;
+  color: #063822;
+  margin-top: 0.15rem;
+  direction: rtl;
+}
+
+.colon {
+  font-weight: 900;
+  font-size: 0.9rem;
+  color: #fef08a;
+  margin-bottom: 0.5rem;
 }
 
 .gridContainer {
@@ -60,4 +81,3 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.75rem;
 }
-

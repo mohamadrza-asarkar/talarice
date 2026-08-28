@@ -11,7 +11,7 @@ import { AuthPage } from '../../pages/auth';
 import { AdminPage } from '../../pages/admin';
 import styles from './style.module.css';
 
-export const Main = () => {
+export function Main() {
   const { activeTab, isAuthenticated } = useApp();
   const location = useLocation();
   const isSearchPage = location.pathname === '/search';

@@ -2,7 +2,7 @@ import React from 'react';
 import { Logo } from '../logo';
 import styles from './style.module.css';
 
-export const Footer = () => {
+export function Footer() {
   const features = [
     { icon: 'fa-solid fa-truck-fast', title: 'ارسال سریع کشوری', sub: 'پست پیشتاز و باربری' },
     { icon: 'fa-solid fa-shield-halved', title: 'ضمانت اصالت و عطر', sub: '۷ روز بازگشت وجه' },
@@ -27,15 +27,17 @@ export const Footer = () => {
       </header>
 
       <div className={styles.featuresGrid}>
-        {features.map((f, i) => (
-          <div key={i} className={styles.featureItem}>
-            <i className={f.icon} />
-            <div>
-              <strong>{f.title}</strong>
-              <small>{f.sub}</small>
+        {features.map(function (f, i) {
+          return (
+            <div key={i} className={styles.featureItem}>
+              <i className={f.icon} />
+              <div>
+                <strong>{f.title}</strong>
+                <small>{f.sub}</small>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <address className={styles.contactInfo}>
@@ -49,18 +51,20 @@ export const Footer = () => {
       </address>
 
       <nav className={styles.socials} aria-label="شبکه‌های اجتماعی">
-        {socials.map((s, i) => (
-          <a
-            key={i}
-            href={s.href}
-            target="_blank"
-            rel="noreferrer"
-            className={styles.socialLink}
-            aria-label={s.label}
-          >
-            <i className={s.icon} />
-          </a>
-        ))}
+        {socials.map(function (s, i) {
+          return (
+            <a
+              key={i}
+              href={s.href}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.socialLink}
+              aria-label={s.label}
+            >
+              <i className={s.icon} />
+            </a>
+          );
+        })}
       </nav>
 
       <small className={styles.copyright}>
@@ -68,5 +72,5 @@ export const Footer = () => {
       </small>
     </footer>
   );
-};
+}
 

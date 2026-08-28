@@ -18,13 +18,15 @@ const homeSections = [
   { id: 'footer', component: Footer }
 ];
 
-export const HomePage = () => {
+export function HomePage() {
   return (
     <div className={styles.homeWrapper}>
-      {homeSections.map(({ id, component: Component }) => (
-        <Component key={id} />
-      ))}
+      {homeSections.map(function ({ id, component: Component }) {
+        return <Component key={id} />;
+      })}
     </div>
   );
-};
+}
+
+export default HomePage;
 

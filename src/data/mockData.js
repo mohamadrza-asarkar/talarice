@@ -371,8 +371,8 @@ export const initialCoupons = [
 
 export const initialOrders = [
   {
-    id: 'ORD-8421',
-    date: '۱۴۰۳/۰۶/۲۰',
+    id: 'ORD-9104',
+    date: '۱۴۰۳/۰۶/۲۸',
     items: [
       {
         product: initialProducts[0],
@@ -384,11 +384,98 @@ export const initialOrders = [
     discountAmount: 145000,
     shippingFee: 0,
     finalAmount: 1305000,
-    status: 'processing',
+    status: 'reviewing',
     trackingCode: 'TRK-9842104',
+    recipientName: 'محمد رضایی',
+    phone: '۰۹۱۷۱۲۳۴۵۶۷',
+    province: 'فارس',
+    city: 'شیراز',
+    postalCode: '۷۱۸۴۵۶۷۸۹۰',
+    fullAddress: 'شیراز، بلوار ارم، کوچه ۱۲، پلاک ۲۴',
     user: {
       name: 'محمد رضایی',
-      phone: '۰۹۱۷ ۱۲۳ ۴۵۶۷'
+      phone: '۰۹۱۷۱۲۳۴۵۶۷'
+    }
+  },
+  {
+    id: 'ORD-8920',
+    date: '۱۴۰۳/۰۶/۲۵',
+    items: [
+      {
+        product: initialProducts[1] || initialProducts[0],
+        weightKg: 5,
+        quantity: 2
+      }
+    ],
+    totalAmount: 1560000,
+    discountAmount: 0,
+    shippingFee: 0,
+    finalAmount: 1560000,
+    status: 'shipping',
+    trackingCode: 'TRK-9831920',
+    recipientName: 'زهرا موسوی',
+    phone: '۰۹۳۵۹۸۷۶۵۴۳',
+    province: 'فارس',
+    city: 'شیراز',
+    postalCode: '۷۱۴۵۶۱۲۳۸۹',
+    fullAddress: 'شیراز، میدان قدوسی غربی، خیابان سبحانی، مجتمع سرو',
+    user: {
+      name: 'زهرا موسوی',
+      phone: '۰۹۳۵۹۸۷۶۵۴۳'
+    }
+  },
+  {
+    id: 'ORD-8715',
+    date: '۱۴۰۳/۰۶/۲۰',
+    items: [
+      {
+        product: initialProducts[0],
+        weightKg: 20,
+        quantity: 1
+      }
+    ],
+    totalAmount: 2800000,
+    discountAmount: 200000,
+    shippingFee: 0,
+    finalAmount: 2600000,
+    status: 'shipped',
+    trackingCode: 'TRK-9815712',
+    recipientName: 'امیرحسین کریمی',
+    phone: '۰۹۱۲۳۴۵۶۷۸۹',
+    province: 'تهران',
+    city: 'تهران',
+    postalCode: '۱۹۸۷۶۵۴۳۲۱',
+    fullAddress: 'تهران، سعادت‌آباد، خیابان علامه شمالی، پلاک ۱۸',
+    user: {
+      name: 'امیرحسین کریمی',
+      phone: '۰۹۱۲۳۴۵۶۷۸۹'
+    }
+  },
+  {
+    id: 'ORD-8421',
+    date: '۱۴۰۳/۰۶/۱۵',
+    items: [
+      {
+        product: initialProducts[0],
+        weightKg: 10,
+        quantity: 2
+      }
+    ],
+    totalAmount: 2900000,
+    discountAmount: 290000,
+    shippingFee: 0,
+    finalAmount: 2610000,
+    status: 'delivered',
+    trackingCode: 'TRK-9784210',
+    recipientName: 'رضا کمالی',
+    phone: '۰۹۱۷۳۱۱۴۴۵۵',
+    province: 'فارس',
+    city: 'مرودشت',
+    postalCode: '۷۳۷۱۸۴۵۶۹۰',
+    fullAddress: 'مرودشت، خیابان انقلاب، نبش کوچه شهید رضایی',
+    user: {
+      name: 'رضا کمالی',
+      phone: '۰۹۱۷۳۱۱۴۴۵۵'
     }
   }
 ];

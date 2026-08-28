@@ -3,18 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const ProductPage = () => {
+export function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { products, addToCart, setIsCartOpen, goBack } = useApp();
 
-  const handleBack = (e) => {
+  function handleBack(e) {
     e?.preventDefault();
     e?.stopPropagation();
     goBack('/catalog');
-  };
+  }
 
-  const product = products?.find((p) => String(p.id) === String(id) || String(p._id) === String(id));
+  const product = products?.find(function (p) { return String(p.id) === String(id) || String(p._id) === String(id); });
   const [activeTab, setActiveTab] = useState('desc');
 
   if (!product) {
@@ -28,7 +28,7 @@ export const ProductPage = () => {
         </header>
         <div className={styles.notFoundContainer}>
           <h2>محصول یافت نشد</h2>
-          <button onClick={() => navigate('/catalog')} className={styles.notFoundBtn}>
+          <button onClick={function () { navigate('/catalog'); }} className={styles.notFoundBtn}>
             مشاهده محصولات
           </button>
         </div>
@@ -103,15 +103,17 @@ export const ProductPage = () => {
 
         <div className={styles.tabsContainer}>
           <div className={styles.tabsList}>
-            {tabs.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id)}
-                className={`${styles.tabBtn} ${activeTab === t.id ? styles.tabActive : styles.tabInactive}`}
-              >
-                {t.label}
-              </button>
-            ))}
+            {tabs.map(function (t) {
+              return (
+                <button
+                  key={t.id}
+                  onClick={function () { setActiveTab(t.id); }}
+                  className={`${styles.tabBtn} ${activeTab === t.id ? styles.tabActive : styles.tabInactive}`}
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </div>
 
           <div className={styles.tabContent}>
@@ -146,7 +148,9 @@ export const ProductPage = () => {
                   <div className={styles.reviewHeader}>
                     <strong className={styles.reviewerName}>کاربر سایت</strong>
                     <div className={styles.reviewStars}>
-                      {[...Array(5)].map((_, i) => <i key={i} className="fa-solid fa-star" />)}
+                      {[...Array(5)].map(function (_, i) {
+                        return <i key={i} className="fa-solid fa-star" />;
+                      })}
                     </div>
                   </div>
                   <p className={styles.reviewText}>
@@ -161,7 +165,7 @@ export const ProductPage = () => {
 
       <div className={styles.bottomBar}>
         <button
-          onClick={() => {
+          onClick={function () {
             addToCart(product, null, 1);
             setIsCartOpen(true);
           }}
@@ -173,5 +177,7 @@ export const ProductPage = () => {
       </div>
     </div>
   );
-};
+}
+
+export default ProductPage;
 

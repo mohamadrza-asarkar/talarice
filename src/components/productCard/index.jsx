@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const ProductCard = ({ product }) => {
+export function ProductCard({ product }) {
   const { addToCart } = useApp();
 
   if (!product) return null;
@@ -37,7 +37,7 @@ export const ProductCard = ({ product }) => {
 
         <button
           type="button"
-          onClick={() => addToCart(product, null, 1)}
+          onClick={function () { addToCart(product, null, 1); }}
           className={styles.addButton}
         >
           <i className="fa-solid fa-cart-plus" />
@@ -46,6 +46,6 @@ export const ProductCard = ({ product }) => {
       </div>
     </article>
   );
-};
+}
 
 

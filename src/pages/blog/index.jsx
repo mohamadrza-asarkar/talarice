@@ -2,239 +2,277 @@ import React, { useState } from 'react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const BlogPage = () => {
-  const { blogPosts, goBack } = useApp();
-  const [selectedPost, setSelectedPost] = useState(null);
-  const [activeCategory, setActiveCategory] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+export function BlogPage() {
+  const { goBack } = useApp();
+  const [isOpenDetail, setIsOpenDetail] = useState(false);
   const [commentName, setCommentName] = useState('');
   const [commentText, setCommentText] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  const categories = [
-    { id: 'all', label: 'همه مقالات' },
-    { id: 'cooking', label: 'رازهای پخت مجلسی' },
-    { id: 'origin', label: 'شالیزار و اصالت' },
-    { id: 'health', label: 'خواص و سلامت' }
-  ];
-
-  const cookingTips = [
+  const cultivationSteps = [
     {
+      step: '۱',
+      title: 'آماده‌سازی بذر و خزانه‌گیری (فروردین)',
+      icon: 'fa-solid fa-seedling',
+      desc: 'بذرهای اصیل برنج کامفیروز در آب نمک جوانه زده و در خزانه‌های سرپوشیده با خاک غنی کامفیروز کشت می‌شوند تا به نشاهای شاداب تبدیل گردند.'
+    },
+    {
+      step: '۲',
+      title: 'نشاکاری و آماده‌سازی شالیزار (اردیبهشت)',
       icon: 'fa-solid fa-water',
-      title: 'خیساندن مناسب با نمک',
-      desc: 'برنج کامفیروز را حداقل ۲ تا ۳ ساعت قبل از پخت در آب ولرم و نمک سنگ خیس کنید.'
+      desc: 'زمین اصلی با آب گوارای سرچشمه رودخانه کر شخم زده و گل‌ورز می‌شود. سپس نشاهای سبز توسط شالیکاران باتجربه کامفیروز با دقت نشا می‌شوند.'
     },
     {
-      icon: 'fa-solid fa-fire-burner',
-      title: 'شعله ملایم و ری‌کشی',
-      desc: 'هنگام جوشیدن، از زدن کفگیر زیاد خودداری کنید تا دانه‌ها خرد نشوند.'
+      step: '۳',
+      title: 'مدیریت آبیاری و تغذیه ارگانیک (تیر تا مرداد)',
+      icon: 'fa-solid fa-sun',
+      desc: 'آبیاری منظم تناوبی و استفاده از کودهای طبیعی و ارگانیک باعث قد کشیدن ساقه‌ها و ایجاد عطر متراکم بی‌نظیر در دانه‌های برنج می‌گردد.'
     },
     {
-      icon: 'fa-solid fa-oil-well',
-      title: 'روغن حیوانی یا کرمانشاهی',
-      desc: 'پس از دم کشیدن، اضافه کردن روغن محلی عطر شگفت‌انگیز کامفیروز را دوچندان می‌کند.'
+      step: '۴',
+      title: 'برداشت دانه‌های طلایی و خشک‌سازی (شهریور)',
+      icon: 'fa-solid fa-wheat-awn',
+      desc: 'پس از رسیدن کامل خوشه‌های طلایی، برنج برداشت شده و در گرمای طبیعی خورشید کامفیروز به آرامش خشک می‌شود تا هنگام پخت خرد نشود.'
     }
   ];
 
-  const filteredPosts = (blogPosts ?? []).filter((post) => {
-    const matchesCategory = activeCategory === 'all' || post.category === activeCategory;
-    const matchesSearch = !searchQuery.trim() ||
-      post.title?.includes(searchQuery) ||
-      post.summary?.includes(searchQuery);
-    return matchesCategory && matchesSearch;
-  });
-
-  const featuredPost = filteredPosts[0];
-  const otherPosts = filteredPosts.slice(1);
-
-  const handleCommentSubmit = (e) => {
+  function handleCommentSubmit(e) {
     e.preventDefault();
     if (!commentText.trim()) return;
     setIsSubmitted(true);
-    setTimeout(() => {
+    setTimeout(function () {
       setIsSubmitted(false);
       setCommentName('');
       setCommentText('');
     }, 3000);
-  };
+  }
 
   return (
     <div className={styles.blogWrapper}>
+      {/* Top Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTop}>
           <button
             type="button"
-            onClick={() => goBack('/')}
+            onClick={function () { goBack('/'); }}
             className={styles.backBtn}
-            aria-label="بازگشت"
+            aria-label="بازگشت به خانه"
           >
             <i className="fa-solid fa-arrow-right" />
-            <span>بازگشت</span>
+            <span>بازگشت به خانه</span>
           </button>
           <div className={styles.headerBadges}>
-            <span className={styles.headerBadge}>دانشنامه و مقالات</span>
+            <span className={styles.headerBadge}>دانشنامه شالیکاری</span>
             <span className={styles.headerSubtitle}>
-              <i className="fa-solid fa-book-open-reader" />
-              <span>آموزش‌های تخصصی</span>
+              <i className="fa-solid fa-graduation-cap" />
+              <span>مستند علمی</span>
             </span>
           </div>
         </div>
-        <h2 className={styles.headerTitle}>دانستنی‌های برنج اصیل کامفیروز</h2>
+        <h1 className={styles.headerTitle}>دانشنامه تخصصی کشت برنج کامفیروز</h1>
         <p className={styles.headerDesc}>
-          مرجع تخصصی آموزش پخت مجلسی، تشخیص برنج اصل از تقلبی و خواص بی‌نظیر شالیزارهای فارس
+          مرجع اصیل آشنایی با مراحل کاشت، داشت و برداشت برنج معطر کامفیروز در شالیزارهای سرسبز استان فارس
         </p>
       </header>
 
-      <div className={styles.searchContainer}>
-        <input
-          type="text"
-          placeholder="جستجو در مقالات و آموزش‌ها..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className={styles.searchInput}
-        />
-        <i className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`} />
-        {searchQuery && (
-          <button onClick={() => setSearchQuery('')} className={styles.clearButton}>
-            <i className="fa-solid fa-circle-xmark" />
-          </button>
-        )}
-      </div>
-
-      <nav className={styles.categoriesScroll}>
-        {categories.map((c) => (
-          <button
-            key={c.id}
-            onClick={() => setActiveCategory(c.id)}
-            className={`${styles.categoryBtn} ${activeCategory === c.id ? styles.categoryActive : styles.categoryInactive}`}
-          >
-            {c.label}
-          </button>
-        ))}
-      </nav>
-
-      {featuredPost && (
-        <article onClick={() => setSelectedPost(featuredPost)} className={styles.featuredCard}>
-          <div className={styles.featuredImageWrapper}>
-            <img src={featuredPost.image} alt={featuredPost.title} className={styles.featuredImage} />
-            <div className={styles.featuredOverlay}>
-              <span className={styles.featuredBadge}>مقاله ویژه</span>
-              <h3 className={styles.featuredTitle}>{featuredPost.title}</h3>
-            </div>
+      {/* Main Single Article Card */}
+      <article
+        onClick={function () { setIsOpenDetail(true); }}
+        className={styles.featuredCard}
+        style={{ cursor: 'pointer', border: '2px solid #d4af37' }}
+      >
+        <div className={styles.featuredImageWrapper}>
+          <img
+            src="https://images.unsplash.com/photo-1536657464919-892534f60d6e?auto=format&fit=crop&w=1000&q=80"
+            alt="کشت برنج کامفیروز"
+            className={styles.featuredImage}
+          />
+          <div className={styles.featuredOverlay}>
+            <span className={styles.featuredBadge}>
+              <i className="fa-solid fa-star" /> مقاله اختصاصی طلا رایس
+            </span>
+            <h2 className={styles.featuredTitle}>
+              راهنمای جامع سیر تا پیاز کشت و شالیکاری برنج کامفیروز
+            </h2>
           </div>
-          <div className={styles.featuredContent}>
-            <p className={styles.featuredSummary}>{featuredPost.summary}</p>
-            <div className={styles.metaRow}>
-              <div className={styles.metaItem}>
-                <i className="fa-regular fa-clock" />
-                <span>{featuredPost.readTime ?? '۵ دقیقه'}</span>
-              </div>
-              <span className={styles.readMore}>
-                مطالعه کامل <i className="fa-solid fa-arrow-left" />
-              </span>
+        </div>
+        <div className={styles.featuredContent}>
+          <p className={styles.featuredSummary}>
+            آشنایی کامل با مراحل چهارگانه کاشت تا برداشت برنج کامفیروز، نقش سرچشمه‌های رودخانه کر و آب‌وهوای منحصربه‌فرد منطقه کامفیروز فارس در خلق عطر و طعم فوق‌العاده برنج طلا.
+          </p>
+          <div className={styles.metaRow}>
+            <div className={styles.metaItem}>
+              <i className="fa-regular fa-clock" />
+              <span>زمان مطالعه: ۶ دقیقه</span>
             </div>
+            <div className={styles.metaItem}>
+              <i className="fa-regular fa-calendar" />
+              <span>بهمن ۱۴۰۳</span>
+            </div>
+            <span className={styles.readMore}>
+              مشاهده کامل مقاله <i className="fa-solid fa-arrow-left" />
+            </span>
           </div>
-        </article>
-      )}
+        </div>
+      </article>
 
-      {otherPosts.length > 0 && (
-        <section className={styles.postsList}>
-          <h4 className={styles.sectionTitle}>
-            <i className="fa-solid fa-newspaper" />
-            سایر مقالات و آموزش‌ها
-          </h4>
-          {otherPosts.map((post) => (
-            <article key={post.id} onClick={() => setSelectedPost(post)} className={styles.listCard}>
-              <img src={post.image} alt={post.title} className={styles.listImage} />
-              <div className={styles.listContent}>
-                <span className={styles.listCategory}>{post.categoryName ?? 'آموزش'}</span>
-                <h4 className={styles.listTitle}>{post.title}</h4>
-                <div className={styles.listMeta}>
-                  <span>{post.date ?? 'بهمن ۱۴۰۳'}</span>
-                  <span>{post.readTime ?? '۳ دقیقه'}</span>
+      {/* Quick Overview Section */}
+      <aside className={styles.tipsCard}>
+        <h3 className={styles.tipsTitle}>
+          <i className="fa-solid fa-seedling" style={{ color: '#d4af37' }} />
+          خلاصه مراحل ۴ گانه شالیکاری کامفیروز
+        </h3>
+        <div className={styles.tipsList}>
+          {cultivationSteps.map(function (item) {
+            return (
+              <div key={item.step} className={styles.tipItem}>
+                <div className={styles.tipIconWrapper}>
+                  <i className={item.icon} />
+                </div>
+                <div>
+                  <strong className={styles.tipItemTitle}>{item.title}</strong>
+                  <p className={styles.tipItemDesc}>{item.desc}</p>
                 </div>
               </div>
-            </article>
-          ))}
-        </section>
-      )}
-
-      {!filteredPosts.length && (
-        <div className={styles.emptyState}>
-          <i className="fa-solid fa-magnifying-glass" />
-          <p>مقاله‌ای با این مشخصات یافت نشد.</p>
-        </div>
-      )}
-
-      <aside className={styles.tipsCard}>
-        <h4 className={styles.tipsTitle}>
-          <i className="fa-solid fa-lightbulb" />
-          ۳ راز طلایی پخت برنج کامفیروزی
-        </h4>
-        <div className={styles.tipsList}>
-          {cookingTips.map((tip, idx) => (
-            <div key={idx} className={styles.tipItem}>
-              <div className={styles.tipIconWrapper}>
-                <i className={tip.icon} />
-              </div>
-              <div>
-                <strong className={styles.tipItemTitle}>{tip.title}</strong>
-                <p className={styles.tipItemDesc}>{tip.desc}</p>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </aside>
 
-      {selectedPost && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedPost(null)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+      {/* Article Detail View (Open like Product Page) */}
+      {isOpenDetail && (
+        <div className={styles.modalOverlay} onClick={function () { setIsOpenDetail(false); }}>
+          <div className={styles.modalContent} onClick={function (e) { e.stopPropagation(); }}>
+            {/* Modal Hero */}
             <div className={styles.modalHero}>
-              <img src={selectedPost.image} alt={selectedPost.title} className={styles.modalHeroImage} />
+              <img
+                src="https://images.unsplash.com/photo-1536657464919-892534f60d6e?auto=format&fit=crop&w=1200&q=80"
+                alt="شالیزار برنج کامفیروز"
+                className={styles.modalHeroImage}
+              />
               <div className={styles.modalHeroOverlay}>
-                <h3>{selectedPost.title}</h3>
+                <span className={styles.headerBadge} style={{ marginBottom: '0.35rem', display: 'inline-block' }}>
+                  دانشنامه شالیکاری
+                </span>
+                <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fef08a', margin: 0 }}>
+                  راهنمای جامع کشت و شالیکاری برنج اصیل کامفیروز
+                </h2>
               </div>
-              <button onClick={() => setSelectedPost(null)} className={styles.modalCloseBtn}>
+              <button
+                onClick={function () { setIsOpenDetail(false); }}
+                className={styles.modalCloseBtn}
+                aria-label="بستن"
+              >
                 <i className="fa-solid fa-xmark" />
               </button>
             </div>
 
+            {/* Modal Body */}
             <div className={styles.modalBody}>
               <div className={styles.modalMetaRow}>
-                <span>نویسنده: کارشناس شالیزار طلا رایس</span>
-                <span>زمان مطالعه: {selectedPost.readTime ?? '۵ دقیقه'}</span>
-              </div>
-              <div className={styles.modalText}>
-                {selectedPost.content ?? selectedPost.summary}
+                <span>
+                  <i className="fa-solid fa-user-pen" style={{ color: '#d4af37', marginLeft: '4px' }} />
+                  نویسنده: مهندس زارعی (کارشناس شالیکاری طلا رایس)
+                </span>
+                <span>
+                  <i className="fa-regular fa-clock" style={{ color: '#d4af37', marginLeft: '4px' }} />
+                  ۶ دقیقه مطالعه
+                </span>
               </div>
 
+              {/* Rich Article Text */}
+              <div className={styles.modalText}>
+                <h3 style={{ fontSize: '1.05rem', color: '#073b27', fontWeight: 900, marginBottom: '0.5rem' }}>
+                  مقدمه: جادوی خاک و آب کامفیروز
+                </h3>
+                <p style={{ lineHeight: '1.8', marginBottom: '1.25rem' }}>
+                  منطقه کامفیروز در استان فارس، به دلیل عبور رودخانه خروشان کر و خاک جلگه‌ای فوق‌العاده غنی، مستعدترین بستر برای کشت یکی از معطرترین و خوش‌پخت‌ترین برنج‌های ایران است. برنج کامفیروز بر خلاف سایر ارقام، دارای دانه خوش‌فرم، ری‌کشی مجلسی و طبع گرم است که هواداران بی‌شماری دارد.
+                </p>
+
+                <h3 style={{ fontSize: '1.05rem', color: '#073b27', fontWeight: 900, margin: '1.25rem 0 0.5rem' }}>
+                  مراحل دقیق کاشت تا برداشت برنج کامفیروز
+                </h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', margin: '1rem 0' }}>
+                  {cultivationSteps.map(function (st) {
+                    return (
+                      <div
+                        key={st.step}
+                        style={{
+                          backgroundColor: '#f8fafc',
+                          borderRight: '4px solid #073b27',
+                          padding: '0.875rem 1rem',
+                          borderRadius: '0.5rem',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+                          <span
+                            style={{
+                              backgroundColor: '#073b27',
+                              color: '#fef08a',
+                              width: '24px',
+                              height: '24px',
+                              borderRadius: '50%',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '0.75rem',
+                              fontWeight: 900
+                            }}
+                          >
+                            {st.step}
+                          </span>
+                          <strong style={{ color: '#073b27', fontSize: '0.9rem' }}>{st.title}</strong>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '0.8125rem', color: '#334155', lineHeight: '1.7' }}>
+                          {st.desc}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <h3 style={{ fontSize: '1.05rem', color: '#073b27', fontWeight: 900, margin: '1.25rem 0 0.5rem' }}>
+                  چرا برنج کامفیروز طلا رایس متفاوت است؟
+                </h3>
+                <ul style={{ paddingRight: '1.25rem', lineHeight: '1.8', color: '#1e293b', fontSize: '0.85rem' }}>
+                  <li>کشت ۱۰۰٪ سورت‌شده و خالص بدون اختلاط با دانه‌های خارجی</li>
+                  <li>استفاده از آبیاری نوین بدون آلودگی‌های شیمیایی</li>
+                  <li>خشک‌سازی کاملاً سنتی جهت حفظ حداکثر عطر و ری‌کشی عالی</li>
+                  <li>ارسال مستقیم از شالیزارهای کامفیروز شیراز به سراسر کشور</li>
+                </ul>
+              </div>
+
+              {/* Comment Section */}
               <div className={styles.commentSection}>
                 <h4 className={styles.commentTitle}>
                   <i className="fa-regular fa-comment-dots" />
-                  دیدگاه شما درباره این مقاله
+                  پرسش یا دیدگاه شما درباره کشت برنج
                 </h4>
                 {isSubmitted ? (
                   <div className={styles.commentSuccess}>
-                    دیدگاه شما با موفقیت ثبت شد و پس از بررسی منتشر خواهد شد.
+                    <i className="fa-solid fa-circle-check" style={{ marginLeft: '6px' }} />
+                    دیدگاه شما با موفقیت ثبت شد و پس از بررسی توسط کارشناسان منتشر خواهد شد.
                   </div>
                 ) : (
                   <form onSubmit={handleCommentSubmit} className={styles.commentInputGroup}>
                     <input
                       type="text"
-                      placeholder="نام شما..."
+                      placeholder="نام و نام خانوادگی..."
                       value={commentName}
-                      onChange={(e) => setCommentName(e.target.value)}
+                      onChange={function (e) { setCommentName(e.target.value); }}
                       className={styles.commentInput}
                     />
                     <textarea
                       rows={3}
-                      placeholder="دیدگاه یا پرسش شما درباره پخت..."
+                      placeholder="پرسش خود را درباره مراحل کشت یا خرید مستقیم بنویسید..."
                       value={commentText}
-                      onChange={(e) => setCommentText(e.target.value)}
+                      onChange={function (e) { setCommentText(e.target.value); }}
                       className={styles.commentInput}
                     />
                     <button type="submit" className={styles.commentButton}>
-                      ارسال دیدگاه
+                      ثبت دیدگاه کارشناسی
                     </button>
                   </form>
                 )}
@@ -243,11 +281,11 @@ export const BlogPage = () => {
               <div className={styles.modalBottomAction}>
                 <button
                   type="button"
-                  onClick={() => setSelectedPost(null)}
+                  onClick={function () { setIsOpenDetail(false); }}
                   className={styles.modalBackBtn}
                 >
                   <i className="fa-solid fa-arrow-right" />
-                  <span>بازگشت به مقالات</span>
+                  <span>بازگشت به دانشنامه</span>
                 </button>
               </div>
             </div>
@@ -256,4 +294,6 @@ export const BlogPage = () => {
       )}
     </div>
   );
-};
+}
+
+export default BlogPage;

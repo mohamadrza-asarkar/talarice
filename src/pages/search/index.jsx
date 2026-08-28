@@ -3,24 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const SearchPage = () => {
+export function SearchPage() {
   const { searchQuery, setSearchQuery, products, goBack } = useApp();
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
-  useEffect(() => {
+  useEffect(function () {
     inputRef.current?.focus();
   }, []);
 
-  const handleBack = (e) => {
+  function handleBack(e) {
     e?.preventDefault();
     e?.stopPropagation();
     goBack('/');
-  };
+  }
 
   const query = searchQuery?.trim() ?? '';
   const filtered = query
-    ? (products ?? []).filter((p) => p.name?.includes(query) || p.description?.includes(query))
+    ? (products ?? []).filter(function (p) { return p.name?.includes(query) || p.description?.includes(query); })
     : [];
 
   return (
@@ -41,13 +41,13 @@ export const SearchPage = () => {
             type="text"
             placeholder="جستجوی برنج کامفیروزی ممتاز..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={(e) => {
+            onChange={function (e) { setSearchQuery(e.target.value); }}
+            onKeyDown={function (e) {
               if (e.key === 'Escape') handleBack(e);
             }}
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className={styles.clearBtn}>
+            <button onClick={function () { setSearchQuery(''); }} className={styles.clearBtn}>
               <i className="fa-solid fa-circle-xmark" />
             </button>
           )}
@@ -76,26 +76,30 @@ export const SearchPage = () => {
             <span className={styles.resultsCount}>
               نتایج برای «{searchQuery}» ({filtered.length.toLocaleString('fa-IR')} مورد)
             </span>
-            {filtered.map((product) => (
-              <div
-                key={product.id}
-                onClick={() => navigate(`/product/${product.id}`)}
-                className={styles.resultItem}
-              >
-                <img src={product.image} alt={product.name} className={styles.resultImg} />
-                <div className={styles.resultInfo}>
-                  <h4>{product.name}</h4>
-                  <div className={styles.price}>
-                    <strong>{(product.price ?? 0).toLocaleString('fa-IR')}</strong>
-                    <small>تومان</small>
+            {filtered.map(function (product) {
+              return (
+                <div
+                  key={product.id}
+                  onClick={function () { navigate(`/product/${product.id}`); }}
+                  className={styles.resultItem}
+                >
+                  <img src={product.image} alt={product.name} className={styles.resultImg} />
+                  <div className={styles.resultInfo}>
+                    <h4>{product.name}</h4>
+                    <div className={styles.price}>
+                      <strong>{(product.price ?? 0).toLocaleString('fa-IR')}</strong>
+                      <small>تومان</small>
+                    </div>
                   </div>
+                  <i className={`fa-solid fa-chevron-left ${styles.actionIcon}`} />
                 </div>
-                <i className={`fa-solid fa-chevron-left ${styles.actionIcon}`} />
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
     </div>
   );
-};
+}
+
+export default SearchPage;

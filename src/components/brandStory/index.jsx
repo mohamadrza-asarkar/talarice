@@ -2,7 +2,7 @@ import React from 'react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const BrandStory = () => {
+export function BrandStory() {
   const { brandStory } = useApp();
 
   return (

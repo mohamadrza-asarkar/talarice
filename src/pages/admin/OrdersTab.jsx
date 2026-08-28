@@ -16,14 +16,14 @@ import {
 } from 'lucide-react';
 import styles from './style.module.css';
 
-export const OrdersTab = () => {
+export function OrdersTab() {
   const { orders, setOrders } = useApp();
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState(null);
 
-  const updateStatus = (id, newStatus) => {
-    const updated = orders.map((o) => {
+  function updateStatus(id, newStatus) {
+    const updated = orders.map(function (o) {
       const orderId = o.id || o._id;
       if (orderId === id) {
         return { ...o, status: newStatus };
@@ -34,10 +34,10 @@ export const OrdersTab = () => {
     if (selectedOrder && (selectedOrder.id === id || selectedOrder._id === id)) {
       setSelectedOrder({ ...selectedOrder, status: newStatus });
     }
-  };
+  }
 
   // Filter orders
-  const filteredOrders = orders.filter((o) => {
+  const filteredOrders = orders.filter(function (o) {
     const orderId = String(o.id || o._id || '');
     const tracking = String(o.trackingCode || '');
     const customerName = o.user?.name || o.addresses?.[0]?.recipientName || '';
@@ -50,10 +50,21 @@ export const OrdersTab = () => {
       customerName.toLowerCase().includes(search.toLowerCase()) ||
       customerPhone.includes(search);
 
-    const matchesStatus = statusFilter === 'all' || o.status === statusFilter;
+    const matchesStatus =
+      statusFilter === 'all' ||
+      (statusFilter === 'reviewing' && (o.status === 'reviewing' || o.status === 'processing')) ||
+      (statusFilter === 'shipping' && (o.status === 'shipping' || o.status === 'in_transit')) ||
+      (statusFilter === 'shipped' && o.status === 'shipped') ||
+      (statusFilter === 'delivered' && o.status === 'delivered') ||
+      o.status === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
+
+  const reviewingCount = orders.filter(function (o) { return o.status === 'reviewing' || o.status === 'processing'; }).length;
+  const shippingCount = orders.filter(function (o) { return o.status === 'shipping' || o.status === 'in_transit'; }).length;
+  const shippedCount = orders.filter(function (o) { return o.status === 'shipped'; }).length;
+  const deliveredCount = orders.filter(function (o) { return o.status === 'delivered'; }).length;
 
   return (
     <div>
@@ -79,41 +90,49 @@ export const OrdersTab = () => {
               type="text"
               placeholder="جستجو بر اساس نام خریدار، شماره تماس، کد رهگیری..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={function (e) { setSearch(e.target.value); }}
               className={styles.searchInput}
             />
           </div>
 
           <div className={styles.filterChips}>
             <button
-              onClick={() => setStatusFilter('all')}
+              onClick={function () { setStatusFilter('all'); }}
               className={`${styles.filterChip} ${statusFilter === 'all' ? styles.filterChipActive : ''}`}
             >
               همه ({orders.length})
             </button>
             <button
-              onClick={() => setStatusFilter('processing')}
+              onClick={function () { setStatusFilter('reviewing'); }}
               className={`${styles.filterChip} ${
-                statusFilter === 'processing' ? styles.filterChipActive : ''
+                statusFilter === 'reviewing' ? styles.filterChipActive : ''
               }`}
             >
-              در حال پردازش ({orders.filter((o) => o.status === 'processing').length})
+              درحال بررسی ({reviewingCount})
             </button>
             <button
-              onClick={() => setStatusFilter('shipped')}
+              onClick={function () { setStatusFilter('shipping'); }}
+              className={`${styles.filterChip} ${
+                statusFilter === 'shipping' ? styles.filterChipActive : ''
+              }`}
+            >
+              در حال ارسال ({shippingCount})
+            </button>
+            <button
+              onClick={function () { setStatusFilter('shipped'); }}
               className={`${styles.filterChip} ${
                 statusFilter === 'shipped' ? styles.filterChipActive : ''
               }`}
             >
-              ارسال شده ({orders.filter((o) => o.status === 'shipped').length})
+              ارسال شده ({shippedCount})
             </button>
             <button
-              onClick={() => setStatusFilter('delivered')}
+              onClick={function () { setStatusFilter('delivered'); }}
               className={`${styles.filterChip} ${
                 statusFilter === 'delivered' ? styles.filterChipActive : ''
               }`}
             >
-              تحویل شده ({orders.filter((o) => o.status === 'delivered').length})
+              تحویل شده ({deliveredCount})
             </button>
           </div>
         </div>
@@ -139,7 +158,7 @@ export const OrdersTab = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredOrders.map((o) => {
+                  {filteredOrders.map(function (o) {
                     const id = o.id || o._id;
                     const customerName =
                       o.user?.name || o.addresses?.[0]?.recipientName || 'مشتری ناشناس';
@@ -193,22 +212,34 @@ export const OrdersTab = () => {
 
                         {/* Status */}
                         <td className={styles.td}>
-                          {o.status === 'processing' && (
+                          {(o.status === 'reviewing' || o.status === 'processing') && (
                             <span className={styles.statusProcessing}>
                               <Clock size={13} />
-                              در حال پردازش
+                              درحال بررسی
+                            </span>
+                          )}
+                          {(o.status === 'shipping' || o.status === 'in_transit') && (
+                            <span
+                              className={styles.statusShipped}
+                              style={{ backgroundColor: '#f0f9ff', color: '#0284c7', borderColor: '#bae6fd' }}
+                            >
+                              <Truck size={13} />
+                              در حال ارسال
                             </span>
                           )}
                           {o.status === 'shipped' && (
-                            <span className={styles.statusShipped}>
-                              <Truck size={13} />
+                            <span
+                              className={styles.statusShipped}
+                              style={{ backgroundColor: '#f5f3ff', color: '#7c3aed', borderColor: '#ddd6fe' }}
+                            >
+                              <Package size={13} />
                               ارسال شده
                             </span>
                           )}
                           {o.status === 'delivered' && (
                             <span className={styles.statusDelivered}>
                               <CheckCircle2 size={13} />
-                              تحویل به مشتری
+                              تحویل شده
                             </span>
                           )}
                         </td>
@@ -217,7 +248,7 @@ export const OrdersTab = () => {
                         <td className={styles.td} style={{ textAlign: 'center' }}>
                           <div className={styles.actionBtnGroup}>
                             <button
-                              onClick={() => setSelectedOrder(o)}
+                              onClick={function () { setSelectedOrder(o); }}
                               className={styles.detailBtn}
                               title="مشاهده جزئیات فاکتور"
                             >
@@ -225,20 +256,33 @@ export const OrdersTab = () => {
                               <span>فاکتور</span>
                             </button>
 
-                            {o.status === 'processing' && (
+                            {(o.status === 'reviewing' || o.status === 'processing') && (
                               <button
-                                onClick={() => updateStatus(id, 'shipped')}
+                                onClick={function () { updateStatus(id, 'shipping'); }}
                                 className={styles.orderActionBtn}
-                                title="تغییر به ارسال شده"
+                                style={{ background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' }}
+                                title="تغییر به در حال ارسال"
                               >
                                 <Truck size={14} />
                                 <span>ارسال</span>
                               </button>
                             )}
 
+                            {(o.status === 'shipping' || o.status === 'in_transit') && (
+                              <button
+                                onClick={function () { updateStatus(id, 'shipped'); }}
+                                className={styles.orderActionBtn}
+                                style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}
+                                title="تغییر به ارسال شده"
+                              >
+                                <Package size={14} />
+                                <span>ارسال شد</span>
+                              </button>
+                            )}
+
                             {o.status === 'shipped' && (
                               <button
-                                onClick={() => updateStatus(id, 'delivered')}
+                                onClick={function () { updateStatus(id, 'delivered'); }}
                                 className={styles.orderActionBtn}
                                 style={{ background: 'linear-gradient(135deg, #059669 0%, #047857 100%)' }}
                                 title="تغییر به تحویل شده"
@@ -261,8 +305,8 @@ export const OrdersTab = () => {
 
       {/* Order Details / Invoice Modal */}
       {selectedOrder && (
-        <div className={styles.modalOverlay} onClick={() => setSelectedOrder(null)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={function () { setSelectedOrder(null); }}>
+          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
             <div className={styles.modalHeader}>
               <div>
                 <h3 className={styles.modalTitle}>جزئیات فاکتور سفارش</h3>
@@ -273,7 +317,7 @@ export const OrdersTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedOrder(null)}
+                onClick={function () { setSelectedOrder(null); }}
                 className={styles.modalCloseBtn}
               >
                 <X size={20} />
@@ -297,30 +341,42 @@ export const OrdersTab = () => {
                   <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#042a1b' }}>
                     تغییر وضعیت مرسوله:
                   </span>
-                  <div style={{ display: 'flex', gap: '0.375rem' }}>
+                  <div style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap' }}>
                     <button
-                      onClick={() => updateStatus(selectedOrder.id || selectedOrder._id, 'processing')}
+                      onClick={function () { updateStatus(selectedOrder.id || selectedOrder._id, 'reviewing'); }}
                       className={`${styles.filterChip} ${
-                        selectedOrder.status === 'processing' ? styles.filterChipActive : ''
+                        (selectedOrder.status === 'reviewing' || selectedOrder.status === 'processing')
+                          ? styles.filterChipActive
+                          : ''
                       }`}
                     >
-                      در حال پردازش
+                      درحال بررسی
                     </button>
                     <button
-                      onClick={() => updateStatus(selectedOrder.id || selectedOrder._id, 'shipped')}
+                      onClick={function () { updateStatus(selectedOrder.id || selectedOrder._id, 'shipping'); }}
+                      className={`${styles.filterChip} ${
+                        (selectedOrder.status === 'shipping' || selectedOrder.status === 'in_transit')
+                          ? styles.filterChipActive
+                          : ''
+                      }`}
+                    >
+                      در حال ارسال
+                    </button>
+                    <button
+                      onClick={function () { updateStatus(selectedOrder.id || selectedOrder._id, 'shipped'); }}
                       className={`${styles.filterChip} ${
                         selectedOrder.status === 'shipped' ? styles.filterChipActive : ''
                       }`}
                     >
-                      ارسال شد
+                      ارسال شده
                     </button>
                     <button
-                      onClick={() => updateStatus(selectedOrder.id || selectedOrder._id, 'delivered')}
+                      onClick={function () { updateStatus(selectedOrder.id || selectedOrder._id, 'delivered'); }}
                       className={`${styles.filterChip} ${
                         selectedOrder.status === 'delivered' ? styles.filterChipActive : ''
                       }`}
                     >
-                      تحویل شد
+                      تحویل شده
                     </button>
                   </div>
                 </div>
@@ -368,23 +424,25 @@ export const OrdersTab = () => {
                   </h4>
                   <div className={styles.invoiceItemList}>
                     {(selectedOrder.items || []).length > 0 ? (
-                      selectedOrder.items.map((item, idx) => (
-                        <div key={idx} className={styles.invoiceItemCard}>
-                          <div>
-                            <div style={{ fontWeight: 800, fontSize: '0.8125rem', color: '#042a1b' }}>
-                              {item.product?.name || 'برنج کامفیروزی اعلا طلا رایس'}
+                      selectedOrder.items.map(function (item, idx) {
+                        return (
+                          <div key={idx} className={styles.invoiceItemCard}>
+                            <div>
+                              <div style={{ fontWeight: 800, fontSize: '0.8125rem', color: '#042a1b' }}>
+                                {item.product?.name || 'برنج کامفیروزی اعلا طلا رایس'}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.125rem' }}>
+                                بسته‌بندی: گونی نخی اعلا ضد رطوبت | تعداد:{' '}
+                                {item.quantity || 1} کیسه
+                              </div>
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.125rem' }}>
-                              بسته‌بندی: گونی نخی اعلا ضد رطوبت | تعداد:{' '}
-                              {item.quantity || 1} کیسه
+                            <div style={{ fontWeight: 900, color: '#042a1b', fontSize: '0.8125rem' }}>
+                              {((item.product?.price || 1450000) * (item.quantity || 1)).toLocaleString()}{' '}
+                              تومان
                             </div>
                           </div>
-                          <div style={{ fontWeight: 900, color: '#042a1b', fontSize: '0.8125rem' }}>
-                            {((item.product?.price || 1450000) * (item.quantity || 1)).toLocaleString()}{' '}
-                            تومان
-                          </div>
-                        </div>
-                      ))
+                        );
+                      })
                     ) : (
                       <div className={styles.invoiceItemCard}>
                         <div>
@@ -460,7 +518,7 @@ export const OrdersTab = () => {
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={() => setSelectedOrder(null)}
+                    onClick={function () { setSelectedOrder(null); }}
                     className={styles.cancelBtn}
                     style={{ width: '100%' }}
                   >
@@ -474,4 +532,4 @@ export const OrdersTab = () => {
       )}
     </div>
   );
-};
+}

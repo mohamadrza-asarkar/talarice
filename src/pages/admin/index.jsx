@@ -23,7 +23,7 @@ import { SlidersTab } from './SlidersTab';
 import { BlogTab } from './BlogTab';
 import styles from './style.module.css';
 
-export const AdminPage = () => {
+export function AdminPage() {
   const navigate = useNavigate();
   const { isAdmin, currentUser, products, orders, heroSlides, articles } = useApp();
   const [activeTab, setActiveTab] = useState('products');
@@ -35,14 +35,16 @@ export const AdminPage = () => {
     { id: 'products', label: 'محصولات انبار', icon: Package, count: products.length },
     { id: 'orders', label: 'سفارشات', icon: ShoppingBag, count: orders.length },
     { id: 'sliders', label: 'ویترین و اسلایدر', icon: ImageIcon, count: heroSlides.length },
-    { id: 'blog', label: 'وبلاگ و مقالات', icon: BookOpen, count: articles.length },
+    { id: 'blog', label: 'دانشنامه و مقالات', icon: BookOpen, count: articles.length },
     { id: 'users', label: 'مشتریان و کاربران', icon: Users, count: 5 },
   ];
 
   // Calculated Stats
-  const totalSales = orders.reduce((sum, o) => sum + (Number(o.finalAmount || o.totalPrice || 0)), 0);
-  const pendingOrders = orders.filter(o => o.status === 'processing').length;
-  const inStockProducts = products.filter(p => (p.stock || 0) > 0).length;
+  const totalSales = orders.reduce(function (sum, o) {
+    return sum + (Number(o.finalAmount || o.totalPrice || 0));
+  }, 0);
+  const pendingOrders = orders.filter(function (o) { return o.status === 'reviewing' || o.status === 'processing'; }).length;
+  const inStockProducts = products.filter(function (p) { return (p.stock || 0) > 0; }).length;
 
   const todayPersian = new Intl.DateTimeFormat('fa-IR', {
     weekday: 'long',
@@ -58,7 +60,7 @@ export const AdminPage = () => {
         <div className={styles.mobileHeaderRight}>
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={function () { navigate('/'); }}
             className={styles.mobileBackBtn}
             aria-label="بازگشت به فروشگاه"
             title="بازگشت به فروشگاه"
@@ -72,7 +74,7 @@ export const AdminPage = () => {
           </div>
         </div>
         <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onClick={function () { setIsMobileMenuOpen(!isMobileMenuOpen); }}
           className={styles.mobileMenuBtn}
           aria-label="باز کردن منو"
         >
@@ -92,13 +94,13 @@ export const AdminPage = () => {
 
         <nav className={styles.navList}>
           <div className={styles.navLabel}>بخش‌های مدیریتی</div>
-          {navItems.map(item => {
+          {navItems.map(function (item) {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => {
+                onClick={function () {
                   setActiveTab(item.id);
                   setIsMobileMenuOpen(false);
                 }}
@@ -128,7 +130,7 @@ export const AdminPage = () => {
 
           <button
             type="button"
-            onClick={() => navigate('/')}
+            onClick={function () { navigate('/'); }}
             className={styles.backButton}
           >
             <ArrowRight size={17} />
@@ -226,9 +228,11 @@ export const AdminPage = () => {
       {isMobileMenuOpen && (
         <div
           className={styles.backdrop}
-          onClick={() => setIsMobileMenuOpen(false)}
+          onClick={function () { setIsMobileMenuOpen(false); }}
         />
       )}
     </div>
   );
-};
+}
+
+export default AdminPage;

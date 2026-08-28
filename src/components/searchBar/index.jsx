@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import styles from './style.module.css';
 
-export const SearchBar = () => {
+export function SearchBar() {
   return (
     <Link to="/search" className={styles.searchContainer}>
       <input

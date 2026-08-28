@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import { Users, Search, Plus, UserCheck, ShieldCheck, X, Phone, MapPin, ShoppingBag } from 'lucide-react';
 import styles from './style.module.css';
 
-export const UsersTab = () => {
+export function UsersTab() {
   const { currentUser, orders } = useApp();
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +17,7 @@ export const UsersTab = () => {
       role: 'admin',
       roleTitle: 'مدیر ارشد سیستم',
       ordersCount: orders.length,
-      totalSpend: orders.reduce((sum, o) => sum + (o.finalAmount || o.totalPrice || 1450000), 0),
+      totalSpend: orders.reduce(function (sum, o) { return sum + (o.finalAmount || o.totalPrice || 1450000); }, 0),
       city: 'شیراز',
       regDate: '۱۴۰۳/۰۱/۱۵',
       status: 'active'
@@ -79,7 +79,7 @@ export const UsersTab = () => {
     city: 'شیراز'
   });
 
-  const handleAddUser = (e) => {
+  function handleAddUser(e) {
     e.preventDefault();
     const newUser = {
       id: `usr_${Date.now()}`,
@@ -97,9 +97,9 @@ export const UsersTab = () => {
     setUserList([newUser, ...userList]);
     setIsModalOpen(false);
     setFormData({ name: '', phone: '', role: 'customer', city: 'شیراز' });
-  };
+  }
 
-  const filteredUsers = userList.filter((u) => {
+  const filteredUsers = userList.filter(function (u) {
     return (
       !search ||
       u.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -120,7 +120,7 @@ export const UsersTab = () => {
             مشاهده سوابق خرید، سطح کاربری و مشخصات مشتریان وفادار طلا رایس
           </p>
         </div>
-        <button onClick={() => setIsModalOpen(true)} className={styles.addBtn}>
+        <button onClick={function () { setIsModalOpen(true); }} className={styles.addBtn}>
           <Plus size={19} strokeWidth={2.5} />
           <span>ثبت کاربر جدید</span>
         </button>
@@ -136,7 +136,7 @@ export const UsersTab = () => {
               type="text"
               placeholder="جستجو بر اساس نام، شماره موبایل یا شهر..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={function (e) { setSearch(e.target.value); }}
               className={styles.searchInput}
             />
           </div>
@@ -167,80 +167,82 @@ export const UsersTab = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className={styles.tr}>
-                      {/* User Avatar & Name */}
-                      <td className={styles.td}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                          <div className={styles.userAvatarCircle}>
-                            {user.name.trim()[0] || 'ک'}
-                          </div>
-                          <div>
-                            <div style={{ fontWeight: 800, color: '#042a1b', fontSize: '0.875rem' }}>
-                              {user.name}
+                  {filteredUsers.map(function (user) {
+                    return (
+                      <tr key={user.id} className={styles.tr}>
+                        {/* User Avatar & Name */}
+                        <td className={styles.td}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <div className={styles.userAvatarCircle}>
+                              {user.name.trim()[0] || 'ک'}
                             </div>
-                            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.125rem' }}>
-                              شهر: {user.city} | عضویت: {user.regDate}
+                            <div>
+                              <div style={{ fontWeight: 800, color: '#042a1b', fontSize: '0.875rem' }}>
+                                {user.name}
+                              </div>
+                              <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '0.125rem' }}>
+                                شهر: {user.city} | عضویت: {user.regDate}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
+                        </td>
 
-                      {/* Phone */}
-                      <td className={styles.td}>
-                        <span
-                          dir="ltr"
-                          style={{
-                            fontFamily: 'monospace',
-                            fontSize: '0.8125rem',
-                            fontWeight: 700,
-                            color: '#334155',
-                            backgroundColor: '#f8fafc',
-                            padding: '0.25rem 0.5rem',
-                            borderRadius: '0.375rem',
-                            border: '1px solid #e2e8f0',
-                            display: 'inline-block'
-                          }}
-                        >
-                          {user.phone}
-                        </span>
-                      </td>
+                        {/* Phone */}
+                        <td className={styles.td}>
+                          <span
+                            dir="ltr"
+                            style={{
+                              fontFamily: 'monospace',
+                              fontSize: '0.8125rem',
+                              fontWeight: 700,
+                              color: '#334155',
+                              backgroundColor: '#f8fafc',
+                              padding: '0.25rem 0.5rem',
+                              borderRadius: '0.375rem',
+                              border: '1px solid #e2e8f0',
+                              display: 'inline-block'
+                            }}
+                          >
+                            {user.phone}
+                          </span>
+                        </td>
 
-                      {/* Role */}
-                      <td className={styles.td}>
-                        {user.role === 'admin' ? (
-                          <span className={styles.roleBadgeAdmin}>مدیر ارشد</span>
-                        ) : user.role === 'vip' ? (
-                          <span className={styles.roleBadgeVIP}>مشتری VIP</span>
-                        ) : (
-                          <span className={styles.roleBadgeCustomer}>مشتری عادی</span>
-                        )}
-                      </td>
+                        {/* Role */}
+                        <td className={styles.td}>
+                          {user.role === 'admin' ? (
+                            <span className={styles.roleBadgeAdmin}>مدیر ارشد</span>
+                          ) : user.role === 'vip' ? (
+                            <span className={styles.roleBadgeVIP}>مشتری VIP</span>
+                          ) : (
+                            <span className={styles.roleBadgeCustomer}>مشتری عادی</span>
+                          )}
+                        </td>
 
-                      {/* Orders Count */}
-                      <td className={styles.td}>
-                        <span style={{ fontWeight: 800, color: '#042a1b' }}>
-                          {user.ordersCount} سفارش
-                        </span>
-                      </td>
+                        {/* Orders Count */}
+                        <td className={styles.td}>
+                          <span style={{ fontWeight: 800, color: '#042a1b' }}>
+                            {user.ordersCount} سفارش
+                          </span>
+                        </td>
 
-                      {/* Total Spend */}
-                      <td className={styles.td}>
-                        <span className={styles.priceText}>
-                          {user.totalSpend > 0 ? user.totalSpend.toLocaleString() : '---'}
-                        </span>
-                        {user.totalSpend > 0 && <span className={styles.currency}>تومان</span>}
-                      </td>
+                        {/* Total Spend */}
+                        <td className={styles.td}>
+                          <span className={styles.priceText}>
+                            {user.totalSpend > 0 ? user.totalSpend.toLocaleString() : '---'}
+                          </span>
+                          {user.totalSpend > 0 && <span className={styles.currency}>تومان</span>}
+                        </td>
 
-                      {/* Status */}
-                      <td className={styles.td} style={{ textAlign: 'center' }}>
-                        <span className={styles.userActiveBadge}>
-                          <span className={styles.userActiveDot} />
-                          فعال
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
+                        {/* Status */}
+                        <td className={styles.td} style={{ textAlign: 'center' }}>
+                          <span className={styles.userActiveBadge}>
+                            <span className={styles.userActiveDot} />
+                            فعال
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -250,8 +252,8 @@ export const UsersTab = () => {
 
       {/* Add User Modal */}
       {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={function () { setIsModalOpen(false); }}>
+          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
             <div className={styles.modalHeader}>
               <div>
                 <h3 className={styles.modalTitle}>افزودن کاربر یا مشتری جدید</h3>
@@ -259,7 +261,7 @@ export const UsersTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={function () { setIsModalOpen(false); }}
                 className={styles.modalCloseBtn}
               >
                 <X size={20} />
@@ -276,7 +278,7 @@ export const UsersTab = () => {
                       type="text"
                       placeholder="مثال: رضا احمدی"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, name: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -288,7 +290,7 @@ export const UsersTab = () => {
                       type="text"
                       placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                       value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, phone: e.target.value }); }}
                       dir="ltr"
                       className={styles.input}
                     />
@@ -300,7 +302,7 @@ export const UsersTab = () => {
                       type="text"
                       placeholder="مثال: شیراز"
                       value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, city: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -309,7 +311,7 @@ export const UsersTab = () => {
                     <label className={styles.label}>سطح دسترسی / نقش کاربر</label>
                     <select
                       value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, role: e.target.value }); }}
                       className={styles.select}
                     >
                       <option value="customer">مشتری عادی</option>
@@ -322,7 +324,7 @@ export const UsersTab = () => {
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={function () { setIsModalOpen(false); }}
                     className={styles.cancelBtn}
                   >
                     انصراف
@@ -338,4 +340,4 @@ export const UsersTab = () => {
       )}
     </div>
   );
-};
+}

@@ -2,7 +2,7 @@ import React from 'react';
 import styles from './style.module.css';
 import logoImg from '../../assets/logo.png';
 
-export const Logo = ({ size }) => {
+export function Logo({ size }) {
   return (
     <img
       src={logoImg}

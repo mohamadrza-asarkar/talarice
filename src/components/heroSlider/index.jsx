@@ -3,26 +3,26 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const HeroSlider = () => {
+export function HeroSlider() {
   const { heroSlides, setSelectedCategory } = useApp();
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  useEffect(() => {
+  useEffect(function () {
     if (!heroSlides?.length) return;
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    const timer = setInterval(function () {
+      setCurrentSlide(function (prev) { return (prev + 1) % heroSlides.length; });
     }, 5500);
-    return () => clearInterval(timer);
+    return function () { clearInterval(timer); };
   }, [heroSlides?.length]);
 
   if (!heroSlides?.length) return null;
   const slide = heroSlides[currentSlide];
 
-  const handleCta = () => {
+  function handleCta() {
     if (slide.category) setSelectedCategory(slide.category);
     navigate('/catalog');
-  };
+  }
 
   return (
     <section className={styles.sliderCard}>
@@ -48,26 +48,28 @@ export const HeroSlider = () => {
         <div className={styles.navRow}>
           <button
             type="button"
-            onClick={() => setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length)}
+            onClick={function () { setCurrentSlide(function (prev) { return (prev - 1 + heroSlides.length) % heroSlides.length; }); }}
             className={styles.navBtn}
             aria-label="Previous slide"
           >
             <i className="fa-solid fa-chevron-right" />
           </button>
           <div className={styles.dots}>
-            {heroSlides.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setCurrentSlide(idx)}
-                className={currentSlide === idx ? styles.dotActive : styles.dot}
-                aria-label={`Slide ${idx + 1}`}
-              />
-            ))}
+            {heroSlides.map(function (_, idx) {
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={function () { setCurrentSlide(idx); }}
+                  className={currentSlide === idx ? styles.dotActive : styles.dot}
+                  aria-label={`Slide ${idx + 1}`}
+                />
+              );
+            })}
           </div>
           <button
             type="button"
-            onClick={() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length)}
+            onClick={function () { setCurrentSlide(function (prev) { return (prev + 1) % heroSlides.length; }); }}
             className={styles.navBtn}
             aria-label="Next slide"
           >
@@ -77,5 +79,5 @@ export const HeroSlider = () => {
       </footer>
     </section>
   );
-};
+}
 

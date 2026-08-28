@@ -3,23 +3,29 @@ import { useApp } from '../../context';
 import { ProductCard } from '../productCard';
 import styles from './style.module.css';
 
-export const AmazingDeals = () => {
+export function AmazingDeals() {
   const { products } = useApp();
-  const dealProducts = products.filter((p) => p.isDeal);
+  const dealProducts = products.filter(function (p) { return p.isDeal; });
   const [secondsLeft, setSecondsLeft] = useState(46785);
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSecondsLeft((s) => (s > 0 ? s - 1 : 46785));
+  useEffect(function () {
+    const timer = setInterval(function () {
+      setSecondsLeft(function (s) { return s > 0 ? s - 1 : 46785; });
     }, 1000);
-    return () => clearInterval(timer);
+    return function () { clearInterval(timer); };
   }, []);
 
   if (!dealProducts.length) return null;
 
-  const h = String(Math.floor(secondsLeft / 3600)).padStart(2, '0');
-  const m = String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0');
-  const s = String(secondsLeft % 60).padStart(2, '0');
+  function toFaDigits(str) {
+    return String(str).replace(/\d/g, function (d) {
+      return '۰۱۲۳۴۵۶۷۸۹'[d];
+    });
+  }
+
+  const h = toFaDigits(String(Math.floor(secondsLeft / 3600)).padStart(2, '0'));
+  const m = toFaDigits(String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0'));
+  const s = toFaDigits(String(secondsLeft % 60).padStart(2, '0'));
 
   return (
     <section className={styles.dealsSection}>
@@ -29,17 +35,29 @@ export const AmazingDeals = () => {
           <span>پیشنهاد شگفت‌انگیز طلا رایس</span>
         </h3>
 
-        <time className={styles.timer}>
-          <span>{s}</span>:<span>{m}</span>:<span>{h}</span>
+        <time className={styles.timer} dir="ltr">
+          <div className={styles.timerSegment}>
+            <span>{h}</span>
+            <small className={styles.timerLabel}>ساعت</small>
+          </div>
+          <span className={styles.colon}>:</span>
+          <div className={styles.timerSegment}>
+            <span>{m}</span>
+            <small className={styles.timerLabel}>دقیقه</small>
+          </div>
+          <span className={styles.colon}>:</span>
+          <div className={styles.timerSegment}>
+            <span>{s}</span>
+            <small className={styles.timerLabel}>ثانیه</small>
+          </div>
         </time>
       </header>
 
       <div className={styles.gridContainer}>
-        {dealProducts.slice(0, 2).map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
+        {dealProducts.slice(0, 2).map(function (product) {
+          return <ProductCard key={product.id} product={product} />;
+        })}
       </div>
     </section>
   );
-};
-
+}

@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import { Plus, Trash2, Search, PackageOpen, Edit3, X, Filter, CheckCircle2 } from 'lucide-react';
 import styles from './style.module.css';
 
-export const ProductsTab = () => {
+export function ProductsTab() {
   const { products, setProducts } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
@@ -23,13 +23,13 @@ export const ProductsTab = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  const openAddModal = () => {
+  function openAddModal() {
     setEditingProduct(null);
     setFormData(initialFormState);
     setIsModalOpen(true);
-  };
+  }
 
-  const openEditModal = (product) => {
+  function openEditModal(product) {
     setEditingProduct(product);
     setFormData({
       name: product.name || '',
@@ -42,9 +42,9 @@ export const ProductsTab = () => {
       farmer: product.farmer || 'شالیکاران کامفیروز'
     });
     setIsModalOpen(true);
-  };
+  }
 
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
 
     const priceNum = Number(formData.price);
@@ -53,7 +53,7 @@ export const ProductsTab = () => {
 
     if (editingProduct) {
       // Edit existing product
-      const updatedProducts = products.map((p) => {
+      const updatedProducts = products.map(function (p) {
         if (p._id === editingProduct._id || p.id === editingProduct.id) {
           return {
             ...p,
@@ -100,15 +100,15 @@ export const ProductsTab = () => {
     setIsModalOpen(false);
     setEditingProduct(null);
     setFormData(initialFormState);
-  };
+  }
 
-  const handleDelete = (id) => {
+  function handleDelete(id) {
     if (!window.confirm('آیا از حذف این محصول اطمینان دارید؟ این عمل غیرقابل بازگشت است.')) return;
-    setProducts(products.filter((p) => p._id !== id && p.id !== id));
-  };
+    setProducts(products.filter(function (p) { return p._id !== id && p.id !== id; }));
+  }
 
   // Filter products
-  const filteredProducts = products.filter((p) => {
+  const filteredProducts = products.filter(function (p) {
     const matchesSearch =
       !search ||
       p.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -150,7 +150,7 @@ export const ProductsTab = () => {
               type="text"
               placeholder="جستجو بر اساس نام محصول یا منطقه کشت..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={function (e) { setSearch(e.target.value); }}
               className={styles.searchInput}
             />
           </div>
@@ -158,7 +158,7 @@ export const ProductsTab = () => {
           <div className={styles.toolbarFilters}>
             <select
               value={stockFilter}
-              onChange={(e) => setStockFilter(e.target.value)}
+              onChange={function (e) { setStockFilter(e.target.value); }}
               className={styles.filterSelect}
             >
               <option value="all">همه موجودی‌ها</option>
@@ -192,7 +192,7 @@ export const ProductsTab = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredProducts.map((p) => {
+                  {filteredProducts.map(function (p) {
                     const id = p._id || p.id;
                     const stock = p.stock ?? 0;
                     return (
@@ -204,7 +204,7 @@ export const ProductsTab = () => {
                               <img
                                 src={p.image || '/images/products/hashemi.jpg'}
                                 alt={p.name}
-                                onError={(e) => {
+                                onError={function (e) {
                                   e.target.onerror = null;
                                   e.target.src = '/images/products/hashemi.jpg';
                                 }}
@@ -253,14 +253,14 @@ export const ProductsTab = () => {
                         <td className={styles.td} style={{ textAlign: 'center' }}>
                           <div className={styles.actionBtnGroup}>
                             <button
-                              onClick={() => openEditModal(p)}
+                              onClick={function () { openEditModal(p); }}
                               className={styles.editBtn}
                               title="ویرایش مشخصات و قیمت"
                             >
                               <Edit3 size={16} strokeWidth={2.2} />
                             </button>
                             <button
-                              onClick={() => handleDelete(id)}
+                              onClick={function () { handleDelete(id); }}
                               className={styles.deleteBtn}
                               title="حذف از انبار"
                             >
@@ -280,8 +280,8 @@ export const ProductsTab = () => {
 
       {/* Add / Edit Modal */}
       {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
-          <div className={styles.modalBox} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.modalOverlay} onClick={function () { setIsModalOpen(false); }}>
+          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
             <div className={styles.modalHeader}>
               <div>
                 <h3 className={styles.modalTitle}>
@@ -295,7 +295,7 @@ export const ProductsTab = () => {
               </div>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={function () { setIsModalOpen(false); }}
                 className={styles.modalCloseBtn}
               >
                 <X size={20} />
@@ -312,7 +312,7 @@ export const ProductsTab = () => {
                       type="text"
                       placeholder="مثال: برنج کامفیروزی اعلا کشت اول طلا رایس"
                       value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, name: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -323,7 +323,7 @@ export const ProductsTab = () => {
                       type="text"
                       placeholder="مثال: کامفیروز مرودشت، استان فارس"
                       value={formData.origin}
-                      onChange={(e) => setFormData({ ...formData, origin: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, origin: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -334,7 +334,7 @@ export const ProductsTab = () => {
                       type="text"
                       placeholder="مثال: شالیکاران نمونه حوزه رود کُر"
                       value={formData.farmer}
-                      onChange={(e) => setFormData({ ...formData, farmer: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, farmer: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -346,7 +346,7 @@ export const ProductsTab = () => {
                       type="number"
                       placeholder="مثال: 1450000"
                       value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, price: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -357,7 +357,7 @@ export const ProductsTab = () => {
                       type="number"
                       placeholder="مثال: 1650000"
                       value={formData.oldPrice}
-                      onChange={(e) => setFormData({ ...formData, oldPrice: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, oldPrice: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -369,7 +369,7 @@ export const ProductsTab = () => {
                       type="number"
                       placeholder="مثال: 30"
                       value={formData.stock}
-                      onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, stock: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -380,7 +380,7 @@ export const ProductsTab = () => {
                       type="text"
                       placeholder="https://... یا خالی برای تصویر پیش‌فرض"
                       value={formData.image}
-                      onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
                       dir="ltr"
                       className={styles.input}
                     />
@@ -391,7 +391,7 @@ export const ProductsTab = () => {
                     <textarea
                       placeholder="توضیحاتی درباره عطر، قد کشیدن، و نحوه پخت این برنج بنویسید..."
                       value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
                       rows="3"
                       className={styles.textarea}
                     />
@@ -401,7 +401,7 @@ export const ProductsTab = () => {
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={() => setIsModalOpen(false)}
+                    onClick={function () { setIsModalOpen(false); }}
                     className={styles.cancelBtn}
                   >
                     انصراف
@@ -417,4 +417,4 @@ export const ProductsTab = () => {
       )}
     </div>
   );
-};
+}

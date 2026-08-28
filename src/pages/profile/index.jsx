@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
-export const ProfilePage = () => {
-  const { orders, addresses, logout, currentUser, isAdmin, goBack } = useApp();
+export function ProfilePage() {
+  const { orders, addresses, logout, currentUser, isAdmin, getOrderStatusInfo } = useApp();
   const [activeSubTab, setActiveSubTab] = useState('orders');
 
   const [wholesaleForm, setWholesaleForm] = useState({
@@ -19,10 +19,10 @@ export const ProfilePage = () => {
   const [supportText, setSupportText] = useState('');
   const [supportSuccess, setSupportSuccess] = useState(false);
 
-  const handleWholesaleSubmit = (e) => {
+  function handleWholesaleSubmit(e) {
     e.preventDefault();
     setWholesaleSuccess(true);
-    setTimeout(() => {
+    setTimeout(function () {
       setWholesaleSuccess(false);
       setWholesaleForm({
         businessName: '',
@@ -32,7 +32,7 @@ export const ProfilePage = () => {
         description: ''
       });
     }, 4000);
-  };
+  }
 
   const tabs = [
     { id: 'orders', label: 'سفارش‌ها' },
@@ -44,18 +44,6 @@ export const ProfilePage = () => {
   return (
     <div className={styles.profileWrapper}>
       <header className={styles.headerCard}>
-        <div className={styles.headerTopBar}>
-          <button
-            type="button"
-            onClick={() => goBack('/')}
-            className={styles.backBtn}
-            aria-label="بازگشت به فروشگاه"
-          >
-            <i className="fa-solid fa-arrow-right" />
-            <span>بازگشت به فروشگاه</span>
-          </button>
-        </div>
-
         <div className={styles.headerTop}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>
@@ -84,15 +72,17 @@ export const ProfilePage = () => {
       </header>
 
       <nav className={styles.tabsContainer}>
-        {tabs.map((t) => (
-          <button
-            key={t.id}
-            onClick={() => setActiveSubTab(t.id)}
-            className={`${styles.tabBtn} ${activeSubTab === t.id ? styles.tabActive : styles.tabInactive}`}
-          >
-            {t.label}
-          </button>
-        ))}
+        {tabs.map(function (t) {
+          return (
+            <button
+              key={t.id}
+              onClick={function () { setActiveSubTab(t.id); }}
+              className={`${styles.tabBtn} ${activeSubTab === t.id ? styles.tabActive : styles.tabInactive}`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </nav>
 
       <main className={styles.tabContent}>
@@ -105,30 +95,163 @@ export const ProfilePage = () => {
                 <p>هنوز هیچ سفارشی ثبت نکرده‌اید.</p>
               </div>
             ) : (
-              orders.map((ord) => (
-                <article key={ord.id} className={styles.card}>
-                  <div className={`${styles.row} ${styles.rowBorder}`}>
-                    <span className={styles.monoText}>{ord.id}</span>
-                    <span className={styles.badgeStatus}>در حال پردازش و بسته‌بندی</span>
-                  </div>
+              orders.map(function (ord) {
+                const statusInfo = (typeof getOrderStatusInfo === 'function' ? getOrderStatusInfo(ord.status) : null) || {
+                  key: ord.status || 'reviewing',
+                  label: ord.status === 'shipping' ? 'در حال ارسال' : ord.status === 'shipped' ? 'ارسال شده' : ord.status === 'delivered' ? 'تحویل شده' : 'درحال بررسی',
+                  desc: 'سفارش در حال پردازش و آماده‌سازی در انبار است.',
+                  color: '#b45309',
+                  bg: '#fffbeb',
+                  border: '#fde68a',
+                  step: ord.status === 'delivered' ? 4 : ord.status === 'shipped' ? 4 : ord.status === 'shipping' ? 3 : 2
+                };
 
-                  <div className={`${styles.row} ${styles.mediumText}`}>
-                    <span>تاریخ ثبت: {ord.date}</span>
-                    <span>کد پیگیری: <strong className={styles.monoText}>{ord.trackingCode}</strong></span>
-                  </div>
+                const currentStep = statusInfo.step || (ord.status === 'delivered' ? 4 : ord.status === 'shipped' ? 4 : ord.status === 'shipping' ? 3 : 2);
 
-                  <div className={styles.boldText}>
-                    تعداد اقلام: {(ord.items?.length ?? 0).toLocaleString('fa-IR')} کیسه برنج
-                  </div>
+                return (
+                  <article key={ord.id} className={styles.card}>
+                    <div className={`${styles.row} ${styles.rowBorder}`}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <i className="fa-solid fa-receipt" style={{ color: '#d4af37' }} />
+                        <span className={styles.monoText}>سفارش #{ord.id}</span>
+                      </div>
+                      <span
+                        className={styles.statusBadge}
+                        style={{
+                          backgroundColor: statusInfo.bg,
+                          color: statusInfo.color,
+                          borderColor: statusInfo.border
+                        }}
+                      >
+                        {statusInfo.key === 'reviewing' && <i className="fa-regular fa-clock" />}
+                        {statusInfo.key === 'shipping' && <i className="fa-solid fa-truck-fast" />}
+                        {statusInfo.key === 'shipped' && <i className="fa-solid fa-box-open" />}
+                        {statusInfo.key === 'delivered' && <i className="fa-solid fa-circle-check" />}
+                        <span>{statusInfo.label}</span>
+                      </span>
+                    </div>
 
-                  <div className={styles.totalRow}>
-                    <span>مبلغ کل:</span>
-                    <strong className={styles.totalValue}>
-                      {((ord.finalAmount ?? ord.totalAmount) ?? 0).toLocaleString('fa-IR')} تومان
-                    </strong>
-                  </div>
-                </article>
-              ))
+                    {/* Status Description Banner */}
+                    <div
+                      className={styles.statusDescBox}
+                      style={{
+                        backgroundColor: statusInfo.bg,
+                        color: statusInfo.color,
+                        border: `1px solid ${statusInfo.border}`
+                      }}
+                    >
+                      <i className="fa-solid fa-circle-info" />
+                      <span>{statusInfo.desc}</span>
+                    </div>
+
+                    {/* Progress Stepper */}
+                    <div className={styles.orderStepper}>
+                      <div className={styles.stepperLine}>
+                        <div
+                          className={styles.stepperLineFill}
+                          style={{
+                            width: currentStep === 4 ? '100%' : currentStep === 3 ? '66%' : '33%'
+                          }}
+                        />
+                      </div>
+
+                      <div className={styles.stepperItem}>
+                        <div className={`${styles.stepperDot} ${styles.stepperDotDone}`}>
+                          <i className="fa-solid fa-check" />
+                        </div>
+                        <span className={`${styles.stepperLabel} ${styles.stepperLabelDone}`}>ثبت سفارش</span>
+                      </div>
+
+                      <div className={styles.stepperItem}>
+                        <div
+                          className={`${styles.stepperDot} ${
+                            currentStep >= 2 ? (currentStep === 2 ? styles.stepperDotActive : styles.stepperDotDone) : styles.stepperDotPending
+                          }`}
+                        >
+                          {currentStep > 2 ? <i className="fa-solid fa-check" /> : <span>۲</span>}
+                        </div>
+                        <span
+                          className={`${styles.stepperLabel} ${
+                            currentStep > 2 ? styles.stepperLabelDone : currentStep === 2 ? styles.stepperLabelActive : ''
+                          }`}
+                        >
+                          درحال بررسی
+                        </span>
+                      </div>
+
+                      <div className={styles.stepperItem}>
+                        <div
+                          className={`${styles.stepperDot} ${
+                            currentStep >= 3 ? (currentStep === 3 ? styles.stepperDotActive : styles.stepperDotDone) : styles.stepperDotPending
+                          }`}
+                        >
+                          {currentStep > 3 ? <i className="fa-solid fa-check" /> : <span>۳</span>}
+                        </div>
+                        <span
+                          className={`${styles.stepperLabel} ${
+                            currentStep > 3 ? styles.stepperLabelDone : currentStep === 3 ? styles.stepperLabelActive : ''
+                          }`}
+                        >
+                          در حال ارسال
+                        </span>
+                      </div>
+
+                      <div className={styles.stepperItem}>
+                        <div
+                          className={`${styles.stepperDot} ${
+                            currentStep >= 4 ? styles.stepperDotDone : styles.stepperDotPending
+                          }`}
+                        >
+                          {currentStep >= 4 ? <i className="fa-solid fa-check" /> : <span>۴</span>}
+                        </div>
+                        <span
+                          className={`${styles.stepperLabel} ${
+                            currentStep >= 4 ? styles.stepperLabelDone : ''
+                          }`}
+                        >
+                          {ord.status === 'delivered' ? 'تحویل شده' : 'ارسال شده'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className={`${styles.row} ${styles.mediumText}`}>
+                      <span>تاریخ ثبت: {ord.date}</span>
+                      <span>کد رهگیری: <strong className={styles.monoText}>{ord.trackingCode}</strong></span>
+                    </div>
+
+                    {/* Order Items preview */}
+                    {ord.items && ord.items.length > 0 && (
+                      <div className={styles.orderItemsList}>
+                        {ord.items.map(function (item, idx) {
+                          const pName = item.product?.name || item.name || 'برنج کامفیروز ممتاز';
+                          const weight = item.weightKg || item.product?.weightKg || 10;
+                          const qty = item.quantity || 1;
+                          return (
+                            <div key={idx} className={styles.orderItemRow}>
+                              <span>🌾 {pName} ({weight.toLocaleString('fa-IR')} کیلوگرم)</span>
+                              <strong>{qty.toLocaleString('fa-IR')} عدد</strong>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {ord.fullAddress && (
+                      <div style={{ fontSize: '0.75rem', color: '#4b5563', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                        <i className="fa-solid fa-location-dot" style={{ color: '#d4af37' }} />
+                        <span>تحویل به: {ord.recipientName || 'خریدار'} - {ord.fullAddress}</span>
+                      </div>
+                    )}
+
+                    <div className={styles.totalRow}>
+                      <span>مبلغ کل پرداختی:</span>
+                      <strong className={styles.totalValue}>
+                        {((ord.finalAmount ?? ord.totalAmount) ?? 0).toLocaleString('fa-IR')} تومان
+                      </strong>
+                    </div>
+                  </article>
+                );
+              })
             )}
           </section>
         )}
@@ -136,18 +259,20 @@ export const ProfilePage = () => {
         {activeSubTab === 'addresses' && (
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>آدرس‌های ثبت شده:</h3>
-            {addresses?.map((addr) => (
-              <article key={addr.id} className={styles.card}>
-                <div className={styles.row}>
-                  <strong className={styles.boldText}>{addr.title}</strong>
-                  {addr.isDefault && <span className={styles.badgeDefault}>پیش‌فرض</span>}
-                </div>
-                <p className={styles.addressDesc}>{addr.fullAddress}</p>
-                <small className={styles.addressContact}>
-                  گیرنده: {addr.recipientName} ({addr.phone})
-                </small>
-              </article>
-            ))}
+            {addresses?.map(function (addr) {
+              return (
+                <article key={addr.id} className={styles.card}>
+                  <div className={styles.row}>
+                    <strong className={styles.boldText}>{addr.title}</strong>
+                    {addr.isDefault && <span className={styles.badgeDefault}>پیش‌فرض</span>}
+                  </div>
+                  <p className={styles.addressDesc}>{addr.fullAddress}</p>
+                  <small className={styles.addressContact}>
+                    گیرنده: {addr.recipientName} ({addr.phone})
+                  </small>
+                </article>
+              );
+            })}
           </section>
         )}
 
@@ -172,7 +297,7 @@ export const ProfilePage = () => {
                     type="text"
                     required
                     value={wholesaleForm.businessName}
-                    onChange={(e) => setWholesaleForm({ ...wholesaleForm, businessName: e.target.value })}
+                    onChange={function (e) { setWholesaleForm({ ...wholesaleForm, businessName: e.target.value }); }}
                     placeholder="مثلاً: رستوران سنتی شیراز"
                     className={styles.input}
                   />
@@ -185,7 +310,7 @@ export const ProfilePage = () => {
                       type="text"
                       required
                       value={wholesaleForm.contactName}
-                      onChange={(e) => setWholesaleForm({ ...wholesaleForm, contactName: e.target.value })}
+                      onChange={function (e) { setWholesaleForm({ ...wholesaleForm, contactName: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -196,7 +321,7 @@ export const ProfilePage = () => {
                       dir="ltr"
                       required
                       value={wholesaleForm.phone}
-                      onChange={(e) => setWholesaleForm({ ...wholesaleForm, phone: e.target.value })}
+                      onChange={function (e) { setWholesaleForm({ ...wholesaleForm, phone: e.target.value }); }}
                       className={styles.input}
                     />
                   </div>
@@ -206,7 +331,7 @@ export const ProfilePage = () => {
                   <label className={styles.label}>حجم تخمینی (کیلوگرم):</label>
                   <select
                     value={wholesaleForm.estimatedKg}
-                    onChange={(e) => setWholesaleForm({ ...wholesaleForm, estimatedKg: e.target.value })}
+                    onChange={function (e) { setWholesaleForm({ ...wholesaleForm, estimatedKg: e.target.value }); }}
                     className={styles.input}
                   >
                     <option value="100">۱۰۰ کیلوگرم (۱۰ کیسه)</option>
@@ -220,7 +345,7 @@ export const ProfilePage = () => {
                   <textarea
                     rows={2}
                     value={wholesaleForm.description}
-                    onChange={(e) => setWholesaleForm({ ...wholesaleForm, description: e.target.value })}
+                    onChange={function (e) { setWholesaleForm({ ...wholesaleForm, description: e.target.value }); }}
                     placeholder="نوع برنج درخواستی، تاریخ تحویل و..."
                     className={styles.input}
                   />
@@ -254,7 +379,7 @@ export const ProfilePage = () => {
               <textarea
                 rows={2}
                 value={supportText}
-                onChange={(e) => setSupportText(e.target.value)}
+                onChange={function (e) { setSupportText(e.target.value); }}
                 placeholder="سوال خود درباره پخت، ارسال یا کیفیت برنج را بنویسید..."
                 className={styles.input}
               />
@@ -265,11 +390,11 @@ export const ProfilePage = () => {
               ) : (
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={function () {
                     if (supportText.trim()) {
                       setSupportSuccess(true);
                       setSupportText('');
-                      setTimeout(() => setSupportSuccess(false), 3000);
+                      setTimeout(function () { setSupportSuccess(false); }, 3000);
                     }
                   }}
                   className={styles.supportButton}
@@ -283,4 +408,6 @@ export const ProfilePage = () => {
       </main>
     </div>
   );
-};
+}
+
+export default ProfilePage;
