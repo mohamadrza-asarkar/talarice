@@ -1,5 +1,4 @@
 import client from './client';
-import { initialCoupons } from '../data/mockData';
 
 function parseCoupon(c) {
   if (!c) return null;
@@ -23,13 +22,11 @@ export const couponsApi = {
           data: response.data.map(parseCoupon)
         };
       }
+      return { success: false, data: [], message: 'خطا در دریافت کدهای تخفیف' };
     } catch (err) {
-      console.warn('[couponsApi] Fetch coupons server fallback:', err.message);
+      console.error('[couponsApi] Fetch coupons error:', err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      data: initialCoupons.map(parseCoupon)
-    };
   },
 
   /**
@@ -51,27 +48,11 @@ export const couponsApi = {
           message: response.message || `کد تخفیف ${response.coupon.discountPercent}٪ با موفقیت اعمال شد.`
         };
       }
+      return { success: false, message: response.message || 'کد تخفیف وارد شده معتبر نمی‌باشد.' };
     } catch (err) {
-      console.warn('[couponsApi] Validate coupon server fallback:', err.message);
+      console.error('[couponsApi] Validate coupon error:', err.message || err);
+      throw err;
     }
-
-    // Local parsing fallback
-    const found = initialCoupons.find(c => c.code.toUpperCase() === cleanCode);
-    if (found) {
-      const parsed = parseCoupon(found);
-      const discountAmount = Math.round((cartTotal * parsed.discountPercent) / 100);
-      return {
-        success: true,
-        coupon: parsed,
-        discountAmount: discountAmount,
-        message: `کد تخفیف ${parsed.discountPercent}٪ با موفقیت اعمال شد.`
-      };
-    }
-
-    return {
-      success: false,
-      message: 'کد تخفیف وارد شده نامعتبر یا منقضی شده است.'
-    };
   }
 };
 

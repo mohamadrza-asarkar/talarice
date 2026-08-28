@@ -1,5 +1,4 @@
 import client from './client';
-import { initialArticles } from '../data/mockData';
 
 function parseArticle(a) {
   if (!a) return null;
@@ -30,19 +29,17 @@ export const blogApi = {
   async getArticles() {
     try {
       const response = await client.get('/articles');
-      if (response && response.success && Array.isArray(response.data) && response.data.length > 0) {
+      if (response && response.success && Array.isArray(response.data)) {
         return {
           success: true,
           data: response.data.map(parseArticle)
         };
       }
+      return { success: false, data: [], message: 'خطا در دریافت مقالات' };
     } catch (err) {
-      console.warn('[blogApi] Fetch articles server fallback:', err.message);
+      console.error('[blogApi] Fetch articles error:', err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      data: initialArticles.map(parseArticle)
-    };
   },
 
   /**
@@ -57,14 +54,11 @@ export const blogApi = {
           data: parseArticle(response.data)
         };
       }
+      return { success: false, data: null, message: 'مقاله مورد نظر پیدا نشد.' };
     } catch (err) {
-      console.warn(`[blogApi] Fetch article ${id} fallback:`, err.message);
+      console.error(`[blogApi] Fetch article ${id} error:`, err.message || err);
+      throw err;
     }
-    const found = initialArticles.find(a => String(a.id) === String(id));
-    return {
-      success: Boolean(found),
-      data: found ? parseArticle(found) : parseArticle(initialArticles[0])
-    };
   },
 
   /**
@@ -76,16 +70,14 @@ export const blogApi = {
       if (response && response.success) {
         return {
           success: true,
-          message: 'دیدگاه شما با موفقیت ثبت شد و پس از بررسی منتشر خواهد شد.'
+          message: response.message || 'دیدگاه شما با موفقیت ثبت شد و پس از بررسی منتشر خواهد شد.'
         };
       }
+      return { success: false, message: 'خطا در ثبت دیدگاه.' };
     } catch (err) {
-      console.warn('[blogApi] Submit comment server fallback:', err);
+      console.error('[blogApi] Submit comment error:', err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      message: 'دیدگاه شما ثبت شد و به مقاله اضافه گردید.'
-    };
   }
 };
 

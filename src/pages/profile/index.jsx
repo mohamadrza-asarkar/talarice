@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
+import { AuthPage } from '../auth';
 import styles from './style.module.css';
 
 export function ProfilePage() {
@@ -18,6 +19,10 @@ export function ProfilePage() {
 
   const [supportText, setSupportText] = useState('');
   const [supportSuccess, setSupportSuccess] = useState(false);
+
+  if (!currentUser) {
+    return <AuthPage />;
+  }
 
   function handleWholesaleSubmit(e) {
     e.preventDefault();
@@ -50,9 +55,11 @@ export function ProfilePage() {
               {currentUser?.name ? currentUser.name.charAt(0) : 'م'}
             </div>
             <div>
-              <h2 className={styles.userName}>{currentUser?.name ?? 'محمد رضایی'}</h2>
-              <p className={styles.userPhone}>{currentUser?.phone ?? '۰۹۱۷ ۱۲۳ ۴۵۶۷'}</p>
-              <span className={styles.userBadge}>مشتری طلایی</span>
+              <h2 className={styles.userName}>{currentUser?.name}</h2>
+              <p className={styles.userPhone}>{currentUser?.mobile || currentUser?.phone}</p>
+              <span className={styles.userBadge}>
+                {currentUser?.role === 'admin' ? 'مدیر ارشد طلا رایس' : 'مشتری طلایی'}
+              </span>
             </div>
           </div>
 

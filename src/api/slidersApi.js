@@ -1,5 +1,4 @@
 import client from './client';
-import { initialHeroSlides } from '../data/mockData';
 
 function parseSlide(s) {
   if (!s) return null;
@@ -22,19 +21,17 @@ export const slidersApi = {
   async getSliders() {
     try {
       const response = await client.get('/slides');
-      if (response && response.success && Array.isArray(response.data) && response.data.length > 0) {
+      if (response && response.success && Array.isArray(response.data)) {
         return {
           success: true,
           data: response.data.map(parseSlide)
         };
       }
+      return { success: false, data: [], message: 'خطا در دریافت بنرها' };
     } catch (err) {
-      console.warn('[slidersApi] Fetch slides error:', err.message || err);
+      console.error('[slidersApi] Fetch slides error:', err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      data: initialHeroSlides.map(parseSlide)
-    };
   },
 
   /**
@@ -50,8 +47,9 @@ export const slidersApi = {
           message: response.message || 'اسلاید جدید با موفقیت ایجاد شد.'
         };
       }
+      return { success: false, message: 'خطا در ثبت اسلاید جدید.' };
     } catch (err) {
-      console.warn('[slidersApi] Create slide error:', err.message || err);
+      console.error('[slidersApi] Create slide error:', err.message || err);
       throw err;
     }
   },
@@ -64,7 +62,7 @@ export const slidersApi = {
       const response = await client.delete(`/slides/${id}`);
       return response || { success: true, message: 'اسلاید با موفقیت حذف شد.' };
     } catch (err) {
-      console.warn(`[slidersApi] Delete slide ${id} error:`, err.message || err);
+      console.error(`[slidersApi] Delete slide ${id} error:`, err.message || err);
       throw err;
     }
   }

@@ -1,5 +1,4 @@
 import client from './client';
-import { initialCategories, initialTrustItems, initialBrandStory, initialTestTips } from '../data/mockData';
 
 export const categoriesApi = {
   /**
@@ -14,13 +13,11 @@ export const categoriesApi = {
           data: response.data
         };
       }
+      return { success: false, data: [], message: 'خطا در دریافت دسته‌بندی‌ها' };
     } catch (err) {
-      console.warn('[categoriesApi] Server fallback:', err.message);
+      console.error('[categoriesApi] Categories fetch error:', err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      data: initialCategories
-    };
   },
 
   /**
@@ -32,20 +29,22 @@ export const categoriesApi = {
       if (response && response.success && response.data) {
         return {
           success: true,
-          trustItems: response.data.trustItems || initialTrustItems,
-          brandStory: response.data.brandStory || initialBrandStory,
-          testTips: response.data.testTips || initialTestTips
+          trustItems: response.data.trustItems || [],
+          brandStory: response.data.brandStory || '',
+          testTips: response.data.testTips || []
         };
       }
+      return {
+        success: false,
+        trustItems: [],
+        brandStory: '',
+        testTips: [],
+        message: 'خطا در دریافت متا دیتای خانه'
+      };
     } catch (err) {
-      console.warn('[categoriesApi] Home meta server fallback:', err.message);
+      console.error('[categoriesApi] Home meta fetch error:', err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      trustItems: initialTrustItems,
-      brandStory: initialBrandStory,
-      testTips: initialTestTips
-    };
   }
 };
 

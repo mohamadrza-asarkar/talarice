@@ -1,5 +1,4 @@
 import client from './client';
-import { initialProducts } from '../data/mockData';
 
 function parseProduct(p) {
   if (!p) return null;
@@ -25,7 +24,6 @@ function parseProduct(p) {
     origin: p.origin || 'کامفیروز، استان فارس',
     farmer: p.farmer || 'تعاونی شالیکاران کامفیروز',
     cookingRatio: p.cookingRatio || '۱ پیمانه برنج به ۱.۳ پیمانه آب',
-    elongation: p.elongation || 'بسیار عالی (ری‌کشی ۲ برابر)',
     rating: Number(p.rating || 5.0),
     reviewCount: Number(p.reviewCount || p.numReviews || 12),
     gallery: Array.isArray(p.gallery) && p.gallery.length ? p.gallery : [image],
@@ -45,22 +43,18 @@ export const productsApi = {
   async getProducts(params = {}) {
     try {
       const response = await client.get('/products', { params });
-      if (response && response.success && Array.isArray(response.data) && response.data.length > 0) {
+      if (response && response.success && Array.isArray(response.data)) {
         return {
           success: true,
           data: response.data.map(parseProduct),
           total: response.total || response.data.length
         };
       }
+      return { success: false, data: [], total: 0, message: 'خطا در دریافت لیست محصولات' };
     } catch (err) {
-      console.warn('[productsApi] Server fetch fallback:', err.message);
+      console.error('[productsApi] Server fetch error:', err.message || err);
+      throw err;
     }
-    // Fallback to parsed initial products
-    return {
-      success: true,
-      data: initialProducts.map(parseProduct),
-      total: initialProducts.length
-    };
   },
 
   /**
@@ -75,14 +69,11 @@ export const productsApi = {
           data: parseProduct(response.data)
         };
       }
+      return { success: false, data: null, message: 'محصول مورد نظر یافت نشد.' };
     } catch (err) {
-      console.warn(`[productsApi] Fetch product ${id} fallback:`, err.message);
+      console.error(`[productsApi] Fetch product ${id} error:`, err.message || err);
+      throw err;
     }
-    const found = initialProducts.find(p => String(p.id) === String(id) || String(p._id) === String(id));
-    return {
-      success: Boolean(found),
-      data: found ? parseProduct(found) : null
-    };
   },
 
   /**
@@ -98,15 +89,11 @@ export const productsApi = {
           message: 'محصول جدید با موفقیت ایجاد شد.'
         };
       }
+      return { success: false, message: 'خطا در ثبت محصول جدید' };
     } catch (err) {
-      console.warn('[productsApi] Create product server error, creating locally:', err);
+      console.error('[productsApi] Create product error:', err.message || err);
+      throw err;
     }
-    const newProd = parseProduct({ ...productData, id: `prod-${Date.now()}` });
-    return {
-      success: true,
-      data: newProd,
-      message: 'محصول با موفقیت اضافه گردید.'
-    };
   },
 
   /**
@@ -122,14 +109,11 @@ export const productsApi = {
           message: 'اطلاعات محصول به‌روزرسانی شد.'
         };
       }
+      return { success: false, message: 'خطا در ویرایش اطلاعات محصول' };
     } catch (err) {
-      console.warn(`[productsApi] Update product ${id} fallback:`, err);
+      console.error(`[productsApi] Update product ${id} error:`, err.message || err);
+      throw err;
     }
-    return {
-      success: true,
-      data: parseProduct({ ...productData, id }),
-      message: 'ویرایش محصول با موفقیت ذخیره گردید.'
-    };
   },
 
   /**
@@ -138,9 +122,10 @@ export const productsApi = {
   async deleteProduct(id) {
     try {
       const response = await client.delete(`/products/${id}`);
-      return response || { success: true, message: 'محصول حذف گردید.' };
+      return response || { success: true, message: 'محصول با موفقیت حذف گردید.' };
     } catch (err) {
-      return { success: true, message: 'محصول با موفقیت حذف گردید.' };
+      console.error(`[productsApi] Delete product ${id} error:`, err.message || err);
+      throw err;
     }
   }
 };

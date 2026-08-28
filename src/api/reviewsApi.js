@@ -1,5 +1,4 @@
 import client from './client';
-import { initialReviews } from '../data/mockData';
 
 function parseReview(r) {
   if (!r) return null;
@@ -27,16 +26,11 @@ export const reviewsApi = {
           data: response.data.map(parseReview)
         };
       }
+      return { success: false, data: [], message: 'خطا در دریافت نظرات' };
     } catch (err) {
-      console.warn('[reviewsApi] Fetch reviews server fallback:', err.message);
+      console.error('[reviewsApi] Fetch reviews error:', err.message || err);
+      throw err;
     }
-    const filtered = productId
-      ? initialReviews.filter(r => String(r.productId) === String(productId))
-      : initialReviews;
-    return {
-      success: true,
-      data: filtered.map(parseReview)
-    };
   },
 
   /**
@@ -52,8 +46,9 @@ export const reviewsApi = {
           message: response.message || 'دیدگاه شما با موفقیت ثبت شد.'
         };
       }
+      return { success: false, message: 'خطا در ثبت دیدگاه' };
     } catch (err) {
-      console.warn('[reviewsApi] Add review error:', err.message || err);
+      console.error('[reviewsApi] Add review error:', err.message || err);
       throw err;
     }
   },
@@ -66,7 +61,7 @@ export const reviewsApi = {
       const response = await client.post(`/reviews/${reviewId}/reply`, { comment });
       return response || { success: true, message: 'پاسخ شما با موفقیت ثبت شد.' };
     } catch (err) {
-      console.warn(`[reviewsApi] Reply to review ${reviewId} error:`, err.message || err);
+      console.error(`[reviewsApi] Reply to review ${reviewId} error:`, err.message || err);
       throw err;
     }
   },
@@ -79,7 +74,7 @@ export const reviewsApi = {
       const response = await client.delete(`/reviews/${reviewId}`);
       return response || { success: true, message: 'دیدگاه با موفقیت حذف شد.' };
     } catch (err) {
-      console.warn(`[reviewsApi] Delete review ${reviewId} error:`, err.message || err);
+      console.error(`[reviewsApi] Delete review ${reviewId} error:`, err.message || err);
       throw err;
     }
   }

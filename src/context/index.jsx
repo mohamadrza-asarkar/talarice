@@ -11,19 +11,6 @@ import {
   reviewsApi,
   categoriesApi
 } from '../api';
-import {
-  initialProducts,
-  initialHeroSlides,
-  initialCategories,
-  initialTrustItems,
-  initialBrandStory,
-  initialReviews,
-  initialArticles,
-  initialTestTips,
-  initialCoupons,
-  initialOrders
-} from '../data/mockData';
-
 const AppContext = createContext();
 
 export function getOrderStatusInfo(status) {
@@ -132,16 +119,20 @@ export function AppProvider({ children }) {
     navigate(target);
   }
 
-  const [products, setProducts] = useState(initialProducts);
-  const [articles, setArticles] = useState(initialArticles);
-  const [reviews] = useState(initialReviews);
-  const [coupons] = useState(initialCoupons);
-  const [heroSlides, setHeroSlides] = useState(initialHeroSlides);
+  const [products, setProducts] = useState([]);
+  const [articles, setArticles] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [coupons, setCoupons] = useState([]);
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [connectionError, setConnectionError] = useState(null);
 
-  const categories = initialCategories;
-  const trustItems = initialTrustItems;
-  const brandStory = initialBrandStory;
-  const testTips = initialTestTips;
+  const [categories, setCategories] = useState([
+    { id: 'all', name: 'همه محصولات', iconClass: 'fa-solid fa-border-all' }
+  ]);
+  const [trustItems, setTrustItems] = useState([]);
+  const [brandStory, setBrandStory] = useState('');
+  const [testTips, setTestTips] = useState([]);
 
   function getImageUrl(path) {
     if (!path) return '/images/products/hashemi.jpg';
@@ -150,33 +141,53 @@ export function AppProvider({ children }) {
   }
 
   async function fetchRealData() {
+    setIsConnecting(true);
     try {
-      const [prodRes, sliderRes, artRes, orderRes] = await Promise.all([
+      const [prodRes, sliderRes, artRes, orderRes, catRes, metaRes] = await Promise.all([
         productsApi.getProducts(),
         slidersApi.getSliders(),
         blogApi.getArticles(),
-        ordersApi.getOrders()
+        ordersApi.getOrders(),
+        categoriesApi.getCategories(),
+        categoriesApi.getHomeMeta()
       ]);
 
-      if (prodRes?.success && Array.isArray(prodRes.data) && prodRes.data.length > 0) {
+      if (prodRes?.success && Array.isArray(prodRes.data)) {
         setProducts(prodRes.data);
       }
-      if (sliderRes?.success && Array.isArray(sliderRes.data) && sliderRes.data.length > 0) {
+      if (sliderRes?.success && Array.isArray(sliderRes.data)) {
         setHeroSlides(sliderRes.data);
       }
-      if (artRes?.success && Array.isArray(artRes.data) && artRes.data.length > 0) {
+      if (artRes?.success && Array.isArray(artRes.data)) {
         setArticles(artRes.data);
       }
-      if (orderRes?.success && Array.isArray(orderRes.data) && orderRes.data.length > 0) {
+      if (orderRes?.success && Array.isArray(orderRes.data)) {
         setOrders(orderRes.data);
       }
+      if (catRes?.success && Array.isArray(catRes.data)) {
+        setCategories(catRes.data);
+      }
+      if (metaRes?.success) {
+        setTrustItems(metaRes.trustItems || []);
+        setBrandStory(metaRes.brandStory || '');
+        setTestTips(metaRes.testTips || []);
+      }
+      setConnectionError(null);
     } catch (err) {
       console.warn('[fetchRealData] API fetch warning:', err);
+      setConnectionError(err.message || 'خطای اتصال به سرور بک‌اند');
+    } finally {
+      setIsConnecting(false);
     }
   }
 
   useEffect(function () {
     fetchRealData();
+    // Poll the backend every 6 seconds to automatically detect when it's booted and populated!
+    const interval = setInterval(function () {
+      fetchRealData();
+    }, 6000);
+    return function () { clearInterval(interval); };
   }, []);
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -205,9 +216,9 @@ export function AppProvider({ children }) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
       }
-      return initialOrders;
+      return [];
     } catch {
-      return initialOrders;
+      return [];
     }
   });
 
@@ -234,25 +245,7 @@ export function AppProvider({ children }) {
     try {
       const userStr = localStorage.getItem('tala_user');
       if (userStr) return JSON.parse(userStr);
-      return {
-        id: 'usr-1',
-        name: 'محمد رضایی',
-        phone: '۰۹۱۷ ۱۲۳ ۴۵۶۷',
-        role: 'admin',
-        addresses: [
-          {
-            id: 'addr-1',
-            title: 'منزل شخصی',
-            recipientName: 'محمد رضایی',
-            phone: '۰۹۱۷ ۱۲۳ ۴۵۶۷',
-            province: 'فارس',
-            city: 'شیراز',
-            postalCode: '۷۱۹۴۷۱۲۳۴۵',
-            fullAddress: 'شیراز، بلوار ارم، کوچه ۱۲، پلاک ۴، زنگ ۲',
-            isDefault: true
-          }
-        ]
-      };
+      return null;
     } catch {
       return null;
     }
@@ -303,18 +296,7 @@ export function AppProvider({ children }) {
       if (err?.response?.data?.message) {
         return { success: false, message: err.response.data.message };
       }
-      // Seamless fallback for client-side mode
-      const cleanPhone = phone.replace(/[^0-9]/g, '');
-      const isAdminUser = cleanPhone === '09171234567' || cleanPhone === '09123456789' || phone.includes('۰۹۱۷');
-      const mockUser = {
-        id: 'usr-' + Date.now(),
-        name: isAdminUser ? 'محمد رضایی' : 'کاربر طلا رایس',
-        phone: phone,
-        role: isAdminUser ? 'admin' : 'customer',
-        addresses: []
-      };
-      login(mockUser, 'mock_token_' + Date.now());
-      return { success: true, user: mockUser, message: 'ورود با موفقیت انجام شد' };
+      return { success: false, message: 'خطا در ارتباط با سرور بک‌اند. لطفاً مطمئن شوید سرور شما به درستی اجرا شده است.' };
     }
   }
 
@@ -330,16 +312,7 @@ export function AppProvider({ children }) {
       if (err?.response?.data?.message) {
         return { success: false, message: err.response.data.message };
       }
-      // Seamless fallback for client-side mode
-      const mockUser = {
-        id: 'usr-' + Date.now(),
-        name: name.trim(),
-        phone: phone.trim(),
-        role: 'customer',
-        addresses: []
-      };
-      login(mockUser, 'mock_token_' + Date.now());
-      return { success: true, user: mockUser, message: 'ثبت‌نام با موفقیت انجام شد' };
+      return { success: false, message: 'خطا در ارتباط با سرور بک‌اند. لطفاً مطمئن شوید سرور شما به درستی اجرا شده است.' };
     }
   }
 
@@ -514,6 +487,8 @@ export function AppProvider({ children }) {
         setHeroSlides,
         brandStory,
         testTips,
+        isConnecting,
+        connectionError,
         searchQuery,
         setSearchQuery,
         selectedCategory,
