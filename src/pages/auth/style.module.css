@@ -8,6 +8,33 @@
   animation: fadeIn 0.3s ease-out;
 }
 
+.topBar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #073822;
+  background-color: #ffffff;
+  border: 1px solid #d4af37;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-weight: 800;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.backBtn:hover {
+  background-color: #073822;
+  color: #fef08a;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

@@ -4,7 +4,7 @@ import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const SearchPage = () => {
-  const { searchQuery, setSearchQuery, products } = useApp();
+  const { searchQuery, setSearchQuery, products, goBack } = useApp();
   const navigate = useNavigate();
   const inputRef = useRef(null);
 
@@ -15,11 +15,7 @@ export const SearchPage = () => {
   const handleBack = (e) => {
     e?.preventDefault();
     e?.stopPropagation();
-    if (window.history?.state?.idx > 0) {
-      navigate(-1);
-    } else {
-      navigate('/');
-    }
+    goBack('/');
   };
 
   const query = searchQuery?.trim() ?? '';
@@ -43,9 +39,12 @@ export const SearchPage = () => {
           <input
             ref={inputRef}
             type="text"
-            placeholder="کیسه ۱۰ کیلویی..."
+            placeholder="جستجوی برنج کامفیروزی ممتاز..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') handleBack(e);
+            }}
           />
           {searchQuery && (
             <button onClick={() => setSearchQuery('')} className={styles.clearBtn}>
@@ -62,7 +61,7 @@ export const SearchPage = () => {
               <i className="fa-solid fa-magnifying-glass" />
             </div>
             <h4>جستجوی محصولات طلا رایس</h4>
-            <p>نام محصول یا وزن مورد نظر خود را تایپ کنید.</p>
+            <p>نام برنج مورد نظر خود را تایپ کنید.</p>
           </div>
         ) : !filtered.length ? (
           <div className={styles.noResults}>

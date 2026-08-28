@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import API from '../services/api';
 import {
   initialProducts,
@@ -18,6 +18,49 @@ const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Internal Navigation History Stack for robust, instant back navigation
+  const [historyStack, setHistoryStack] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem('tala_nav_history');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return ['/'];
+  });
+
+  useEffect(() => {
+    const currentPath = location.pathname + location.search;
+    setHistoryStack((prev) => {
+      if (prev[prev.length - 1] === currentPath) return prev;
+      const newStack = [...prev, currentPath].slice(-30);
+      try {
+        sessionStorage.setItem('tala_nav_history', JSON.stringify(newStack));
+      } catch (e) {}
+      return newStack;
+    });
+  }, [location.pathname, location.search]);
+
+  const goBack = (defaultFallback = '/') => {
+    const currentPath = location.pathname + location.search;
+    setHistoryStack((prev) => {
+      const nextStack = [...prev];
+      // Pop all occurrences of currentPath from the end
+      while (nextStack.length > 0 && nextStack[nextStack.length - 1] === currentPath) {
+        nextStack.pop();
+      }
+      const target = nextStack.length > 0 ? nextStack[nextStack.length - 1] : defaultFallback;
+      try {
+        sessionStorage.setItem('tala_nav_history', JSON.stringify(nextStack.length > 0 ? nextStack : [target]));
+      } catch (e) {}
+      navigate(target);
+      return nextStack.length > 0 ? nextStack : [target];
+    });
+  };
+
   const [products, setProducts] = useState(initialProducts);
   const [articles, setArticles] = useState(initialArticles);
   const [reviews] = useState(initialReviews);
@@ -242,17 +285,17 @@ export const AppProvider = ({ children }) => {
   }, [orders]);
 
   const addToCart = (product, weightKg = null, quantity = 1) => {
-    const selectedWeight = weightKg || product.weight;
+    const prodId = product._id || product.id;
     setCart((prevCart) => {
       const existingIndex = prevCart.findIndex(
-        (item) => item.product.id === product.id && item.weightKg === selectedWeight
+        (item) => (item.product?._id || item.product?.id) === prodId
       );
       if (existingIndex > -1) {
         const newCart = [...prevCart];
         newCart[existingIndex].quantity += quantity;
         return newCart;
       } else {
-        return [...prevCart, { product, weightKg: selectedWeight, quantity }];
+        return [...prevCart, { product, quantity }];
       }
     });
   };
@@ -264,7 +307,7 @@ export const AppProvider = ({ children }) => {
     }
     setCart((prevCart) =>
       prevCart.map((item) =>
-        item.product.id === productId && item.weightKg === weightKg
+        (item.product?.id === productId || item.product?._id === productId)
           ? { ...item, quantity: newQuantity }
           : item
       )
@@ -274,7 +317,7 @@ export const AppProvider = ({ children }) => {
   const removeFromCart = (productId, weightKg) => {
     setCart((prevCart) =>
       prevCart.filter(
-        (item) => !(item.product.id === productId && item.weightKg === weightKg)
+        (item) => !(item.product?.id === productId || item.product?._id === productId)
       )
     );
   };
@@ -306,8 +349,8 @@ export const AppProvider = ({ children }) => {
   };
 
   const cartTotalAmount = cart.reduce((sum, item) => {
-    const unitPrice = (item.product.price / item.product.weight) * item.weightKg;
-    return sum + unitPrice * item.quantity;
+    const unitPrice = Number(item.product?.price || 0);
+    return sum + unitPrice * (item.quantity || 1);
   }, 0);
 
   const cartCount = cart.reduce((count, item) => count + item.quantity, 0);
@@ -341,17 +384,10 @@ export const AppProvider = ({ children }) => {
   const filteredProducts = products.filter((p) => {
     const matchesSearch =
       searchQuery.trim() === '' ||
-      p.name.includes(searchQuery) ||
-      p.description.includes(searchQuery);
+      p.name?.includes(searchQuery) ||
+      p.description?.includes(searchQuery);
 
-    const matchesCategory =
-      selectedCategory === 'all' || p.category === selectedCategory;
-
-    const matchesWeight =
-      selectedWeightFilter === 'all' ||
-      p.weight.toString() === selectedWeightFilter;
-
-    return matchesSearch && matchesCategory && matchesWeight;
+    return matchesSearch;
   }).sort((a, b) => {
     if (sortBy === 'price-low') return a.price - b.price;
     if (sortBy === 'price-high') return b.price - a.price;
@@ -416,7 +452,9 @@ export const AppProvider = ({ children }) => {
         logout,
         loginUser,
         registerUser,
-        refreshData: fetchRealData
+        refreshData: fetchRealData,
+        goBack,
+        historyStack
       }}
     >
       {children}

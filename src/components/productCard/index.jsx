@@ -8,13 +8,8 @@ export const ProductCard = ({ product }) => {
 
   if (!product) return null;
 
-  const defaultWeight = product.weight || 10;
-  const [selectedWeight, setSelectedWeight] = useState(defaultWeight);
-  const weightOptions = product.weightOptions?.length ? product.weightOptions : [defaultWeight];
-
-  const ratio = selectedWeight / defaultWeight;
-  const currentPrice = Math.round((product.price || 0) * ratio);
-  const currentOldPrice = product.oldPrice ? Math.round(product.oldPrice * ratio) : null;
+  const currentPrice = product.price || 0;
+  const currentOldPrice = product.oldPrice || null;
 
   return (
     <article className={styles.card}>
@@ -33,19 +28,6 @@ export const ProductCard = ({ product }) => {
       </Link>
 
       <div className={styles.bottomSection}>
-        <div className={styles.weightContainer}>
-          {weightOptions.map((w) => (
-            <button
-              key={w}
-              type="button"
-              onClick={() => setSelectedWeight(w)}
-              className={`${styles.weightButton} ${selectedWeight === w ? styles.weightButtonSelected : styles.weightButtonUnselected}`}
-            >
-              {w} کیلو
-            </button>
-          ))}
-        </div>
-
         <div className={styles.priceContainer}>
           {currentOldPrice ? <del className={styles.oldPrice}>{currentOldPrice.toLocaleString('fa-IR')}</del> : <span className={styles.emptyPrice} />}
           <strong className={styles.currentPrice}>
@@ -55,7 +37,7 @@ export const ProductCard = ({ product }) => {
 
         <button
           type="button"
-          onClick={() => addToCart(product, selectedWeight, 1)}
+          onClick={() => addToCart(product, null, 1)}
           className={styles.addButton}
         >
           <i className="fa-solid fa-cart-plus" />

@@ -5,16 +5,27 @@ import { ProductCard } from '../../components/productCard';
 import styles from './style.module.css';
 
 export const CatalogPage = () => {
-  const { products } = useApp();
+  const { products, goBack } = useApp();
 
   return (
     <div className={styles.catalogWrapper}>
       <header className={styles.headerCard}>
         <div className={styles.headerTopRow}>
-          <span className={styles.locationBadge}>شالیزارهای کامفیروز فارس</span>
-          <span className={styles.countBadge}>
-            {(products?.length ?? 0).toLocaleString('fa-IR')} گونی برنج
-          </span>
+          <button
+            type="button"
+            onClick={() => goBack('/')}
+            className={styles.backBtn}
+            aria-label="بازگشت"
+          >
+            <i className="fa-solid fa-arrow-right" />
+            <span>بازگشت</span>
+          </button>
+          <div className={styles.headerBadges}>
+            <span className={styles.locationBadge}>شالیزارهای کامفیروز فارس</span>
+            <span className={styles.countBadge}>
+              {(products?.length ?? 0).toLocaleString('fa-IR')} گونی برنج
+            </span>
+          </div>
         </div>
         <h2 className={styles.title}>فهرست گونی‌های برنج کامفیروزی</h2>
         <p className={styles.subtitle}>

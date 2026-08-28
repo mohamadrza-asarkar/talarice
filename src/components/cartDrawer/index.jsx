@@ -72,13 +72,11 @@ export const CartDrawer = () => {
 
             <ul className={styles.itemsList}>
               {cart.map((item) => {
-                const baseWeight = item.product?.weight ?? 10;
-                const unitPrice = item.product?.price ?? 0;
-                const singlePrice = item.weightKg === baseWeight ? unitPrice : Math.round((unitPrice / baseWeight) * item.weightKg);
-                const itemTotal = singlePrice * (item.quantity ?? 1);
+                const unitPrice = Number(item.product?.price ?? 0);
+                const itemTotal = unitPrice * (item.quantity ?? 1);
 
                 return (
-                  <li key={`${item.product?.id}-${item.weightKg}`} className={styles.itemCard}>
+                  <li key={item.product?.id || item.product?._id} className={styles.itemCard}>
                     <img src={item.product?.image} alt={item.product?.name} className={styles.itemImg} />
                     <div className={styles.itemInfo}>
                       <div className={styles.itemTop}>
@@ -93,7 +91,7 @@ export const CartDrawer = () => {
                       </div>
 
                       <span className={styles.variant}>
-                        کیسه {(item.weightKg ?? 10).toLocaleString('fa-IR')} کیلویی
+                        بسته‌بندی گونی نخی ضد رطوبت
                       </span>
 
                       <div className={styles.itemBottom}>

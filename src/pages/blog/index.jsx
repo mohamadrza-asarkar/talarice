@@ -3,7 +3,7 @@ import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const BlogPage = () => {
-  const { blogPosts } = useApp();
+  const { blogPosts, goBack } = useApp();
   const [selectedPost, setSelectedPost] = useState(null);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,11 +62,22 @@ export const BlogPage = () => {
     <div className={styles.blogWrapper}>
       <header className={styles.headerCard}>
         <div className={styles.headerTop}>
-          <span className={styles.headerBadge}>دانشنامه و مقالات</span>
-          <span className={styles.headerSubtitle}>
-            <i className="fa-solid fa-book-open-reader" />
-            <span>آموزش‌های تخصصی</span>
-          </span>
+          <button
+            type="button"
+            onClick={() => goBack('/')}
+            className={styles.backBtn}
+            aria-label="بازگشت"
+          >
+            <i className="fa-solid fa-arrow-right" />
+            <span>بازگشت</span>
+          </button>
+          <div className={styles.headerBadges}>
+            <span className={styles.headerBadge}>دانشنامه و مقالات</span>
+            <span className={styles.headerSubtitle}>
+              <i className="fa-solid fa-book-open-reader" />
+              <span>آموزش‌های تخصصی</span>
+            </span>
+          </div>
         </div>
         <h2 className={styles.headerTitle}>دانستنی‌های برنج اصیل کامفیروز</h2>
         <p className={styles.headerDesc}>
@@ -227,6 +238,17 @@ export const BlogPage = () => {
                     </button>
                   </form>
                 )}
+              </div>
+
+              <div className={styles.modalBottomAction}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPost(null)}
+                  className={styles.modalBackBtn}
+                >
+                  <i className="fa-solid fa-arrow-right" />
+                  <span>بازگشت به مقالات</span>
+                </button>
               </div>
             </div>
           </div>

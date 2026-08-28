@@ -6,18 +6,15 @@ import styles from './style.module.css';
 export const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, addToCart, setIsCartOpen } = useApp();
+  const { products, addToCart, setIsCartOpen, goBack } = useApp();
 
-  const handleBack = () => {
-    if (window.history?.state?.idx > 0) {
-      navigate(-1);
-    } else {
-      navigate('/catalog');
-    }
+  const handleBack = (e) => {
+    e?.preventDefault();
+    e?.stopPropagation();
+    goBack('/catalog');
   };
 
   const product = products?.find((p) => String(p.id) === String(id) || String(p._id) === String(id));
-  const [selectedWeight, setSelectedWeight] = useState(null);
   const [activeTab, setActiveTab] = useState('desc');
 
   if (!product) {
@@ -39,12 +36,8 @@ export const ProductPage = () => {
     );
   }
 
-  const defaultWeight = product.weight ?? 10;
-  const currentSelectedWeight = selectedWeight ?? defaultWeight;
-  const weightOptions = product.weightOptions?.length ? product.weightOptions : [defaultWeight];
-  const ratio = currentSelectedWeight / defaultWeight;
-  const currentPrice = Math.round((product.price ?? 0) * ratio);
-  const currentOldPrice = product.oldPrice ? Math.round(product.oldPrice * ratio) : null;
+  const currentPrice = Number(product.price ?? 0);
+  const currentOldPrice = product.oldPrice ? Number(product.oldPrice) : null;
 
   const tabs = [
     { id: 'desc', label: 'معرفی محصول' },
@@ -87,21 +80,6 @@ export const ProductPage = () => {
           <span className={styles.tag}>برنج اصیل کامفیروز</span>
           <span className={styles.tag}>بوجاری شده</span>
           <span className={styles.tag}>بدون خرده</span>
-        </div>
-
-        <div className={styles.weightSelector}>
-          <h3 className={styles.weightTitle}>وزن کیسه (کیلوگرم):</h3>
-          <div className={styles.weightOptions}>
-            {weightOptions.map((w) => (
-              <button
-                key={w}
-                onClick={() => setSelectedWeight(w)}
-                className={`${styles.weightBtn} ${currentSelectedWeight === w ? styles.weightBtnActive : styles.weightBtnInactive}`}
-              >
-                {w} کیلو
-              </button>
-            ))}
-          </div>
         </div>
 
         <div className={styles.priceContainer}>
@@ -184,7 +162,7 @@ export const ProductPage = () => {
       <div className={styles.bottomBar}>
         <button
           onClick={() => {
-            addToCart(product, currentSelectedWeight);
+            addToCart(product, null, 1);
             setIsCartOpen(true);
           }}
           className={styles.addToCartBtn}

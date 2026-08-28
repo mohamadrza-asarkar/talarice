@@ -2,7 +2,6 @@ import React from 'react';
 import { HeroSlider } from '../../components/heroSlider';
 import { TrustBar } from '../../components/trustBar';
 import { AmazingDeals } from '../../components/amazingDeals';
-import { Categories } from '../../components/categories';
 import { BestSellers } from '../../components/bestSellers';
 import { BrandStory } from '../../components/brandStory';
 import { CustomerReviews } from '../../components/customerReviews';
@@ -13,7 +12,6 @@ const homeSections = [
   { id: 'hero', component: HeroSlider },
   { id: 'trust', component: TrustBar },
   { id: 'deals', component: AmazingDeals },
-  { id: 'categories', component: Categories },
   { id: 'bestsellers', component: BestSellers },
   { id: 'story', component: BrandStory },
   { id: 'reviews', component: CustomerReviews },

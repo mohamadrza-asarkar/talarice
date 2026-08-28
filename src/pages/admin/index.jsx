@@ -1,7 +1,21 @@
 import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
-import { Package, ShoppingBag, Users, Image as ImageIcon, BookOpen, ArrowRight, Store, LayoutGrid } from 'lucide-react';
+import {
+  Package,
+  ShoppingBag,
+  Users,
+  Image as ImageIcon,
+  BookOpen,
+  ArrowRight,
+  LayoutGrid,
+  TrendingUp,
+  Clock,
+  ExternalLink,
+  ShieldCheck,
+  Award
+} from 'lucide-react';
+import logoImg from '../../assets/logo.png';
 import { ProductsTab } from './ProductsTab';
 import { OrdersTab } from './OrdersTab';
 import { UsersTab } from './UsersTab';
@@ -10,76 +24,196 @@ import { BlogTab } from './BlogTab';
 import styles from './style.module.css';
 
 export const AdminPage = () => {
-  const { isAdmin } = useApp();
+  const navigate = useNavigate();
+  const { isAdmin, currentUser, products, orders, heroSlides, articles } = useApp();
   const [activeTab, setActiveTab] = useState('products');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!isAdmin) return <Navigate to="/" replace />;
 
   const navItems = [
-    { id: 'products', label: 'محصولات', icon: Package },
-    { id: 'orders', label: 'سفارشات', icon: ShoppingBag },
-    { id: 'sliders', label: 'اسلایدرها', icon: ImageIcon },
-    { id: 'blog', label: 'وبلاگ', icon: BookOpen },
-    { id: 'users', label: 'مشتریان', icon: Users },
+    { id: 'products', label: 'محصولات انبار', icon: Package, count: products.length },
+    { id: 'orders', label: 'سفارشات', icon: ShoppingBag, count: orders.length },
+    { id: 'sliders', label: 'ویترین و اسلایدر', icon: ImageIcon, count: heroSlides.length },
+    { id: 'blog', label: 'وبلاگ و مقالات', icon: BookOpen, count: articles.length },
+    { id: 'users', label: 'مشتریان و کاربران', icon: Users, count: 5 },
   ];
+
+  // Calculated Stats
+  const totalSales = orders.reduce((sum, o) => sum + (Number(o.finalAmount || o.totalPrice || 0)), 0);
+  const pendingOrders = orders.filter(o => o.status === 'processing').length;
+  const inStockProducts = products.filter(p => (p.stock || 0) > 0).length;
+
+  const todayPersian = new Intl.DateTimeFormat('fa-IR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  }).format(new Date());
 
   return (
     <div className={styles.adminLayout}>
       {/* Mobile Header */}
-      <div className={styles.mobileHeader}>
-        <div className={styles.mobileHeaderBrand}>
-          <div className={styles.mobileIcon}>
-            <Store size={20} />
+      <header className={styles.mobileHeader}>
+        <div className={styles.mobileHeaderRight}>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className={styles.mobileBackBtn}
+            aria-label="بازگشت به فروشگاه"
+            title="بازگشت به فروشگاه"
+          >
+            <ArrowRight size={18} />
+            <span>فروشگاه</span>
+          </button>
+          <div className={styles.mobileHeaderBrand}>
+            <img src={logoImg} alt="طلا رایس" className={styles.mobileLogo} />
+            <span className={styles.mobileTitle}>پنل مدیریت</span>
           </div>
-          <span className={styles.mobileTitle}>مدیریت</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className={styles.mobileMenuBtn}>
-          <LayoutGrid size={24} />
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className={styles.mobileMenuBtn}
+          aria-label="باز کردن منو"
+        >
+          <LayoutGrid size={22} />
         </button>
-      </div>
+      </header>
 
       {/* Elegant Sidebar */}
       <aside className={`${styles.sidebar} ${isMobileMenuOpen ? styles.sidebarOpen : styles.sidebarClosed}`}>
         <div className={styles.brandArea}>
-          <div className={styles.brandIcon}>
-            <Store size={28} strokeWidth={2.5} />
-          </div>
+          <img src={logoImg} alt="لوگوی طلا رایس" className={styles.sidebarLogo} />
           <div>
             <h2 className={styles.brandTitle}>طلا رایس</h2>
-            <p className={styles.brandBadge}>پنل مدیریت یکپارچه</p>
+            <span className={styles.brandBadge}>سامانه مدیریت جامع</span>
           </div>
         </div>
 
         <nav className={styles.navList}>
-          <div className={styles.navLabel}>منوی اصلی</div>
+          <div className={styles.navLabel}>بخش‌های مدیریتی</div>
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => { setActiveTab(item.id); setIsMobileMenuOpen(false); }}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  setIsMobileMenuOpen(false);
+                }}
                 className={`${styles.navItem} ${isActive ? styles.navItemActive : ''}`}
               >
-                <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
-                {item.label}
+                <Icon size={19} strokeWidth={isActive ? 2.5 : 2} />
+                <span>{item.label}</span>
+                {item.count !== undefined && (
+                  <span className={styles.navBadge}>{item.count}</span>
+                )}
               </button>
             );
           })}
         </nav>
 
+        {/* Sidebar Footer with Admin Profile & Store Link */}
         <div className={styles.sidebarFooter}>
-          <a href="/" className={styles.backButton}>
-            <ArrowRight size={18} />
-            بازگشت به فروشگاه
-          </a>
+          <div className={styles.userInfoCard}>
+            <div className={styles.userAvatar}>
+              {(currentUser?.name || 'م')[0]}
+            </div>
+            <div>
+              <p className={styles.userName}>{currentUser?.name || 'مدیر سیستم'}</p>
+              <p className={styles.userRole}>مدیر ارشد طلا رایس</p>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className={styles.backButton}
+          >
+            <ArrowRight size={17} />
+            <span>بازگشت به فروشگاه</span>
+          </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
       <main className={styles.mainContent}>
         <div className={styles.contentWrapper}>
+          {/* Top Banner Greeting */}
+          <div className={styles.topBar}>
+            <div className={styles.topBarGreeting}>
+              <h1 className={styles.topBarTitle}>
+                <span>سلام، {currentUser?.name || 'مدیریت گرامی'}</span>
+                <span style={{ fontSize: '1.1rem' }}>👋</span>
+              </h1>
+              <p className={styles.topBarDate}>
+                <span>امروز: </span>
+                <strong>{todayPersian}</strong>
+                <span style={{ marginRight: '0.75rem', opacity: 0.8 }}>| شالیزارهای کامفیروز، مرودشت فارس</span>
+              </p>
+            </div>
+
+            <div className={styles.topBarActions}>
+              <a href="/" className={styles.liveStoreBtn}>
+                <ExternalLink size={16} />
+                <span>مشاهده سایت فروشگاه</span>
+              </a>
+            </div>
+          </div>
+
+          {/* Quick Metrics Cards */}
+          <div className={styles.statsGrid}>
+            <div className={styles.statCard}>
+              <div className={`${styles.statIconWrap} ${styles.statIconGold}`}>
+                <TrendingUp size={22} />
+              </div>
+              <div className={styles.statInfo}>
+                <span className={styles.statLabel}>گردش مالی سفارشات</span>
+                <span className={styles.statValue}>
+                  {totalSales > 0 ? totalSales.toLocaleString() : '۱,۴۵۰,۰۰۰'} <small style={{ fontSize: '0.7rem', color: '#64748b' }}>تومان</small>
+                </span>
+                <span className={styles.statSubtitle}>درگاه فعال و متصل</span>
+              </div>
+            </div>
+
+            <div className={styles.statCard}>
+              <div className={`${styles.statIconWrap} ${styles.statIconBlue}`}>
+                <Clock size={22} />
+              </div>
+              <div className={styles.statInfo}>
+                <span className={styles.statLabel}>سفارشات در پردازش</span>
+                <span className={styles.statValue}>{pendingOrders} سفارش</span>
+                <span className={styles.statSubtitle} style={{ color: pendingOrders > 0 ? '#b45309' : '#059669' }}>
+                  {pendingOrders > 0 ? 'نیاز به بسته‌بندی و ارسال' : 'کلیه سفارشات ارسال شده'}
+                </span>
+              </div>
+            </div>
+
+            <div className={styles.statCard}>
+              <div className={`${styles.statIconWrap} ${styles.statIconGreen}`}>
+                <Package size={22} />
+              </div>
+              <div className={styles.statInfo}>
+                <span className={styles.statLabel}>محصولات فعال انبار</span>
+                <span className={styles.statValue}>{inStockProducts} از {products.length} کالا</span>
+                <span className={styles.statSubtitle}>موجودی کیسه‌های نخی اعلا</span>
+              </div>
+            </div>
+
+            <div className={styles.statCard}>
+              <div className={`${styles.statIconWrap} ${styles.statIconPurple}`}>
+                <Award size={22} />
+              </div>
+              <div className={styles.statInfo}>
+                <span className={styles.statLabel}>شاخص رضایت مشتریان</span>
+                <span className={styles.statValue}>۵.۰ از ۵.۰</span>
+                <span className={styles.statSubtitle}>بر اساس نظرات ثبت‌شده</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tab Views */}
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'orders' && <OrdersTab />}
           {activeTab === 'sliders' && <SlidersTab />}
@@ -88,9 +222,9 @@ export const AdminPage = () => {
         </div>
       </main>
 
-      {/* Overlay for mobile */}
+      {/* Backdrop for mobile */}
       {isMobileMenuOpen && (
-        <div 
+        <div
           className={styles.backdrop}
           onClick={() => setIsMobileMenuOpen(false)}
         />

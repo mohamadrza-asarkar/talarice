@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const ProfilePage = () => {
-  const { orders, addresses, logout, currentUser, isAdmin } = useApp();
+  const { orders, addresses, logout, currentUser, isAdmin, goBack } = useApp();
   const [activeSubTab, setActiveSubTab] = useState('orders');
 
   const [wholesaleForm, setWholesaleForm] = useState({
@@ -43,6 +44,18 @@ export const ProfilePage = () => {
   return (
     <div className={styles.profileWrapper}>
       <header className={styles.headerCard}>
+        <div className={styles.headerTopBar}>
+          <button
+            type="button"
+            onClick={() => goBack('/')}
+            className={styles.backBtn}
+            aria-label="بازگشت به فروشگاه"
+          >
+            <i className="fa-solid fa-arrow-right" />
+            <span>بازگشت به فروشگاه</span>
+          </button>
+        </div>
+
         <div className={styles.headerTop}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>
@@ -57,10 +70,10 @@ export const ProfilePage = () => {
 
           <div className={styles.headerActions}>
             {isAdmin && (
-              <a href="/admin" className={styles.adminBtn}>
+              <Link to="/admin" className={styles.adminBtn}>
                 <i className="fa-solid fa-crown" />
                 <span>پنل مدیریت</span>
-              </a>
+              </Link>
             )}
             <button onClick={logout} className={styles.logoutBtn}>
               <i className="fa-solid fa-arrow-right-from-bracket" />

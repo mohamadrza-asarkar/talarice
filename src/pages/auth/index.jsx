@@ -10,7 +10,7 @@ export const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  const { loginUser, registerUser } = useApp();
+  const { loginUser, registerUser, goBack } = useApp();
   const navigate = useNavigate();
 
   const isLogin = activeTab === 'login';
@@ -34,6 +34,18 @@ export const AuthPage = () => {
 
   return (
     <div className={styles.authWrapper}>
+      <div className={styles.topBar}>
+        <button
+          type="button"
+          onClick={() => goBack('/')}
+          className={styles.backBtn}
+          aria-label="بازگشت به فروشگاه"
+        >
+          <i className="fa-solid fa-arrow-right" />
+          <span>بازگشت به فروشگاه</span>
+        </button>
+      </div>
+
       <div className={styles.logoContainer}>
         <Logo />
       </div>

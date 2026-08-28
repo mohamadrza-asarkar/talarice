@@ -1,18 +1,20 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export const CheckoutModal = () => {
+  const navigate = useNavigate();
   const {
     isCheckoutOpen,
     setIsCheckoutOpen,
+    setIsCartOpen,
     cart,
     cartSubtotal,
     discountAmount,
     shippingFee,
     finalTotal,
-    addOrder,
-    setActiveTab
+    addOrder
   } = useApp();
 
   const [step, setStep] = useState(1);
@@ -45,7 +47,7 @@ export const CheckoutModal = () => {
     setTimeout(() => {
       setStep(1);
       setCreatedOrder(null);
-      setActiveTab('profile');
+      navigate('/profile');
     }, 300);
   };
 
@@ -154,9 +156,21 @@ export const CheckoutModal = () => {
                 />
               </div>
 
-              <button type="submit" className={styles.primaryBtn}>
-                مرحله بعد: بررسی سفارش
-              </button>
+              <div className={styles.btnRow}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCheckoutOpen(false);
+                    setIsCartOpen(true);
+                  }}
+                  className={styles.secondaryBtn}
+                >
+                  بازگشت به سبد خرید
+                </button>
+                <button type="submit" className={styles.primaryBtn}>
+                  مرحله بعد: بررسی سفارش
+                </button>
+              </div>
             </form>
           )}
 
@@ -169,17 +183,15 @@ export const CheckoutModal = () => {
 
               <ul className={styles.cartItemsList}>
                 {cart.map((item) => {
-                  const baseW = item.product?.weight ?? 10;
-                  const unitP = item.product?.price ?? 0;
-                  const price = item.weightKg === baseW ? unitP : Math.round((unitP / baseW) * item.weightKg);
-                  const total = price * (item.quantity ?? 1);
+                  const unitP = Number(item.product?.price ?? 0);
+                  const total = unitP * (item.quantity ?? 1);
 
                   return (
-                    <li key={`${item.product?.id}-${item.weightKg}`} className={styles.cartReviewItem}>
+                    <li key={item.product?.id || item.product?._id} className={styles.cartReviewItem}>
                       <div>
                         <strong>{item.product?.name ?? 'برنج کامفیروزی'}</strong>
                         <div className={styles.variantText}>
-                          کیسه {(item.weightKg ?? 10).toLocaleString('fa-IR')} کیلویی × {(item.quantity ?? 1).toLocaleString('fa-IR')}
+                          تعداد: {(item.quantity ?? 1).toLocaleString('fa-IR')} کیسه نخی اعلا
                         </div>
                       </div>
                       <span className={styles.itemPrice}>{total.toLocaleString('fa-IR')} تومان</span>
@@ -292,9 +304,25 @@ export const CheckoutModal = () => {
                 <div><span>تحویل‌گیرنده:</span><span>{createdOrder.address?.recipientName ?? formData.recipientName}</span></div>
               </div>
 
-              <button onClick={handleFinish} className={styles.primaryBtn}>
-                مشاهده در تاریخچه سفارشات
-              </button>
+              <div className={styles.btnRow}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCheckoutOpen(false);
+                    setTimeout(() => {
+                      setStep(1);
+                      setCreatedOrder(null);
+                      navigate('/');
+                    }, 300);
+                  }}
+                  className={styles.secondaryBtn}
+                >
+                  بازگشت به فروشگاه
+                </button>
+                <button onClick={handleFinish} className={styles.primaryBtn}>
+                  مشاهده در سفارشات
+                </button>
+              </div>
             </div>
           )}
         </div>
