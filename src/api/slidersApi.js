@@ -56,14 +56,18 @@ export const slidersApi = {
       }
 
       let slides = [];
-      if (response && response.success) {
-        if (Array.isArray(response.data)) {
-          slides = response.data;
-        } else if (response.data?.slides && Array.isArray(response.data.slides)) {
-          slides = response.data.slides;
-        }
-      } else if (Array.isArray(response)) {
+      if (Array.isArray(response)) {
         slides = response;
+      } else if (Array.isArray(response?.data)) {
+        slides = response.data;
+      } else if (Array.isArray(response?.slides)) {
+        slides = response.slides;
+      } else if (Array.isArray(response?.data?.slides)) {
+        slides = response.data.slides;
+      } else if (Array.isArray(response?.sliders)) {
+        slides = response.sliders;
+      } else if (Array.isArray(response?.data?.sliders)) {
+        slides = response.data.sliders;
       }
 
       return {

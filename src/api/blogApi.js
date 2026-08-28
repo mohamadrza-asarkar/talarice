@@ -29,13 +29,20 @@ export const blogApi = {
   async getArticles() {
     try {
       const response = await client.get('/articles');
-      if (response && response.success && Array.isArray(response.data)) {
-        return {
-          success: true,
-          data: response.data.map(parseArticle)
-        };
+      let articlesList = [];
+      if (Array.isArray(response)) {
+        articlesList = response;
+      } else if (Array.isArray(response?.data)) {
+        articlesList = response.data;
+      } else if (Array.isArray(response?.articles)) {
+        articlesList = response.articles;
+      } else if (Array.isArray(response?.data?.articles)) {
+        articlesList = response.data.articles;
       }
-      return { success: false, data: [], message: 'خطا در دریافت مقالات' };
+      return {
+        success: true,
+        data: articlesList.map(parseArticle).filter(Boolean)
+      };
     } catch (err) {
       console.error('[blogApi] Fetch articles error:', err.message || err);
       throw err;

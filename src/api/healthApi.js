@@ -5,15 +5,25 @@ export const healthApi = {
   /**
    * Check Backend Server Health
    * Endpoint: GET /api/health
-   * Response: { status: "healthy", uptime: 120.45, timestamp: "..." }
+   * Handles various formats:
+   * - { status: "online", database: { isConnected: true }, uptime: 19 }
+   * - { status: "healthy", ... }
+   * - { status: "ok", ... }
    */
   async checkHealth() {
     try {
       const res = await client.get('/health');
+      const statusStr = String(res?.status || '').toLowerCase();
+      const isDbConnected = res?.database?.isConnected === true || res?.database?.connectionState === 'connected' || res?.isConnected === true;
+      
+      const isOnline = statusStr === 'online' || statusStr === 'healthy' || statusStr === 'ok' || statusStr === 'up' || isDbConnected || (res && !res.error && res.success !== false && statusStr !== 'unhealthy' && statusStr !== 'down' && statusStr !== 'error');
+
       return {
-        success: true,
+        success: isOnline,
         statusCode: 200,
-        status: res?.status || 'healthy',
+        status: isOnline ? 'healthy' : 'unhealthy',
+        rawStatus: res?.status || 'unknown',
+        database: res?.database,
         uptime: res?.uptime ?? 0,
         timestamp: res?.timestamp || new Date().toISOString(),
         raw: res
@@ -33,3 +43,4 @@ export const healthApi = {
 };
 
 export default healthApi;
+

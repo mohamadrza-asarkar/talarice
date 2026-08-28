@@ -158,15 +158,17 @@ export function AppProvider({ children }) {
   const checkHealth = useCallback(async () => {
     try {
       const res = await healthApi.checkHealth();
-      if (res.success && res.status === 'healthy') {
+      if (res.success && (res.status === 'healthy' || res.rawStatus === 'online')) {
         setServerHealth({
           status: 'healthy',
           uptime: res.uptime,
           timestamp: res.timestamp,
           statusCode: 200,
           message: 'سرور فعال و پاسخگو می‌باشد',
-          displayText: 'سرور فعال است'
+          displayText: 'سرور فعال است',
+          database: res.database
         });
+        return { success: true };
       } else {
         setServerHealth({
           status: 'unhealthy',
@@ -176,6 +178,7 @@ export function AppProvider({ children }) {
           message: res.message || 'خطا در سلامت سرور',
           displayText: res.displayText || `[کد خطا: ${res.statusCode || 500}] عدم دسترسی به سرور سلامت`
         });
+        return { success: false };
       }
     } catch (err) {
       const parsed = parseApiError(err);
@@ -187,6 +190,7 @@ export function AppProvider({ children }) {
         message: parsed.message,
         displayText: parsed.displayText
       });
+      return { success: false };
     }
   }, []);
 
@@ -335,8 +339,10 @@ export function AppProvider({ children }) {
   }, [showError]);
 
   useEffect(() => {
-    fetchRealData();
-  }, [fetchRealData]);
+    if (serverHealth.status === 'healthy') {
+      fetchRealData();
+    }
+  }, [serverHealth.status, fetchRealData]);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');

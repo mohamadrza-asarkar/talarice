@@ -41,14 +41,20 @@ export const amazingProductsApi = {
     try {
       const response = await client.get('/amazing-products');
       let list = [];
-      if (response && response.success) {
-        if (Array.isArray(response.data)) {
-          list = response.data;
-        } else if (response.data?.products && Array.isArray(response.data.products)) {
-          list = response.data.products;
-        }
-      } else if (Array.isArray(response)) {
+      if (Array.isArray(response)) {
         list = response;
+      } else if (Array.isArray(response?.data)) {
+        list = response.data;
+      } else if (Array.isArray(response?.products)) {
+        list = response.products;
+      } else if (Array.isArray(response?.data?.products)) {
+        list = response.data.products;
+      } else if (Array.isArray(response?.amazingProducts)) {
+        list = response.amazingProducts;
+      } else if (Array.isArray(response?.data?.amazingProducts)) {
+        list = response.data.amazingProducts;
+      } else if (Array.isArray(response?.items)) {
+        list = response.items;
       }
       return {
         success: true,

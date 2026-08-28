@@ -62,15 +62,24 @@ export const productsApi = {
       let productList = [];
       let pagination = null;
 
-      if (response && response.success) {
-        if (response.data?.products && Array.isArray(response.data.products)) {
-          productList = response.data.products;
-          pagination = response.data.pagination;
-        } else if (Array.isArray(response.data)) {
-          productList = response.data;
-        }
-      } else if (Array.isArray(response)) {
+      if (Array.isArray(response)) {
         productList = response;
+      } else if (Array.isArray(response?.products)) {
+        productList = response.products;
+        pagination = response.pagination;
+      } else if (Array.isArray(response?.data?.products)) {
+        productList = response.data.products;
+        pagination = response.data.pagination;
+      } else if (Array.isArray(response?.data)) {
+        productList = response.data;
+        pagination = response.pagination;
+      } else if (Array.isArray(response?.items)) {
+        productList = response.items;
+      } else if (Array.isArray(response?.data?.items)) {
+        productList = response.data.items;
+      } else if (response?.data && typeof response.data === 'object') {
+        const foundArray = Object.values(response.data).find(v => Array.isArray(v));
+        if (foundArray) productList = foundArray;
       }
 
       const parsedProducts = productList.map(parseProduct).filter(Boolean);
