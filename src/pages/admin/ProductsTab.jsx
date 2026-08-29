@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
-import { Plus, Trash2, Search, PackageOpen, Edit3, X, Filter, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Search, PackageOpen, Edit3, X, Filter, CheckCircle2, Loader2, Sparkles } from 'lucide-react';
+import { ImageUploader } from './ImageUploader';
 import styles from './style.module.css';
+
+const RICE_SAMPLE_IMAGES = [
+  { label: 'کیسه نخی برنج کامفیروز', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1000' },
+  { label: 'برنج پخته شده و ری‌کشیده', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=1000' },
+  { label: 'دانه‌های یکدست برنج معطر', url: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=1000' },
+  { label: 'برنج دودی اصیل سنتی', url: 'https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&q=80&w=1000' }
+];
 
 export function ProductsTab() {
   const { products, setProducts, productsApi, showError, showSuccess } = useApp();
@@ -289,11 +297,16 @@ export function ProductsTab() {
       {/* Modal for Add / Edit */}
       {isModalOpen && (
         <div className={styles.modalOverlay}>
-          <div className={styles.modalContent}>
+          <div className={styles.modalBox}>
             <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>
-                {editingProduct ? 'ویرایش مشخصات محصول' : 'افزودن برنج اعلا به انبار'}
-              </h2>
+              <div>
+                <h2 className={styles.modalTitle}>
+                  {editingProduct ? 'ویرایش مشخصات محصول' : 'افزودن برنج اعلا به انبار'}
+                </h2>
+                <p className={styles.modalDesc}>
+                  اطلاعات محصول، قیمت‌گذاری و بارگذاری تصویر را تکمیل کنید
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={function () { setIsModalOpen(false); }}
@@ -304,138 +317,140 @@ export function ProductsTab() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className={styles.modalForm}>
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>عنوان کامل محصول *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="مثال: برنج کامفیروزی اصل طلا رایس"
-                  value={formData.title}
-                  onChange={function (e) { setFormData({ ...formData, title: e.target.value, name: e.target.value }); }}
-                  className={styles.formInput}
-                />
-              </div>
+            <div className={styles.modalContent}>
+              <form onSubmit={handleSubmit} className={styles.form}>
+                <div className={styles.formGrid}>
+                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
+                    <label className={styles.label}>عنوان کامل محصول *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="مثال: برنج کامفیروزی اصل طلا رایس - کیسه ۱۰ کیلوگرمی"
+                      value={formData.title}
+                      onChange={function (e) { setFormData({ ...formData, title: e.target.value, name: e.target.value }); }}
+                      className={styles.input}
+                    />
+                  </div>
 
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>قیمت فروش (تومان) *</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="مثال: 1450000"
-                    value={formData.price}
-                    onChange={function (e) { setFormData({ ...formData, price: e.target.value }); }}
-                    className={styles.formInput}
-                  />
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>دسته‌بندی محصول</label>
+                    <select
+                      value={formData.category}
+                      onChange={function (e) { setFormData({ ...formData, category: e.target.value }); }}
+                      className={styles.select}
+                    >
+                      <option value="all">برنج کامفیروز درجه یک</option>
+                      <option value="kamfirooz">کامفیروز بوجار شده</option>
+                      <option value="hashemi">برنج طارم هاشمی</option>
+                      <option value="smoky">برنج دودی اصیل</option>
+                      <option value="broken">برنج نیم‌دانه معطر</option>
+                      <option value="sarlash">برنج لاشه و سرلاشه</option>
+                    </select>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>موجودی انبار (تعداد کیسه ۱۰ کیلویی) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      placeholder="مثال: 45"
+                      value={formData.stock}
+                      onChange={function (e) { setFormData({ ...formData, stock: e.target.value }); }}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>قیمت فروش (تومان) *</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      placeholder="مثال: 1450000"
+                      value={formData.price}
+                      onChange={function (e) { setFormData({ ...formData, price: e.target.value }); }}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>قیمت قبل از تخفیف (تومان - اختیاری)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="مثال: 1650000"
+                      value={formData.oldPrice}
+                      onChange={function (e) { setFormData({ ...formData, oldPrice: e.target.value }); }}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>منطقه کشت و شالیزار</label>
+                    <input
+                      type="text"
+                      placeholder="مثال: کامفیروز، مرودشت، استان فارس"
+                      value={formData.origin}
+                      onChange={function (e) { setFormData({ ...formData, origin: e.target.value }); }}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label className={styles.label}>کشاورز معتمد</label>
+                    <input
+                      type="text"
+                      placeholder="مثال: حاج رضا زارع کامفیروزی"
+                      value={formData.farmer}
+                      onChange={function (e) { setFormData({ ...formData, farmer: e.target.value }); }}
+                      className={styles.input}
+                    />
+                  </div>
+
+                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
+                    <ImageUploader
+                      label="تصویر شاخص محصول *"
+                      value={formData.image}
+                      onChange={function (url) { setFormData({ ...formData, image: url }); }}
+                      sampleImages={RICE_SAMPLE_IMAGES}
+                    />
+                  </div>
+
+                  <div className={`${styles.formGroup} ${styles.fullCol}`}>
+                    <label className={styles.label}>توضیحات و ویژگی‌های پخت و عطر</label>
+                    <textarea
+                      rows="3"
+                      placeholder="توضیحات ری‌کشیدن، عطر برنج، زمان بوجار، تضمین اصالت و پخت مجلسی..."
+                      value={formData.description}
+                      onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
+                      className={styles.textarea}
+                    />
+                  </div>
                 </div>
 
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>قیمت قبل از تخفیف (اختیاری)</label>
-                  <input
-                    type="number"
-                    placeholder="مثال: 1650000"
-                    value={formData.oldPrice}
-                    onChange={function (e) { setFormData({ ...formData, oldPrice: e.target.value }); }}
-                    className={styles.formInput}
-                  />
+                <div className={styles.modalActions}>
+                  <button
+                    type="button"
+                    onClick={function () { setIsModalOpen(false); }}
+                    className={styles.cancelBtn}
+                    disabled={isSubmitting}
+                  >
+                    انصراف
+                  </button>
+                  <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Loader2 size={16} className="animate-spin" />
+                        <span>در حال ذخیره‌سازی...</span>
+                      </span>
+                    ) : (
+                      <span>{editingProduct ? 'ذخیره تغییرات محصول' : 'ثبت نهایی کالا در انبار'}</span>
+                    )}
+                  </button>
                 </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>موجودی انبار (تعداد کیسه ۱۰ کیلویی) *</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="مثال: 45"
-                    value={formData.stock}
-                    onChange={function (e) { setFormData({ ...formData, stock: e.target.value }); }}
-                    className={styles.formInput}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>درصد تخفیف (%)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    placeholder="مثال: 10"
-                    value={formData.discount}
-                    onChange={function (e) { setFormData({ ...formData, discount: e.target.value }); }}
-                    className={styles.formInput}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>منطقه کشت و شالیزار</label>
-                  <input
-                    type="text"
-                    placeholder="مثال: کامفیروز، مرودشت، استان فارس"
-                    value={formData.origin}
-                    onChange={function (e) { setFormData({ ...formData, origin: e.target.value }); }}
-                    className={styles.formInput}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.formLabel}>کشاورز معتمد</label>
-                  <input
-                    type="text"
-                    placeholder="مثال: حاج رضا زارع کامفیروزی"
-                    value={formData.farmer}
-                    onChange={function (e) { setFormData({ ...formData, farmer: e.target.value }); }}
-                    className={styles.formInput}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>لینک تصویر محصول یا آدرس اینترنتی</label>
-                <input
-                  type="text"
-                  placeholder="https://... یا /images/products/..."
-                  value={formData.image}
-                  onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
-                  className={styles.formInput}
-                />
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.formLabel}>توضیحات و ویژگی‌های پخت</label>
-                <textarea
-                  rows="3"
-                  placeholder="توضیحات عطر، قدکشیدن، نوع بوجار و تضمین کیفیت..."
-                  value={formData.description}
-                  onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
-                  className={styles.formTextarea}
-                />
-              </div>
-
-              <div className={styles.modalActions}>
-                <button
-                  type="button"
-                  onClick={function () { setIsModalOpen(false); }}
-                  className={styles.modalCancelBtn}
-                  disabled={isSubmitting}
-                >
-                  انصراف
-                </button>
-                <button type="submit" className={styles.modalSubmitBtn} disabled={isSubmitting}>
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 size={16} className="animate-spin" />
-                      <span>در حال ذخیره...</span>
-                    </>
-                  ) : (
-                    <span>{editingProduct ? 'ذخیره تغییرات' : 'ثبت نهایی کالا'}</span>
-                  )}
-                </button>
-              </div>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       )}

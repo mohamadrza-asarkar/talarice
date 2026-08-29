@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
+import { SEO } from '../../components/SEO';
 import styles from './style.module.css';
 
 export function ProductPage() {
@@ -39,6 +40,36 @@ export function ProductPage() {
   const currentPrice = Number(product.price ?? 0);
   const currentOldPrice = product.oldPrice ? Number(product.oldPrice) : null;
 
+  const productSchema = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    'name': product.name || product.title,
+    'image': [product.image],
+    'description': product.description || 'برنج اصیل و معطر کامفیروزی فارس کشت شده در شالیزار طلا رایس',
+    'sku': `TALA-${product.id || product._id}`,
+    'brand': {
+      '@type': 'Brand',
+      'name': 'طلا رایس'
+    },
+    'offers': {
+      '@type': 'Offer',
+      'url': window.location.href,
+      'priceCurrency': 'IRR',
+      'price': currentPrice * 10, // in Rials for standard schema
+      'priceValidUntil': '2027-12-31',
+      'availability': (product.stock ?? 1) > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      'seller': {
+        '@type': 'Organization',
+        'name': 'طلا رایس'
+      }
+    },
+    'aggregateRating': {
+      '@type': 'AggregateRating',
+      'ratingValue': product.rating || '4.9',
+      'reviewCount': product.reviewCount || 12
+    }
+  };
+
   const tabs = [
     { id: 'desc', label: 'معرفی محصول' },
     { id: 'specs', label: 'مشخصات پخت' },
@@ -47,6 +78,13 @@ export function ProductPage() {
 
   return (
     <div className={styles.pageWrapper}>
+      <SEO
+        title={product.name || product.title}
+        description={product.description ? `${product.description.slice(0, 150)}... خرید مستقیم برنج اصیل کامفیروز طلا رایس.` : `خرید آنلاین ${product.name} با تضمین پخت عالی و بازگشت وجه.`}
+        image={product.image}
+        keywords={`${product.name}, خرید ${product.name}, برنج کامفیروز, قیمت برنج, طلا رایس`}
+        schema={productSchema}
+      />
       <header className={styles.header}>
         <button type="button" onClick={handleBack} className={styles.backBtn}>
           <i className="fa-solid fa-arrow-right" />

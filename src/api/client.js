@@ -43,6 +43,7 @@ client.interceptors.response.use(
     if (parsed.statusCode === 401 || error.response?.status === 401) {
       localStorage.removeItem('tala_token');
       localStorage.removeItem('token');
+      localStorage.removeItem('tala_user_id');
       localStorage.removeItem('tala_auth');
       localStorage.removeItem('tala_user');
     }

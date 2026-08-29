@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
+import { SEO } from '../../components/SEO';
 import styles from './style.module.css';
 
 export function BlogPage() {
@@ -8,6 +9,28 @@ export function BlogPage() {
   const [commentName, setCommentName] = useState('');
   const [commentText, setCommentText] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    'headline': 'دانشنامه تخصصی کشت و تاریخچه برنج اصیل کامفیروز فارس',
+    'image': ['https://images.unsplash.com/photo-1536304993881-ff6e9eefa2a6?auto=format&fit=crop&q=80&w=1200'],
+    'author': {
+      '@type': 'Organization',
+      'name': 'طلا رایس'
+    },
+    'publisher': {
+      '@type': 'Organization',
+      'name': 'طلا رایس',
+      'logo': {
+        '@type': 'ImageObject',
+        'url': 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=500'
+      }
+    },
+    'datePublished': '2026-08-01',
+    'dateModified': '2026-08-29',
+    'description': 'مرجع جامع علمی و مستند مراحل چهارگانه کاشت، داشت و برداشت برنج اصیل و معطر کامفیروز در استان فارس.'
+  };
 
   const cultivationSteps = [
     {
@@ -49,6 +72,12 @@ export function BlogPage() {
 
   return (
     <div className={styles.blogWrapper}>
+      <SEO
+        title="دانشنامه و آموزش کشت برنج اصیل کامفیروز"
+        description="راهنمای کامل و مستند مراحل کاشت، داشت و برداشت برنج معطر کامفیروزی در شالیزارهای مرودشت و استان فارس به همراه روش‌های پخت مجلسی."
+        keywords="کشت برنج کامفیروز, خواص برنج کامفیروزی, پخت برنج کامفیروز, شالیزارهای کامفیروز"
+        schema={articleSchema}
+      />
       {/* Top Header */}
       <header className={styles.headerCard}>
         <div className={styles.headerTop}>

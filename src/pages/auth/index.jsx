@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Wrench, FileWarning, RefreshCw } from 'lucide-react';
 import { useApp } from '../../context';
+import { SEO } from '../../components/SEO';
 import { Logo } from '../../components/logo';
 import styles from './style.module.css';
 
@@ -135,6 +136,10 @@ export function AuthPage() {
 
   return (
     <div className={styles.authWrapper}>
+      <SEO
+        title={isLogin ? 'ورود به حساب کاربری' : 'ثبت نام مشتریان'}
+        description="ورود و عضویت در فروشگاه آنلاین برنج طلا رایس جهت پیگیری سفارش‌ها و خرید آسان."
+      />
       <div className={styles.logoContainer}>
         <Logo />
       </div>

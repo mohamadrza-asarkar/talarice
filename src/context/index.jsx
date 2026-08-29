@@ -194,14 +194,15 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  // Polling Health check every 20 seconds (20000ms)
+  // Polling Health check: every 3s if not healthy yet, otherwise every 20s
   useEffect(() => {
     checkHealth();
+    const intervalTime = serverHealth.status === 'healthy' ? 20000 : 3000;
     const interval = setInterval(() => {
       checkHealth();
-    }, 20000);
+    }, intervalTime);
     return () => clearInterval(interval);
-  }, [checkHealth]);
+  }, [checkHealth, serverHealth.status]);
 
   // Navigation History Stack
   const historyStackRef = useRef((function () {
@@ -260,9 +261,30 @@ export function AppProvider({ children }) {
   ]);
 
   const [trustItems, setTrustItems] = useState([
-    { id: '1', title: 'ضمانت اصالت کامپیروز', iconClass: 'fa-solid fa-award', description: 'تمام محصولات ما مستقیماً از کشاورزان معتمد و اصیل شالیزارهای کامفیروز تهیه و بسته‌بندی می‌شوند.' },
-    { id: '2', title: 'ارسال سریع به سراسر کشور', iconClass: 'fa-solid fa-truck-fast', description: 'سفارشات شما در سریع‌ترین زمان ممکن از طریق پست، تیپاکس یا باربری به درب منزل شما ارسال خواهد شد.' },
-    { id: '3', title: 'امکان ارجاع وجه', iconClass: 'fa-solid fa-rotate-left', description: 'در صورت عدم رضایت از پخت یا کیفیت محصول، وجه پرداختی شما با احترام تمام مسترد خواهد شد.' }
+    {
+      id: '1',
+      title: 'پخت عالی و قد کشیدن',
+      iconClass: 'fa-solid fa-bowl-rice',
+      description: 'دانه‌های برنج طلا رایس دارای ری‌کشی فوق‌العاده، قد بلند و پخت بی‌نظیر مجلسی هستند.'
+    },
+    {
+      id: '2',
+      title: 'ارسال سریع سراسری',
+      iconClass: 'fa-solid fa-truck-fast',
+      description: 'سفارشات شما در سریع‌ترین زمان ممکن با بسته‌بندی ایمن به سراسر کشور ارسال می‌شوند.'
+    },
+    {
+      id: '3',
+      title: 'ضمانت ۷ روزه کیفیت',
+      iconClass: 'fa-solid fa-shield-halved',
+      description: 'تضمین بازگشت وجه یا تعویض کالا تا ۷ روز در صورت هرگونه نارضایتی از کیفیت یا پخت.'
+    },
+    {
+      id: '4',
+      title: 'مستقیم از شالیزار',
+      iconClass: 'fa-solid fa-seedling',
+      description: 'تهیه مستقیم و بدون واسطه از کشاورزان معتمد شالیزارهای کامفیروز و شمال کشور.'
+    }
   ]);
 
   const [brandStory, setBrandStory] = useState({
@@ -405,40 +427,141 @@ export function AppProvider({ children }) {
     }
   }
 
-  // Authentication state
+  // Clean up any stale legacy user profile from localStorage
+  // Authentication state - restore token, userId, and cached user profile
+  const [token, setToken] = useState(() => localStorage.getItem('tala_token') || localStorage.getItem('token') || '');
+  const [userId, setUserId] = useState(() => localStorage.getItem('tala_user_id') || '');
+  
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const userStr = localStorage.getItem('tala_user');
-      if (userStr) return JSON.parse(userStr);
-      return null;
+      const saved = localStorage.getItem('tala_user');
+      return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
     }
   });
 
-  const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.isAdmin));
+  const [users, setUsers] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tala_users_list');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {
+        id: 'u_admin',
+        _id: 'u_admin',
+        name: 'مدیر ارشد طلا رایس',
+        phone: '09171234567',
+        role: 'admin',
+        address: 'فارس، شیراز، دفتر مرکزی طلا رایس',
+        isActive: true,
+        isAdmin: true
+      }
+    ];
+  });
 
-  const [token, setToken] = useState(() => localStorage.getItem('tala_token') || '');
-  const [isAuthenticated, setIsAuthenticated] = useState(() => Boolean(localStorage.getItem('tala_token') || localStorage.getItem('tala_auth') === 'true'));
+  const [isLoadingUser, setIsLoadingUser] = useState(Boolean(token && !currentUser));
+
+  const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.isAdmin === true));
+  const isAuthenticated = Boolean(token && (currentUser || userId));
+
+  // Live profile fetcher from backend (/api/auth/me)
+  const fetchUserProfile = useCallback(async () => {
+    const activeToken = localStorage.getItem('tala_token') || localStorage.getItem('token');
+    if (!activeToken) {
+      setCurrentUser(null);
+      setUserId('');
+      setIsLoadingUser(false);
+      return null;
+    }
+
+    try {
+      setIsLoadingUser(true);
+      const res = await authApi.getProfile();
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        try {
+          localStorage.setItem('tala_user', JSON.stringify(res.user));
+        } catch {}
+        const uid = res.user.id || res.user._id || '';
+        if (uid) {
+          setUserId(uid);
+          localStorage.setItem('tala_user_id', uid);
+        }
+        return res.user;
+      } else {
+        // If explicitly unauthorized or invalid
+        if (res.statusCode === 401) {
+          setCurrentUser(null);
+          setUserId('');
+          setToken('');
+          localStorage.removeItem('tala_token');
+          localStorage.removeItem('token');
+          localStorage.removeItem('tala_user_id');
+          localStorage.removeItem('tala_user');
+        }
+        return null;
+      }
+    } catch (err) {
+      if (err?.statusCode === 401) {
+        setCurrentUser(null);
+        setUserId('');
+        setToken('');
+        localStorage.removeItem('tala_token');
+        localStorage.removeItem('token');
+        localStorage.removeItem('tala_user_id');
+        localStorage.removeItem('tala_user');
+      }
+      return null;
+    } finally {
+      setIsLoadingUser(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    } else {
+      setIsLoadingUser(false);
+    }
+  }, [token, fetchUserProfile]);
 
   function login(userData = null, jwtToken = null) {
-    setIsAuthenticated(true);
-    localStorage.setItem('tala_auth', 'true');
     if (jwtToken) {
       setToken(jwtToken);
       localStorage.setItem('tala_token', jwtToken);
     }
+    const uid = userData?.id || userData?._id || '';
+    if (uid) {
+      setUserId(uid);
+      localStorage.setItem('tala_user_id', uid);
+    }
     if (userData) {
       setCurrentUser(userData);
-      localStorage.setItem('tala_user', JSON.stringify(userData));
+      try {
+        localStorage.setItem('tala_user', JSON.stringify(userData));
+      } catch {}
+      setUsers(prev => {
+        const exists = prev.some(u => (u.id === uid || u._id === uid || u.phone === userData.phone));
+        if (exists) {
+          return prev.map(u => (u.id === uid || u._id === uid || u.phone === userData.phone ? { ...u, ...userData } : u));
+        }
+        const updated = [userData, ...prev];
+        try { localStorage.setItem('tala_users_list', JSON.stringify(updated)); } catch {}
+        return updated;
+      });
     }
   }
 
   function logout() {
     authApi.logout();
-    setIsAuthenticated(false);
     setCurrentUser(null);
+    setUserId('');
     setToken('');
+    localStorage.removeItem('tala_token');
+    localStorage.removeItem('token');
+    localStorage.removeItem('tala_user_id');
+    localStorage.removeItem('tala_user');
     showSuccess('با موفقیت از حساب کاربری خارج شدید.');
     navigate('/');
   }
@@ -448,6 +571,8 @@ export function AppProvider({ children }) {
       const res = await authApi.login({ phone, password });
       if (res.success && res.token) {
         login(res.user, res.token);
+        // Refresh live profile from server to guarantee freshest role
+        fetchUserProfile();
         showSuccess(res.message || 'ورود با موفقیت انجام شد');
         return { success: true, user: res.user, message: res.message };
       }
@@ -470,6 +595,7 @@ export function AppProvider({ children }) {
       const res = await authApi.register({ name, phone, password, address });
       if (res.success && res.token) {
         login(res.user, res.token);
+        fetchUserProfile();
         showSuccess(res.message || 'ثبت‌نام با موفقیت انجام شد');
         return { success: true, user: res.user, message: res.message };
       }
@@ -710,8 +836,15 @@ export function AppProvider({ children }) {
         addresses: currentUser?.addresses || [],
         isAuthenticated,
         currentUser,
+        userId,
         isAdmin,
         token,
+        isLoadingUser,
+        fetchUserProfile,
+        refreshProfile: fetchUserProfile,
+        users,
+        setUsers,
+        usersCount: users.length,
         login,
         logout,
         loginUser,

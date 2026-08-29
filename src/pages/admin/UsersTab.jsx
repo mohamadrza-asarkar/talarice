@@ -4,23 +4,28 @@ import { Users, Search, Plus, UserCheck, ShieldCheck, X, Phone, MapPin, Shopping
 import styles from './style.module.css';
 
 export function UsersTab() {
-  const { currentUser, orders, adminApi, showError, showSuccess } = useApp();
+  const { currentUser, users, setUsers, orders, adminApi, showError, showSuccess } = useApp();
   const [search, setSearch] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [userList, setUserList] = useState([]);
+  const [userList, setUserList] = useState(users || []);
 
   async function loadUsers() {
     setLoading(true);
     try {
       const res = await adminApi.getUsers();
-      if (res.data && Array.isArray(res.data)) {
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
         setUserList(res.data);
+        if (setUsers) setUsers(res.data);
+      } else if (users && users.length > 0) {
+        setUserList(users);
+      } else if (currentUser) {
+        setUserList([currentUser]);
       }
     } catch (err) {
-      showError(err, 'دریافت کاربران');
-      // If error or empty, keep current user
-      if (currentUser) {
+      // Graceful fallback to context users without annoying popup
+      if (users && users.length > 0) {
+        setUserList(users);
+      } else if (currentUser) {
         setUserList([currentUser]);
       }
     } finally {

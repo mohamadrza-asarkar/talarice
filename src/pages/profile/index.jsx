@@ -5,7 +5,7 @@ import { AuthPage } from '../auth';
 import styles from './style.module.css';
 
 export function ProfilePage() {
-  const { orders, addresses, logout, currentUser, isAdmin, getOrderStatusInfo } = useApp();
+  const { orders, addresses, logout, currentUser, isAdmin, isLoadingUser, getOrderStatusInfo } = useApp();
   const [activeSubTab, setActiveSubTab] = useState('orders');
 
   const [wholesaleForm, setWholesaleForm] = useState({
@@ -19,6 +19,14 @@ export function ProfilePage() {
 
   const [supportText, setSupportText] = useState('');
   const [supportSuccess, setSupportSuccess] = useState(false);
+
+  if (isLoadingUser && !currentUser) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#94a3b8' }}>
+        <span>در حال بارگذاری مشخصات کاربری...</span>
+      </div>
+    );
+  }
 
   if (!currentUser) {
     return <AuthPage />;

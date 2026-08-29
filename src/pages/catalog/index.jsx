@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
+import { SEO } from '../../components/SEO';
 import { ProductCard } from '../../components/productCard';
 import styles from './style.module.css';
 
@@ -9,6 +10,11 @@ export function CatalogPage() {
 
   return (
     <div className={styles.catalogWrapper}>
+      <SEO
+        title="فهرست و قیمت برنج‌های اصیل کامفیروز"
+        description="لیست قیمت انواع برنج اصیل کامفیروزی درجه یک، بوجاری شده، طارم هاشمی، دودی و نیم‌دانه در کیسه‌های ۱۰ کیلوگرمی با امکان خرید آنلاین."
+        keywords="قیمت برنج کامفیروز, خرید کیسه برنج ۱۰ کیلویی, برنج مرودشت, برنج معطر کامفیروزی"
+      />
       <header className={styles.headerCard}>
         <div className={styles.headerTopRow}>
           <button

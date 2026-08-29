@@ -9,20 +9,22 @@ export function TrustBar() {
   if (!trustItems?.length) return null;
 
   return (
-    <section className={styles.trustGrid}>
-      {trustItems.map(function (item) {
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={function () { setSelectedTrust(item); }}
-            className={styles.trustItem}
-          >
-            <i className={item.iconClass} />
-            <span>{item.title}</span>
-          </button>
-        );
-      })}
+    <section className={styles.trustContainer}>
+      <div className={styles.trustGrid}>
+        {trustItems.map(function (item) {
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={function () { setSelectedTrust(item); }}
+              className={styles.trustItem}
+            >
+              <i className={item.iconClass} />
+              <span>{item.title}</span>
+            </button>
+          );
+        })}
+      </div>
 
       {selectedTrust && (
         <div className={styles.modalOverlay} onClick={function () { setSelectedTrust(null); }}>

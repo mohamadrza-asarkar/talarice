@@ -1,4 +1,5 @@
 import React from 'react';
+import { SEO } from '../../components/SEO';
 import { HeroSlider } from '../../components/heroSlider';
 import { TrustBar } from '../../components/trustBar';
 import { AmazingDeals } from '../../components/amazingDeals';
@@ -21,6 +22,11 @@ const homeSections = [
 export function HomePage() {
   return (
     <div className={styles.homeWrapper} dir="rtl">
+      <SEO
+        title="فروشگاه طلا رایس | خرید مستقیم برنج اصیل کامفیروزی از شالیزار"
+        description="خرید آنلاین برنج اصیل، خوش‌عطر و ری‌کشیده کامفیروزی فارس مستقیم از کشاورز با تضمین پخت و بازگشت وجه در فروشگاه طلا رایس."
+        keywords="برنج کامفیروز, خرید برنج کامفیروزی, برنج معطر کامفیروز فارس, برنج اصیل ایرانی, فروشگاه برنج طلا رایس, برنج ارگانیک"
+      />
       {homeSections.map(function ({ id, component: Component }) {
         return <Component key={id} />;
       })}

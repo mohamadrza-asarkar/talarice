@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
 import { Plus, Trash2, Image as ImageIcon, ExternalLink, X, Loader2 } from 'lucide-react';
+import { ImageUploader } from './ImageUploader';
 import styles from './style.module.css';
 
 export function SlidersTab() {
@@ -236,41 +237,12 @@ export function SlidersTab() {
                   </div>
 
                   <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>آدرس تصویر بنر (URL)</label>
-                    <input
-                      required
-                      type="text"
-                      placeholder="https://..."
+                    <ImageUploader
+                      label="تصویر بنر اسلایدر *"
                       value={formData.image}
-                      onChange={function (e) { setFormData({ ...formData, image: e.target.value }); }}
-                      dir="ltr"
-                      className={styles.input}
+                      onChange={function (url) { setFormData({ ...formData, image: url }); }}
+                      sampleImages={sampleImages}
                     />
-                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.375rem', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700 }}>
-                        تصاویر آماده:
-                      </span>
-                      {sampleImages.map(function (img, idx) {
-                        return (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={function () { setFormData({ ...formData, image: img.url }); }}
-                            style={{
-                              fontSize: '0.6875rem',
-                              fontWeight: 700,
-                              padding: '0.2rem 0.5rem',
-                              borderRadius: '0.375rem',
-                              border: '1px solid #cbd5e1',
-                              background: '#f8fafc',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            {img.label}
-                          </button>
-                        );
-                      })}
-                    </div>
                   </div>
 
                   <div className={`${styles.formGroup} ${styles.fullCol}`}>

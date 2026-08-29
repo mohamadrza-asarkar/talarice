@@ -26,18 +26,28 @@ import styles from './style.module.css';
 
 export function AdminPage() {
   const navigate = useNavigate();
-  const { isAdmin, currentUser, products, orders, heroSlides, articles, serverHealth, checkHealth } = useApp();
+  const { isAdmin, currentUser, isLoadingUser, products, orders, heroSlides, articles, users, usersCount, serverHealth, checkHealth } = useApp();
   const [activeTab, setActiveTab] = useState('products');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  if (isLoadingUser && !currentUser) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#94a3b8' }}>
+        <span>در حال بررسی دسترسی...</span>
+      </div>
+    );
+  }
+
   if (!isAdmin) return <Navigate to="/" replace />;
+
+  const actualUsersCount = typeof usersCount === 'number' ? usersCount : (users?.length || 1);
 
   const navItems = [
     { id: 'products', label: 'محصولات انبار', icon: Package, count: products.length },
     { id: 'orders', label: 'سفارشات', icon: ShoppingBag, count: orders.length },
     { id: 'sliders', label: 'ویترین و اسلایدر', icon: ImageIcon, count: heroSlides.length },
     { id: 'blog', label: 'دانشنامه و مقالات', icon: BookOpen, count: articles.length },
-    { id: 'users', label: 'مشتریان و کاربران', icon: Users, count: 5 },
+    { id: 'users', label: 'مشتریان و کاربران', icon: Users, count: actualUsersCount },
   ];
 
   // Calculated Stats

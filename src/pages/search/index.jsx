@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
+import { SEO } from '../../components/SEO';
 import styles from './style.module.css';
 
 export function SearchPage() {
@@ -25,6 +26,10 @@ export function SearchPage() {
 
   return (
     <div className={styles.wrapper}>
+      <SEO
+        title={query ? `جستجوی "${query}" در محصولات` : 'جستجوی انواع برنج کامفیروز'}
+        description="جستجو و مقایسه انواع برنج‌های اعلای کامفیروز، طارم، دودی و نیم‌دانه در فروشگاه طلا رایس."
+      />
       <header className={styles.header}>
         <button 
           type="button" 
