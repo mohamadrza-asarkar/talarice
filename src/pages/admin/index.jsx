@@ -1,61 +1,61 @@
 import React, { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import {
+  LayoutDashboard,
   Package,
   ShoppingBag,
   Users,
   Image as ImageIcon,
-  BookOpen,
   ArrowRight,
   LayoutGrid,
   TrendingUp,
   Clock,
   ExternalLink,
+  Award,
   ShieldCheck,
-  Award
+  KeyRound,
+  LogOut
 } from 'lucide-react';
 import logoImg from '../../assets/logo.png';
+import { OverviewTab } from './OverviewTab';
 import { ProductsTab } from './ProductsTab';
 import { OrdersTab } from './OrdersTab';
 import { UsersTab } from './UsersTab';
 import { SlidersTab } from './SlidersTab';
-import { BlogTab } from './BlogTab';
+import { AdminAuthModal } from './AdminAuthModal';
 import { HealthStatusIndicator } from '../../components/healthStatus';
 import styles from './style.module.css';
 
 export function AdminPage() {
   const navigate = useNavigate();
-  const { isAdmin, currentUser, isLoadingUser, products, orders, heroSlides, articles, users, usersCount, serverHealth, checkHealth } = useApp();
-  const [activeTab, setActiveTab] = useState('products');
+  const {
+    products,
+    orders,
+    heroSlides,
+    users,
+    usersCount,
+    serverHealth,
+    checkHealth,
+    currentUser,
+    isAdmin,
+    logout
+  } = useApp();
+
+  const [activeTab, setActiveTab] = useState('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  if (isLoadingUser && !currentUser) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#94a3b8' }}>
-        <span>در حال بررسی دسترسی...</span>
-      </div>
-    );
-  }
-
-  if (!isAdmin) return <Navigate to="/" replace />;
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const actualUsersCount = typeof usersCount === 'number' ? usersCount : (users?.length || 1);
 
+  // Tab configurations
   const navItems = [
-    { id: 'products', label: 'محصولات انبار', icon: Package, count: products.length },
-    { id: 'orders', label: 'سفارشات', icon: ShoppingBag, count: orders.length },
-    { id: 'sliders', label: 'ویترین و اسلایدر', icon: ImageIcon, count: heroSlides.length },
-    { id: 'blog', label: 'دانشنامه و مقالات', icon: BookOpen, count: articles.length },
-    { id: 'users', label: 'مشتریان و کاربران', icon: Users, count: actualUsersCount },
+    { id: 'overview', label: 'داشبورد و آمار تحلیلی', icon: LayoutDashboard },
+    { id: 'products', label: 'محصولات و انبارداری', icon: Package, count: products.length },
+    { id: 'orders', label: 'سفارشات و رهگیری پستی', icon: ShoppingBag, count: orders.length },
+    { id: 'users', label: 'کاربران و مشتریان', icon: Users, count: actualUsersCount },
+    { id: 'sliders', label: 'ویترین و اسلایدرها', icon: ImageIcon, count: heroSlides.length },
   ];
-
-  // Calculated Stats
-  const totalSales = orders.reduce(function (sum, o) {
-    return sum + (Number(o.finalAmount || o.totalPrice || 0));
-  }, 0);
-  const pendingOrders = orders.filter(function (o) { return o.status === 'reviewing' || o.status === 'processing' || o.status === 'pending'; }).length;
-  const inStockProducts = products.filter(function (p) { return (p.stock || 0) > 0; }).length;
 
   const todayPersian = new Intl.DateTimeFormat('fa-IR', {
     weekday: 'long',
@@ -64,6 +64,38 @@ export function AdminPage() {
     year: 'numeric'
   }).format(new Date());
 
+  if (!isAdmin) {
+    return (
+      <div className={styles.adminLayout} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '1.5rem', textAlign: 'center' }}>
+        <div style={{ background: '#ffffff', borderRadius: '1rem', padding: '2rem', maxWidth: '400px', width: '100%', boxShadow: '0 10px 25px rgba(0,0,0,0.08)', border: '1px solid #f1f5f9' }}>
+          <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: '#fef2f2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem auto' }}>
+            <ShieldCheck size={28} />
+          </div>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0f172a', marginBottom: '0.5rem' }}>عدم دسترسی به پنل مدیریت</h2>
+          <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1.5rem', lineHeight: 1.6 }}>
+            برای مشاهده این بخش نیاز به ورود با حساب کاربری مدیر ارشد دارید.
+          </p>
+          <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+            <button
+              type="button"
+              onClick={() => navigate('/auth')}
+              style={{ background: '#042a1b', color: '#fef08a', border: 'none', borderRadius: '0.5rem', padding: '0.6rem 1.2rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              ورود با حساب مدیریت
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/')}
+              style={{ background: '#f1f5f9', color: '#334155', border: 'none', borderRadius: '0.5rem', padding: '0.6rem 1.2rem', fontSize: '0.85rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              صفحه اصلی
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={styles.adminLayout}>
       {/* Mobile Header */}
@@ -71,7 +103,7 @@ export function AdminPage() {
         <div className={styles.mobileHeaderRight}>
           <button
             type="button"
-            onClick={function () { navigate('/'); }}
+            onClick={() => navigate('/')}
             className={styles.mobileBackBtn}
             aria-label="بازگشت به فروشگاه"
             title="بازگشت به فروشگاه"
@@ -85,7 +117,7 @@ export function AdminPage() {
           </div>
         </div>
         <button
-          onClick={function () { setIsMobileMenuOpen(!isMobileMenuOpen); }}
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           className={styles.mobileMenuBtn}
           aria-label="باز کردن منو"
         >
@@ -99,19 +131,19 @@ export function AdminPage() {
           <img src={logoImg} alt="لوگوی طلا رایس" className={styles.sidebarLogo} />
           <div>
             <h2 className={styles.brandTitle}>طلا رایس</h2>
-            <span className={styles.brandBadge}>سامانه مدیریت جامع</span>
+            <span className={styles.brandBadge}>سامانه مدیریت و وب‌سرویس</span>
           </div>
         </div>
 
         <nav className={styles.navList}>
           <div className={styles.navLabel}>بخش‌های مدیریتی</div>
-          {navItems.map(function (item) {
+          {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={function () {
+                onClick={() => {
                   setActiveTab(item.id);
                   setIsMobileMenuOpen(false);
                 }}
@@ -127,25 +159,46 @@ export function AdminPage() {
           })}
         </nav>
 
-        {/* Sidebar Footer with Admin Profile & Store Link */}
+        {/* Sidebar Footer with Admin Profile & Auth Status */}
         <div className={styles.sidebarFooter}>
           <div className={styles.userInfoCard}>
             <div className={styles.userAvatar}>
               {(currentUser?.name || 'م')[0]}
             </div>
-            <div>
+            <div style={{ flex: 1 }}>
               <p className={styles.userName}>{currentUser?.name || 'مدیر سیستم'}</p>
-              <p className={styles.userRole}>مدیر ارشد طلا رایس</p>
+              <p className={styles.userRole}>
+                {isAdmin ? 'مدیر ارشد طلا رایس' : 'کاربر عادی (بدون دسترسی)'}
+              </p>
             </div>
+            {!isAdmin && (
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                style={{
+                  background: '#d4af37',
+                  border: 'none',
+                  color: '#042a1b',
+                  borderRadius: '0.375rem',
+                  padding: '0.25rem 0.4rem',
+                  cursor: 'pointer',
+                  fontSize: '0.7rem',
+                  fontWeight: 900
+                }}
+                title="ورود با دسترسی مدیریت"
+              >
+                لاگین
+              </button>
+            )}
           </div>
 
           <button
             type="button"
-            onClick={function () { navigate('/'); }}
+            onClick={() => navigate('/')}
             className={styles.backButton}
           >
             <ArrowRight size={17} />
-            <span>بازگشت به فروشگاه</span>
+            <span>مشاهده فروشگاه اصلی</span>
           </button>
         </div>
       </aside>
@@ -157,82 +210,36 @@ export function AdminPage() {
           <div className={styles.topBar}>
             <div className={styles.topBarGreeting}>
               <h1 className={styles.topBarTitle}>
-                <span>سلام، {currentUser?.name || 'مدیریت گرامی'}</span>
-                <span style={{ fontSize: '1.1rem' }}>👋</span>
+                <span>سامانه مدیریت متمرکز طلا رایس</span>
+                <span style={{ fontSize: '1.1rem' }}>🌾</span>
               </h1>
               <p className={styles.topBarDate}>
                 <span>امروز: </span>
                 <strong>{todayPersian}</strong>
-                <span style={{ marginRight: '0.75rem', opacity: 0.8 }}>| شالیزارهای کامفیروز، مرودشت فارس</span>
+                <span style={{ marginRight: '0.75rem', opacity: 0.8 }}>| سرور مرکزی شیراز و مزارع کامفیروز</span>
               </p>
             </div>
 
             <div className={styles.topBarActions}>
               <HealthStatusIndicator health={serverHealth} onRetry={checkHealth} />
-              <a href="/" className={styles.liveStoreBtn}>
-                <ExternalLink size={16} />
-                <span>مشاهده سایت فروشگاه</span>
-              </a>
+              <button
+                type="button"
+                onClick={() => setIsAuthModalOpen(true)}
+                className={styles.liveStoreBtn}
+                style={{ background: '#042a1b', color: '#fef08a', border: '1px solid #d4af37' }}
+              >
+                <ShieldCheck size={16} color="#d4af37" />
+                <span>{isAdmin ? 'احراز هویت: مدیر ارشد' : 'ورود به حساب مدیریت'}</span>
+              </button>
             </div>
           </div>
 
-          {/* Quick Metrics Cards */}
-          <div className={styles.statsGrid}>
-            <div className={styles.statCard}>
-              <div className={`${styles.statIconWrap} ${styles.statIconGold}`}>
-                <TrendingUp size={22} />
-              </div>
-              <div className={styles.statInfo}>
-                <span className={styles.statLabel}>گردش مالی سفارشات</span>
-                <span className={styles.statValue}>
-                  {(totalSales ?? 0).toLocaleString('fa-IR')} <small style={{ fontSize: '0.7rem', color: '#64748b' }}>تومان</small>
-                </span>
-                <span className={styles.statSubtitle}>درگاه فعال و متصل</span>
-              </div>
-            </div>
-
-            <div className={styles.statCard}>
-              <div className={`${styles.statIconWrap} ${styles.statIconBlue}`}>
-                <Clock size={22} />
-              </div>
-              <div className={styles.statInfo}>
-                <span className={styles.statLabel}>سفارشات در پردازش</span>
-                <span className={styles.statValue}>{pendingOrders} سفارش</span>
-                <span className={styles.statSubtitle} style={{ color: pendingOrders > 0 ? '#b45309' : '#059669' }}>
-                  {pendingOrders > 0 ? 'نیاز به بسته‌بندی و ارسال' : 'کلیه سفارشات ارسال شده'}
-                </span>
-              </div>
-            </div>
-
-            <div className={styles.statCard}>
-              <div className={`${styles.statIconWrap} ${styles.statIconGreen}`}>
-                <Package size={22} />
-              </div>
-              <div className={styles.statInfo}>
-                <span className={styles.statLabel}>محصولات فعال انبار</span>
-                <span className={styles.statValue}>{inStockProducts} از {products.length} کالا</span>
-                <span className={styles.statSubtitle}>موجودی کیسه‌های نخی اعلا</span>
-              </div>
-            </div>
-
-            <div className={styles.statCard}>
-              <div className={`${styles.statIconWrap} ${styles.statIconPurple}`}>
-                <Award size={22} />
-              </div>
-              <div className={styles.statInfo}>
-                <span className={styles.statLabel}>شاخص رضایت مشتریان</span>
-                <span className={styles.statValue}>۵.۰ از ۵.۰</span>
-                <span className={styles.statSubtitle}>بر اساس نظرات ثبت‌شده</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Tab Views */}
+          {/* Active Tab View */}
+          {activeTab === 'overview' && <OverviewTab onNavigateTab={tab => setActiveTab(tab)} />}
           {activeTab === 'products' && <ProductsTab />}
           {activeTab === 'orders' && <OrdersTab />}
-          {activeTab === 'sliders' && <SlidersTab />}
-          {activeTab === 'blog' && <BlogTab />}
           {activeTab === 'users' && <UsersTab />}
+          {activeTab === 'sliders' && <SlidersTab />}
         </div>
       </main>
 
@@ -240,9 +247,15 @@ export function AdminPage() {
       {isMobileMenuOpen && (
         <div
           className={styles.backdrop}
-          onClick={function () { setIsMobileMenuOpen(false); }}
+          onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
+
+      {/* Admin Authentication & Lock Modal */}
+      <AdminAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+      />
     </div>
   );
 }

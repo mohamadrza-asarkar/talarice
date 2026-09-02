@@ -1,184 +1,351 @@
-import client from './client';
-import { parseApiError } from '../utils/errorHandler';
+import axios from 'axios';
 
-function parseUser(u) {
-  if (!u) return null;
-  const role = String(u.role || '').toLowerCase().trim();
-  const isAdmin = Boolean(role === 'admin' || u.isAdmin === true);
+/**
+ * آدرس پایه وب‌سرویس بک‌اند (API Base URL)
+ */
+export const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ||
+  'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
+
+/**
+ * دریافت هدرهای احراز هویت شامل توکن کاربر
+ */
+export function getAuthHeaders() {
+  const token =
+    localStorage.getItem('token') ||
+    localStorage.getItem('tala_token');
+
+  const headers = {
+    'Content-Type': 'application/json'
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  return headers;
+}
+
+/**
+ * نرمال‌سازی و قالب‌بندی اطلاعات کاربر
+ */
+function formatUser(userData) {
+  if (!userData) return null;
+  const role = String(userData.role || '').toLowerCase().trim();
+  const isAdmin = role === 'admin' || userData.isAdmin === true;
+
   return {
-    id: String(u._id || u.id || ''),
-    _id: String(u._id || u.id || ''),
-    name: u.name || '',
-    phone: u.phone || u.mobile || '',
+    id: String(userData._id || userData.id || ''),
+    _id: String(userData._id || userData.id || ''),
+    name: userData.name || '',
+    phone: userData.phone || userData.mobile || '',
     role: role || (isAdmin ? 'admin' : 'user'),
-    address: u.address || '',
-    avatar: u.avatar || '',
-    isActive: u.isActive !== undefined ? u.isActive : true,
-    createdAt: u.createdAt || '',
-    isAdmin: isAdmin
+    address: userData.address || '',
+    avatar: userData.avatar || '',
+    isActive: userData.isActive !== undefined ? userData.isActive : true,
+    isAdmin: isAdmin,
+    createdAt: userData.createdAt || ''
   };
 }
 
+/**
+ * ماژول احراز هویت و مدیریت کاربران با استفاده مستقیم از axios.post و axios.get
+ */
 export const authApi = {
   /**
-   * Register new user
+   * ۱. ثبت‌نام کاربر جدید
    * POST /api/auth/register
-   * Body: { name, phone, password, address }
+   * @param {Object} userData - { name, phone, password, address }
    */
   async register(userData) {
     try {
-      const response = await client.post('/auth/register', userData);
-      const token = response?.token || response?.data?.token;
-      const rawUser = response?.user || response?.data?.user || response?.data;
-      const parsedUser = parseUser(rawUser);
-      const userId = parsedUser?.id || parsedUser?._id || '';
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData, {
+        headers: getAuthHeaders()
+      });
 
+      const responseData = response.data || {};
+      const token = responseData.token || responseData.data?.token || responseData.accessToken;
+      const rawUser = responseData.user || responseData.data?.user || responseData.data;
+      const user = formatUser(rawUser);
+
+      // ذخیره توکن و مشخصات در localStorage برای ورود خودکار
       if (token) {
+        localStorage.setItem('token', token);
         localStorage.setItem('tala_token', token);
-        if (userId) {
-          localStorage.setItem('tala_user_id', userId);
+      }
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('tala_user', JSON.stringify(user));
+        if (user.id) {
+          localStorage.setItem('userId', user.id);
+          localStorage.setItem('tala_user_id', user.id);
         }
-        localStorage.removeItem('tala_user');
-        localStorage.removeItem('tala_auth');
       }
 
       return {
         success: true,
-        statusCode: response?.statusCode || 201,
+        statusCode: responseData.statusCode || 201,
         token: token,
-        userId: userId,
-        user: parsedUser,
-        message: response?.message || 'ثبت‌نام با موفقیت انجام شد'
+        user: user,
+        message: responseData.message || 'ثبت‌نام با موفقیت انجام شد'
       };
-    } catch (err) {
-      const parsed = parseApiError(err);
-      throw parsed;
+    } catch (error) {
+      // استخراج مستقیم پیام و وضعیت خطای ارسالی از سمت بک‌اند
+      const statusCode =
+        error.response?.data?.statusCode ||
+        error.response?.status ||
+        (error.request ? 0 : 500);
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        (error.request
+          ? 'عدم برقراری ارتباط با سرور، لطفاً اتصال اینترنت خود را بررسی کنید'
+          : error.message || 'خطا در ثبت‌نام کاربر');
+
+      return {
+        success: false,
+        statusCode: statusCode,
+        message: message,
+        errors: error.response?.data?.errors || null,
+        data: error.response?.data || null
+      };
     }
   },
 
   /**
-   * Login user
+   * ۲. ورود کاربر
    * POST /api/auth/login
-   * Body: { phone, password }
+   * @param {Object} credentials - { phone, password }
    */
   async login(credentials) {
     try {
-      const response = await client.post('/auth/login', credentials);
-      const token = response?.token || response?.data?.token;
-      const rawUser = response?.user || response?.data?.user || response?.data;
-      const parsedUser = parseUser(rawUser);
-      const userId = parsedUser?.id || parsedUser?._id || '';
+      const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials, {
+        headers: getAuthHeaders()
+      });
 
+      const responseData = response.data || {};
+      const token = responseData.token || responseData.data?.token || responseData.accessToken;
+      const rawUser = responseData.user || responseData.data?.user || responseData.data;
+      const user = formatUser(rawUser);
+
+      // ذخیره توکن و مشخصات در localStorage برای ماندگاری و ورود خودکار
       if (token) {
+        localStorage.setItem('token', token);
         localStorage.setItem('tala_token', token);
-        if (userId) {
-          localStorage.setItem('tala_user_id', userId);
+      }
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('tala_user', JSON.stringify(user));
+        if (user.id) {
+          localStorage.setItem('userId', user.id);
+          localStorage.setItem('tala_user_id', user.id);
         }
-        localStorage.removeItem('tala_user');
-        localStorage.removeItem('tala_auth');
       }
 
       return {
         success: true,
-        statusCode: response?.statusCode || 200,
+        statusCode: responseData.statusCode || 200,
         token: token,
-        userId: userId,
-        user: parsedUser,
-        message: response?.message || 'ورود با موفقیت انجام شد'
+        user: user,
+        message: responseData.message || 'ورود با موفقیت انجام شد'
       };
-    } catch (err) {
-      const parsed = parseApiError(err);
-      throw parsed;
+    } catch (error) {
+      // استخراج مستقیم پیام و وضعیت خطای ارسالی از سمت بک‌اند
+      const statusCode =
+        error.response?.data?.statusCode ||
+        error.response?.status ||
+        (error.request ? 0 : 500);
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        (error.request
+          ? 'عدم برقراری ارتباط با سرور، لطفاً اتصال اینترنت خود را بررسی کنید'
+          : error.message || 'نام کاربری یا رمز عبور اشتباه است');
+
+      return {
+        success: false,
+        statusCode: statusCode,
+        message: message,
+        errors: error.response?.data?.errors || null,
+        data: error.response?.data || null
+      };
     }
   },
 
   /**
-   * Fetch logged-in user profile
+   * ۳. دریافت اطلاعات حساب کاربری وارد شده
    * GET /api/auth/me
    */
   async getProfile() {
     try {
-      const response = await client.get('/auth/me');
-      const rawUser = response?.user || response?.data?.user || response?.data || response;
-      const parsedUser = parseUser(rawUser);
-
-      if (parsedUser && (parsedUser.id || parsedUser.name || parsedUser.phone)) {
-        const userId = parsedUser.id || parsedUser._id || '';
-        if (userId) {
-          localStorage.setItem('tala_user_id', userId);
-        }
-        localStorage.removeItem('tala_user');
+      const token = localStorage.getItem('token') || localStorage.getItem('tala_token');
+      if (!token) {
         return {
-          success: true,
-          statusCode: response?.statusCode || 200,
-          user: parsedUser,
-          message: response?.message || 'اطلاعات پروفایل دریافت شد'
+          success: false,
+          statusCode: 401,
+          user: null,
+          message: 'توکن ورود یافت نشد'
         };
       }
+
+      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
+        headers: getAuthHeaders()
+      });
+
+      const responseData = response.data || {};
+      const rawUser = responseData.user || responseData.data?.user || responseData.data || responseData;
+      const user = formatUser(rawUser);
+
+      if (user && (user.id || user.name || user.phone)) {
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('tala_user', JSON.stringify(user));
+        if (user.id) {
+          localStorage.setItem('userId', user.id);
+          localStorage.setItem('tala_user_id', user.id);
+        }
+      }
+
+      return {
+        success: true,
+        statusCode: responseData.statusCode || 200,
+        user: user,
+        message: responseData.message || 'اطلاعات کاربری دریافت شد'
+      };
+    } catch (error) {
+      const statusCode =
+        error.response?.data?.statusCode ||
+        error.response?.status ||
+        (error.request ? 0 : 500);
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'خطا در دریافت اطلاعات کاربری';
+
+      // در صورت منقضی بودن توکن (401)، پاکسازی اطلاعات
+      if (statusCode === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('tala_token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('tala_user');
+        localStorage.removeItem('userId');
+        localStorage.removeItem('tala_user_id');
+      }
+
       return {
         success: false,
-        statusCode: response?.statusCode || 400,
+        statusCode: statusCode,
         user: null,
-        message: response?.message || 'خطا در دریافت پروفایل'
+        message: message,
+        data: error.response?.data || null
       };
-    } catch (err) {
-      const parsed = parseApiError(err);
-      throw parsed;
     }
   },
 
   /**
-   * Update user profile
+   * ۴. ویرایش مشخصات حساب کاربری
    * PUT /api/auth/profile
-   * Body: { name?, phone?, avatar?, address? }
+   * @param {Object} profileData - { name?, phone?, address?, avatar? }
    */
   async updateProfile(profileData) {
     try {
-      const response = await client.put('/auth/profile', profileData);
-      const rawUser = response?.user || response?.data?.user || response?.data;
-      const updated = parseUser(rawUser);
-      localStorage.removeItem('tala_user');
+      const response = await axios.put(`${API_BASE_URL}/auth/profile`, profileData, {
+        headers: getAuthHeaders()
+      });
+
+      const responseData = response.data || {};
+      const rawUser = responseData.user || responseData.data?.user || responseData.data;
+      const user = formatUser(rawUser);
+
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('tala_user', JSON.stringify(user));
+      }
+
       return {
         success: true,
-        statusCode: response?.statusCode || 200,
-        user: updated,
-        message: response?.message || 'پروفایل با موفقیت ویرایش شد'
+        statusCode: responseData.statusCode || 200,
+        user: user,
+        message: responseData.message || 'پروفایل با موفقیت به‌روزرسانی شد'
       };
-    } catch (err) {
-      const parsed = parseApiError(err);
-      throw parsed;
+    } catch (error) {
+      const statusCode =
+        error.response?.data?.statusCode ||
+        error.response?.status ||
+        500;
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'خطا در ویرایش پروفایل';
+
+      return {
+        success: false,
+        statusCode: statusCode,
+        message: message,
+        data: error.response?.data || null
+      };
     }
   },
 
   /**
-   * Change password
+   * ۵. تغییر کلمه عبور
    * PUT /api/auth/change-password
-   * Body: { currentPassword, newPassword }
+   * @param {Object} passwordData - { currentPassword, newPassword }
    */
   async changePassword(passwordData) {
     try {
-      const response = await client.put('/auth/change-password', passwordData);
+      const response = await axios.put(`${API_BASE_URL}/auth/change-password`, passwordData, {
+        headers: getAuthHeaders()
+      });
+
+      const responseData = response.data || {};
       return {
         success: true,
-        statusCode: response?.statusCode || 200,
-        message: response?.message || 'رمز عبور با موفقیت تغییر کرد'
+        statusCode: responseData.statusCode || 200,
+        message: responseData.message || 'رمز عبور با موفقیت تغییر کرد'
       };
-    } catch (err) {
-      const parsed = parseApiError(err);
-      throw parsed;
+    } catch (error) {
+      const statusCode =
+        error.response?.data?.statusCode ||
+        error.response?.status ||
+        500;
+
+      const message =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'خطا در تغییر رمز عبور';
+
+      return {
+        success: false,
+        statusCode: statusCode,
+        message: message,
+        data: error.response?.data || null
+      };
     }
   },
 
   /**
-   * Logout user
+   * ۶. خروج از حساب کاربری (Logout)
    */
   logout() {
-    localStorage.removeItem('tala_token');
     localStorage.removeItem('token');
+    localStorage.removeItem('tala_token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('tala_user');
+    localStorage.removeItem('userId');
     localStorage.removeItem('tala_user_id');
     localStorage.removeItem('tala_auth');
-    localStorage.removeItem('tala_user');
-    return { success: true, statusCode: 200, message: 'از حساب کاربری خارج شدید.' };
+    return {
+      success: true,
+      statusCode: 200,
+      message: 'از حساب کاربری خارج شدید'
+    };
   }
 };
 

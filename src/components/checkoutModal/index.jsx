@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
@@ -14,7 +14,12 @@ import {
   ArrowRight,
   ArrowLeft,
   ShoppingBag,
-  ShieldCheck
+  ShieldCheck,
+  Upload,
+  Image as ImageIcon,
+  Copy,
+  Check,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
@@ -32,6 +37,7 @@ function toEnglishDigits(str) {
 
 export function CheckoutModal() {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
   const {
     isCheckoutOpen,
     setIsCheckoutOpen,
@@ -41,12 +47,15 @@ export function CheckoutModal() {
     discountAmount,
     shippingFee,
     finalTotal,
-    addOrder,
+    createOrder,
     currentUser,
-    isAuthenticated
+    isAuthenticated,
+    showToast
   } = useApp();
 
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const [formData, setFormData] = useState({
     recipientName: '',
     phone: '',
@@ -55,7 +64,8 @@ export function CheckoutModal() {
     postalCode: '',
     fullAddress: '',
     deliveryNote: '',
-    paymentMethod: 'gateway'
+    paymentMethod: 'gateway',
+    receiptImage: ''
   });
   const [errors, setErrors] = useState({});
   const [createdOrder, setCreatedOrder] = useState(null);
@@ -93,6 +103,31 @@ export function CheckoutModal() {
         return next;
       });
     }
+  }
+
+  function handleReceiptUpload(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      showToast('لطفاً یک فایل تصویری (JPG, PNG) انتخاب کنید.', 'error');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('حجم تصویر نباید بیشتر از ۵ مگابایت باشد.', 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = function (uploadEvent) {
+      const base64 = uploadEvent.target?.result;
+      if (base64) {
+        handleInputChange('receiptImage', base64);
+        showToast('تصویر فیش واریزی با موفقیت بارگذاری شد.', 'success');
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   function validateStep1() {
@@ -145,17 +180,27 @@ export function CheckoutModal() {
     setStep(2);
   }
 
-  function handleNext() {
-    if (step === 3) {
-      const order = addOrder({
-        ...formData,
-        recipientName: isLoggedIn ? (currentUser.name || formData.recipientName) : formData.recipientName,
-        phone: isLoggedIn ? (currentUser.phone || formData.phone) : formData.phone
-      });
+  async function handleFinalPayment() {
+    setIsSubmitting(true);
+    try {
+      const orderPayload = {
+        recipientName: isLoggedIn ? (currentUser?.name || formData.recipientName) : formData.recipientName,
+        phone: isLoggedIn ? (currentUser?.phone || formData.phone) : formData.phone,
+        province: formData.province,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        fullAddress: formData.fullAddress,
+        paymentMethod: formData.paymentMethod,
+        paymentReceipt: formData.receiptImage
+      };
+
+      const order = await createOrder(orderPayload);
       setCreatedOrder(order);
       setStep(4);
-    } else {
-      setStep(step + 1);
+    } catch (err) {
+      console.error('Error placing order:', err);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -164,14 +209,22 @@ export function CheckoutModal() {
     setTimeout(function () {
       setStep(1);
       setCreatedOrder(null);
-      navigate('/profile');
+      navigate(isLoggedIn ? '/profile' : '/');
     }, 300);
+  }
+
+  function handleCopyOrderId(id) {
+    if (!id) return;
+    navigator.clipboard.writeText(id).then(function () {
+      setCopiedId(true);
+      setTimeout(function () { setCopiedId(false); }, 2000);
+    });
   }
 
   const stepLabels = ['آدرس و تحویل', 'بررسی اقلام', 'پرداخت نهایی'];
 
   return (
-    <aside className={styles.overlay} onClick={function () { if (step !== 4) setIsCheckoutOpen(false); }}>
+    <aside className={styles.overlay} onClick={function () { if (step !== 4 && !isSubmitting) setIsCheckoutOpen(false); }}>
       <dialog open className={styles.modal} onClick={function (e) { e.stopPropagation(); }}>
         <header className={styles.header}>
           <h3 className={styles.headerTitle}>
@@ -183,6 +236,7 @@ export function CheckoutModal() {
               onClick={function () { setIsCheckoutOpen(false); }}
               className={styles.closeBtn}
               aria-label="بستن پنجره خرید"
+              disabled={isSubmitting}
             >
               <X size={20} />
             </button>
@@ -240,22 +294,22 @@ export function CheckoutModal() {
                   </div>
                 </div>
               ) : (
-                /* Guest mode fallback if not logged in */
+                /* Guest mode with login redirect */
                 <>
                   <div className={styles.guestNotice}>
                     <div className={styles.guestNoticeText}>
-                      <strong>حساب کاربری دارید؟</strong>
-                      <span>برای خرید سریع‌تر و ثبت خودکار اطلاعات وارد شوید.</span>
+                      <strong>ورود برای ثبت و رهگیری سفارش</strong>
+                      <span>برای پیگیری آنلاین وضعیت مرسوله پستی، وارد حساب خود شوید.</span>
                     </div>
                     <button
                       type="button"
                       onClick={function () {
                         setIsCheckoutOpen(false);
-                        navigate('/profile');
+                        navigate('/auth');
                       }}
                       className={styles.loginRedirectBtn}
                     >
-                      ورود به حساب
+                      ورود / عضویت
                     </button>
                   </div>
 
@@ -503,7 +557,7 @@ export function CheckoutModal() {
             <div className={styles.form}>
               <h4 className={styles.sectionTitle}>
                 <CreditCard size={18} />
-                <span>انتخاب روش پرداخت:</span>
+                <span>انتخاب روش پرداخت و ثبت نهایی:</span>
               </h4>
 
               <div className={styles.paymentList}>
@@ -531,7 +585,7 @@ export function CheckoutModal() {
                   <Building2 size={22} className={styles.paymentMethodIcon} />
                   <div className={styles.paymentInfo}>
                     <strong>کارت به کارت حساب طلا رایس</strong>
-                    <small>ارسال تصویر فیش واریزی در پشتیبانی یا پیام‌رسان</small>
+                    <small>واریز به کارت و ثبت تصویر فیش پرداخت بانکی</small>
                   </div>
                   <input
                     type="radio"
@@ -541,6 +595,64 @@ export function CheckoutModal() {
                   />
                 </label>
               </div>
+
+              {/* Card to card bank details and receipt upload */}
+              {formData.paymentMethod === 'card' && (
+                <div className={styles.cardTransferBox}>
+                  <div className={styles.bankCardHeader}>
+                    <Building2 size={16} />
+                    <span>اطلاعات کارت جهت واریز وجه:</span>
+                  </div>
+                  <div className={styles.cardInfoRow}>
+                    <span>شماره کارت:</span>
+                    <strong dir="ltr" className={styles.cardDigits}>۶۰۳۷ - ۹۹۷۵ - ۱۲۳۴ - ۵۶۷۸</strong>
+                  </div>
+                  <div className={styles.cardInfoRow}>
+                    <span>بنام:</span>
+                    <strong>محمدرضا اسدی (طلا رایس) - بانک ملی</strong>
+                  </div>
+
+                  {/* Receipt Uploader */}
+                  <div className={styles.receiptUploadContainer}>
+                    <label className={styles.receiptUploadLabel}>
+                      <ImageIcon size={16} />
+                      <span>تصویر فیش واریزی (اختیاری):</span>
+                    </label>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleReceiptUpload}
+                      style={{ display: 'none' }}
+                    />
+                    
+                    {formData.receiptImage ? (
+                      <div className={styles.receiptPreviewBox}>
+                        <img src={formData.receiptImage} alt="رسید پرداخت" className={styles.receiptPreviewImg} />
+                        <div className={styles.receiptActions}>
+                          <span className={styles.receiptSuccessText}>فیش واریزی ضمیمه شد</span>
+                          <button
+                            type="button"
+                            onClick={function () { handleInputChange('receiptImage', ''); }}
+                            className={styles.removeReceiptBtn}
+                          >
+                            حذف تصویر
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={function () { fileInputRef.current?.click(); }}
+                        className={styles.uploadBtn}
+                      >
+                        <Upload size={16} />
+                        <span>انتخاب و بارگذاری تصویر فیش</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <div className={styles.totalsBox}>
                 <div className={styles.totalsRow}>
@@ -564,12 +676,32 @@ export function CheckoutModal() {
               </div>
 
               <div className={styles.btnRow}>
-                <button type="button" onClick={function () { setStep(2); }} className={styles.secondaryBtn}>
+                <button
+                  type="button"
+                  onClick={function () { setStep(2); }}
+                  className={styles.secondaryBtn}
+                  disabled={isSubmitting}
+                >
                   بازگشت
                 </button>
-                <button type="button" onClick={handleNext} className={styles.primaryBtn} id="checkout-pay-btn">
-                  <span>پرداخت و ثبت نهایی</span>
-                  <CheckCircle2 size={16} />
+                <button
+                  type="button"
+                  onClick={handleFinalPayment}
+                  className={styles.primaryBtn}
+                  id="checkout-pay-btn"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={16} className={styles.spinner} />
+                      <span>در حال ثبت سفارش...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>پرداخت و ثبت نهایی</span>
+                      <CheckCircle2 size={16} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -578,16 +710,58 @@ export function CheckoutModal() {
           {step === 4 && createdOrder && (
             <div className={styles.successBox}>
               <CheckCircle2 size={56} className={styles.successIcon} />
-              <h3>سفارش شما با موفقیت ثبت گردید!</h3>
-              <p>کیسه‌های برنج کامفیروزی در حال آماده‌سازی و بسته‌بندی می‌باشند.</p>
+              <h3>سفارش شما با موفقیت در سیستم ثبت گردید!</h3>
+              <p>کیسه‌های برنج معطر کامفیروزی در حال آماده‌سازی و ارسال به نشانی شما می‌باشند.</p>
 
               <div className={styles.orderSummaryCard}>
-                <div><span>شماره سفارش:</span><strong>{createdOrder.id}</strong></div>
-                <div><span>کد رهگیری پستی:</span><strong dir="ltr">{createdOrder.trackingCode}</strong></div>
-                <div><span>مبلغ پرداختی:</span><strong>{((createdOrder.finalAmount ?? createdOrder.totalAmount) ?? 0).toLocaleString('fa-IR')} تومان</strong></div>
-                <div><span>تحویل‌گیرنده:</span><span>{createdOrder.recipientName || formData.recipientName}</span></div>
-                <div><span>کد پستی:</span><span dir="ltr">{createdOrder.postalCode || formData.postalCode}</span></div>
-                <div><span>نشانی:</span><span>{createdOrder.fullAddress || formData.fullAddress}</span></div>
+                <div className={styles.summaryItem}>
+                  <span>شناسه سفارش:</span>
+                  <div className={styles.orderIdBox}>
+                    <strong dir="ltr">{createdOrder.id || createdOrder._id}</strong>
+                    <button
+                      type="button"
+                      onClick={function () { handleCopyOrderId(createdOrder.id || createdOrder._id); }}
+                      className={styles.copyBtn}
+                      title="کپی شناسه"
+                    >
+                      {copiedId ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                    </button>
+                  </div>
+                </div>
+
+                {createdOrder.postTrackingCode ? (
+                  <div className={styles.summaryItem}>
+                    <span>کد رهگیری پستی:</span>
+                    <strong dir="ltr" style={{ color: '#0d5336', letterSpacing: '1px' }}>
+                      {createdOrder.postTrackingCode}
+                    </strong>
+                  </div>
+                ) : null}
+
+                <div className={styles.summaryItem}>
+                  <span>وضعیت سفارش:</span>
+                  <span className={styles.orderStateBadge}>در انتظار بررسی و ارسال</span>
+                </div>
+
+                <div className={styles.summaryItem}>
+                  <span>مبلغ پرداختی:</span>
+                  <strong>{((createdOrder.totalPrice ?? createdOrder.finalAmount) ?? 0).toLocaleString('fa-IR')} تومان</strong>
+                </div>
+
+                <div className={styles.summaryItem}>
+                  <span>تحویل‌گیرنده:</span>
+                  <span>{createdOrder.name || formData.recipientName}</span>
+                </div>
+
+                <div className={styles.summaryItem}>
+                  <span>کد پستی:</span>
+                  <span dir="ltr">{createdOrder.postalCode || formData.postalCode}</span>
+                </div>
+
+                <div className={styles.summaryItem}>
+                  <span>نشانی پستی:</span>
+                  <span>{createdOrder.address || formData.fullAddress}</span>
+                </div>
               </div>
 
               <div className={styles.btnRow}>
@@ -606,7 +780,7 @@ export function CheckoutModal() {
                   بازگشت به فروشگاه
                 </button>
                 <button onClick={handleFinish} className={styles.primaryBtn}>
-                  <span>مشاهده در سفارشات</span>
+                  <span>مشاهده در پنل سفارش‌ها</span>
                   <ArrowLeft size={16} />
                 </button>
               </div>
@@ -618,3 +792,4 @@ export function CheckoutModal() {
   );
 }
 
+export default CheckoutModal;

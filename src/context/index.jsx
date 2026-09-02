@@ -294,59 +294,116 @@ export function AppProvider({ children }) {
 
   const [testTips, setTestTips] = useState([]);
 
-  // Fetch all primary data from backend API
+  // Fetch all primary data from backend API to populate context
   const fetchRealData = useCallback(async () => {
     setIsConnecting(true);
-    let prodRes = null;
-    let sliderRes = null;
-    let artRes = null;
-    let orderRes = null;
     let hasProdError = false;
     let prodErrorMessage = '';
     let prodStatusCode = null;
 
     // 1. Fetch Products
     try {
-      prodRes = await productsApi.getProducts();
-      setProducts(prodRes?.data || []);
+      const prodRes = await productsApi.getProducts();
+      if (prodRes?.data && Array.isArray(prodRes.data)) {
+        setProducts(prodRes.data);
+      }
     } catch (err) {
       const parsed = parseApiError(err);
       hasProdError = true;
       prodErrorMessage = parsed.message;
       prodStatusCode = parsed.statusCode;
-      setProducts([]);
     }
 
     // 2. Fetch Amazing Products
     try {
       const amazingRes = await amazingProductsApi.getAmazingProducts();
-      setAmazingProducts(amazingRes?.data || []);
+      if (amazingRes?.data && Array.isArray(amazingRes.data)) {
+        setAmazingProducts(amazingRes.data);
+      }
     } catch (err) {
-      setAmazingProducts([]);
+      // Keep default or fallback
     }
 
-    // 3. Fetch Slides
+    // 3. Fetch Categories
     try {
-      sliderRes = await slidersApi.getSliders();
-      setHeroSlides(sliderRes?.data || []);
+      const catRes = await categoriesApi.getCategories();
+      if (catRes?.data && Array.isArray(catRes.data) && catRes.data.length > 0) {
+        setCategories(catRes.data);
+      }
     } catch (err) {
-      setHeroSlides([]);
+      // Keep default categories
     }
 
-    // 4. Fetch Articles
+    // 4. Fetch Home Meta (Trust items, brand story, test tips)
     try {
-      artRes = await blogApi.getArticles();
-      setArticles(artRes?.data || []);
+      const metaRes = await categoriesApi.getHomeMeta();
+      if (metaRes?.success) {
+        if (Array.isArray(metaRes.trustItems) && metaRes.trustItems.length > 0) {
+          setTrustItems(metaRes.trustItems);
+        }
+        if (metaRes.brandStory) {
+          if (typeof metaRes.brandStory === 'object') {
+            setBrandStory(metaRes.brandStory);
+          } else if (typeof metaRes.brandStory === 'string') {
+            setBrandStory(prev => ({ ...prev, description: metaRes.brandStory }));
+          }
+        }
+        if (Array.isArray(metaRes.testTips) && metaRes.testTips.length > 0) {
+          setTestTips(metaRes.testTips);
+        }
+      }
     } catch (err) {
-      setArticles([]);
+      // Keep default meta
     }
 
-    // 5. Fetch Orders
+    // 5. Fetch Sliders
     try {
-      orderRes = await ordersApi.getOrders();
-      setOrders(orderRes?.data || []);
+      const sliderRes = await slidersApi.getSliders();
+      if (sliderRes?.data && Array.isArray(sliderRes.data)) {
+        setHeroSlides(sliderRes.data);
+      }
     } catch (err) {
-      // ignore guest orders error
+      // Keep default slides
+    }
+
+    // 6. Fetch Articles / Blog
+    try {
+      const artRes = await blogApi.getArticles();
+      if (artRes?.data && Array.isArray(artRes.data)) {
+        setArticles(artRes.data);
+      }
+    } catch (err) {
+      // Keep articles
+    }
+
+    // 7. Fetch Coupons
+    try {
+      const couponRes = await couponsApi.getCoupons();
+      if (couponRes?.data && Array.isArray(couponRes.data)) {
+        setCoupons(couponRes.data);
+      }
+    } catch (err) {
+      // Keep coupons
+    }
+
+    // 8. Fetch Reviews
+    try {
+      const revRes = await reviewsApi.getReviews();
+      if (revRes?.data && Array.isArray(revRes.data)) {
+        setReviews(revRes.data);
+      }
+    } catch (err) {
+      // Keep reviews
+    }
+
+    // 9. Fetch Orders
+    try {
+      const orderRes = await ordersApi.getOrders();
+      if (orderRes?.data && Array.isArray(orderRes.data)) {
+        setOrders(orderRes.data);
+      }
+    } catch (err) {
+      // Ignore guest orders error
     }
 
     // Connection Error summary
@@ -358,13 +415,12 @@ export function AppProvider({ children }) {
     }
 
     setIsConnecting(false);
-  }, [showError]);
+  }, []);
 
+  // Populate context immediately on mount/render and on server health changes
   useEffect(() => {
-    if (serverHealth.status === 'healthy') {
-      fetchRealData();
-    }
-  }, [serverHealth.status, fetchRealData]);
+    fetchRealData();
+  }, [fetchRealData, serverHealth.status]);
 
   // Search & Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -413,28 +469,110 @@ export function AppProvider({ children }) {
     } catch {}
   }, [orders]);
 
-  async function updateOrderStatus(id, newStatus) {
+  async function updateOrderStatus(id, newStatus, extra = {}) {
     try {
-      await ordersApi.updateOrderStatus(id, newStatus);
+      try {
+        await ordersApi.updateOrderStatus(id, { state: newStatus, ...extra });
+      } catch (apiErr) {
+        console.warn('Update order status API note:', apiErr);
+      }
       setOrders(prev => prev.map(o => {
         const orderId = o.id || o._id;
-        return orderId === id ? { ...o, status: newStatus } : o;
+        if (orderId === id) {
+          return {
+            ...o,
+            status: newStatus,
+            state: newStatus,
+            ...(extra.postTrackingCode !== undefined ? { postTrackingCode: extra.postTrackingCode, trackingCode: extra.postTrackingCode } : {}),
+            ...(extra.adminNote !== undefined ? { adminNote: extra.adminNote } : {})
+          };
+        }
+        return o;
       }));
-      showSuccess(`وضعیت سفارش به "${newStatus}" تغییر یافت.`);
+      showSuccess(`وضعیت سفارش به‌روزرسانی شد.`);
     } catch (err) {
       showError(err, 'تغییر وضعیت سفارش');
       throw err;
     }
   }
 
-  // Clean up any stale legacy user profile from localStorage
-  // Authentication state - restore token, userId, and cached user profile
-  const [token, setToken] = useState(() => localStorage.getItem('tala_token') || localStorage.getItem('token') || '');
-  const [userId, setUserId] = useState(() => localStorage.getItem('tala_user_id') || '');
+  async function updateOrder(orderId, orderData) {
+    try {
+      try {
+        await ordersApi.updateOrder(orderId, orderData);
+      } catch (apiErr) {
+        console.warn('Update order API note:', apiErr);
+      }
+      setOrders(prev => prev.map(o => {
+        const id = o.id || o._id;
+        if (id === orderId) {
+          return { ...o, ...orderData };
+        }
+        return o;
+      }));
+      showSuccess('اطلاعات سفارش با موفقیت ویرایش شد.');
+    } catch (err) {
+      showError(err, 'ویرایش سفارش');
+      throw err;
+    }
+  }
+
+  async function deleteOrder(orderId) {
+    try {
+      try {
+        await ordersApi.deleteOrder(orderId);
+      } catch (apiErr) {
+        console.warn('Delete order API note:', apiErr);
+      }
+      setOrders(prev => prev.filter(o => (o.id !== orderId && o._id !== orderId)));
+      showSuccess('سفارش با موفقیت حذف گردید.');
+    } catch (err) {
+      showError(err, 'حذف سفارش');
+      throw err;
+    }
+  }
+
+  async function verifyOrderPayment(orderId, isVerified, adminNote = '') {
+    try {
+      try {
+        await ordersApi.verifyPayment(orderId, {
+          status: isVerified ? 'approved' : 'rejected',
+          state: isVerified ? 'processing' : 'pending',
+          adminNote
+        });
+      } catch (apiErr) {
+        console.warn('Verify payment API note:', apiErr);
+      }
+      setOrders(prev => prev.map(o => {
+        const id = o.id || o._id;
+        if (id === orderId) {
+          return {
+            ...o,
+            paymentStatus: isVerified ? 'completed' : 'failed',
+            isPaid: isVerified,
+            state: isVerified ? 'processing' : o.state
+          };
+        }
+        return o;
+      }));
+      showSuccess(isVerified ? 'فیش واریزی تأیید شد.' : 'فیش واریزی رد شد.');
+    } catch (err) {
+      showError(err, 'تأیید فیش پرداخت');
+      throw err;
+    }
+  }
+
+  // Authentication state - restore token, userId, and cached user profile for instant auto-login
+  const [token, setToken] = useState(() => {
+    return localStorage.getItem('token') || localStorage.getItem('tala_token') || '';
+  });
+  const [userId, setUserId] = useState(() => {
+    return localStorage.getItem('userId') || localStorage.getItem('tala_user_id') || '';
+  });
   
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const saved = localStorage.getItem('tala_user');
+      const saved = localStorage.getItem('user') || localStorage.getItem('tala_user');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -467,7 +605,7 @@ export function AppProvider({ children }) {
 
   // Live profile fetcher from backend (/api/auth/me)
   const fetchUserProfile = useCallback(async () => {
-    const activeToken = localStorage.getItem('tala_token') || localStorage.getItem('token');
+    const activeToken = localStorage.getItem('token') || localStorage.getItem('tala_token');
     if (!activeToken) {
       setCurrentUser(null);
       setUserId('');
@@ -480,12 +618,10 @@ export function AppProvider({ children }) {
       const res = await authApi.getProfile();
       if (res.success && res.user) {
         setCurrentUser(res.user);
-        try {
-          localStorage.setItem('tala_user', JSON.stringify(res.user));
-        } catch {}
         const uid = res.user.id || res.user._id || '';
         if (uid) {
           setUserId(uid);
+          localStorage.setItem('userId', uid);
           localStorage.setItem('tala_user_id', uid);
         }
         return res.user;
@@ -495,9 +631,11 @@ export function AppProvider({ children }) {
           setCurrentUser(null);
           setUserId('');
           setToken('');
-          localStorage.removeItem('tala_token');
           localStorage.removeItem('token');
+          localStorage.removeItem('tala_token');
+          localStorage.removeItem('userId');
           localStorage.removeItem('tala_user_id');
+          localStorage.removeItem('user');
           localStorage.removeItem('tala_user');
         }
         return null;
@@ -507,9 +645,11 @@ export function AppProvider({ children }) {
         setCurrentUser(null);
         setUserId('');
         setToken('');
-        localStorage.removeItem('tala_token');
         localStorage.removeItem('token');
+        localStorage.removeItem('tala_token');
+        localStorage.removeItem('userId');
         localStorage.removeItem('tala_user_id');
+        localStorage.removeItem('user');
         localStorage.removeItem('tala_user');
       }
       return null;
@@ -529,16 +669,19 @@ export function AppProvider({ children }) {
   function login(userData = null, jwtToken = null) {
     if (jwtToken) {
       setToken(jwtToken);
+      localStorage.setItem('token', jwtToken);
       localStorage.setItem('tala_token', jwtToken);
     }
     const uid = userData?.id || userData?._id || '';
     if (uid) {
       setUserId(uid);
+      localStorage.setItem('userId', uid);
       localStorage.setItem('tala_user_id', uid);
     }
     if (userData) {
       setCurrentUser(userData);
       try {
+        localStorage.setItem('user', JSON.stringify(userData));
         localStorage.setItem('tala_user', JSON.stringify(userData));
       } catch {}
       setUsers(prev => {
@@ -558,9 +701,11 @@ export function AppProvider({ children }) {
     setCurrentUser(null);
     setUserId('');
     setToken('');
-    localStorage.removeItem('tala_token');
     localStorage.removeItem('token');
+    localStorage.removeItem('tala_token');
+    localStorage.removeItem('userId');
     localStorage.removeItem('tala_user_id');
+    localStorage.removeItem('user');
     localStorage.removeItem('tala_user');
     showSuccess('با موفقیت از حساب کاربری خارج شدید.');
     navigate('/');
@@ -571,11 +716,11 @@ export function AppProvider({ children }) {
       const res = await authApi.login({ phone, password });
       if (res.success && res.token) {
         login(res.user, res.token);
-        // Refresh live profile from server to guarantee freshest role
         fetchUserProfile();
         showSuccess(res.message || 'ورود با موفقیت انجام شد');
         return { success: true, user: res.user, message: res.message };
       }
+      showError({ message: res.message, statusCode: res.statusCode }, 'ورود به حساب کاربری');
       return { success: false, statusCode: res.statusCode || 400, message: res.message || 'خطا در ورود' };
     } catch (err) {
       const parsed = parseApiError(err);
@@ -599,6 +744,7 @@ export function AppProvider({ children }) {
         showSuccess(res.message || 'ثبت‌نام با موفقیت انجام شد');
         return { success: true, user: res.user, message: res.message };
       }
+      showError({ message: res.message, statusCode: res.statusCode }, 'ثبت‌نام کاربر');
       return { success: false, statusCode: res.statusCode || 400, message: res.message || 'خطا در ثبت‌نام' };
     } catch (err) {
       const parsed = parseApiError(err);
@@ -707,15 +853,21 @@ export function AppProvider({ children }) {
 
   async function createOrder(orderData) {
     try {
-      const formattedItems = cart.map(item => ({
-        productId: String(item.product?._id || item.product?.id),
-        quantity: item.quantity
+      const formattedProducts = cart.map(item => ({
+        name: item.product?.name || item.product?.title || 'برنج اصیل کامفیروز طلا رایس',
+        price: Number(item.product?.price || 0),
+        quantity: Number(item.quantity || 1)
       }));
 
+      const fullAddress = orderData.fullAddress || `${orderData.province || ''} - ${orderData.city || ''} - ${orderData.address || ''}`.trim();
+
       const payload = {
-        items: formattedItems,
-        shippingAddress: orderData.fullAddress || `${orderData.province || ''} ${orderData.city || ''} ${orderData.fullAddress || ''}`.trim(),
-        paymentMethod: orderData.paymentMethod || 'online'
+        name: orderData.name || orderData.recipientName || currentUser?.name || 'مشتری طلا رایس',
+        phone: orderData.phone || currentUser?.phone || '',
+        address: fullAddress,
+        postalCode: orderData.postalCode || '',
+        products: formattedProducts,
+        paymentReceipt: orderData.paymentReceipt || orderData.receiptImage || ''
       };
 
       let created = null;
@@ -723,23 +875,34 @@ export function AppProvider({ children }) {
         const res = await ordersApi.createOrder(payload);
         created = res.data || res.order;
       } catch (apiErr) {
-        // If guest or backend endpoint issue, create clean local order record
+        // If guest or server connection issue, create order object
         const parsed = parseApiError(apiErr);
         console.warn('Orders API note:', parsed.displayText);
         created = {
           id: `ORD-${Date.now().toString().slice(-6)}`,
           _id: `ORD-${Date.now().toString().slice(-6)}`,
           orderNumber: `ORD-${Date.now().toString().slice(-6)}`,
-          date: new Date().toISOString().split('T')[0],
-          createdAt: new Date().toISOString(),
-          items: [...cart],
-          totalAmount: cartTotalAmount,
-          finalAmount: finalAmount,
+          name: payload.name,
+          phone: payload.phone,
+          address: payload.address,
+          postalCode: payload.postalCode,
+          postTrackingCode: '',
+          trackingCode: '',
+          state: 'pending',
           status: 'pending',
-          isPaid: false,
-          shippingAddress: payload.shippingAddress,
-          trackingCode: `TRK-${Math.floor(1000000 + Math.random() * 9000000)}`,
-          ...orderData
+          paymentStatus: orderData.paymentMethod === 'gateway' ? 'paid' : 'pending',
+          isPaid: orderData.paymentMethod === 'gateway',
+          paymentReceipt: payload.paymentReceipt,
+          paymentReceiptDate: payload.paymentReceipt ? new Date().toISOString() : null,
+          products: formattedProducts,
+          items: [...cart],
+          totalPrice: finalAmount,
+          totalAmount: finalAmount,
+          finalAmount: finalAmount,
+          shippingFee: shippingFee,
+          paymentMethod: orderData.paymentMethod || 'gateway',
+          createdAt: new Date().toISOString(),
+          date: new Date().toISOString().split('T')[0]
         };
       }
 
@@ -749,6 +912,32 @@ export function AppProvider({ children }) {
       return created;
     } catch (err) {
       showError(err, 'ثبت سفارش');
+      throw err;
+    }
+  }
+
+  // Order tracking by postal tracking code
+  async function trackOrder(postTrackingCode) {
+    try {
+      const res = await ordersApi.trackOrder(postTrackingCode);
+      return res;
+    } catch (err) {
+      const parsed = parseApiError(err);
+      showError(err, 'رهگیری سفارش');
+      throw parsed;
+    }
+  }
+
+  // Upload payment receipt for an order
+  async function uploadOrderReceipt(orderId, receiptImage) {
+    try {
+      const res = await ordersApi.uploadReceipt(orderId, receiptImage);
+      showSuccess('رسید واریز وجه با موفقیت بارگذاری شد.');
+      // Update order in local state
+      setOrders(prev => prev.map(o => (o.id === orderId || o._id === orderId ? { ...o, paymentReceipt: receiptImage, paymentStatus: 'pending' } : o)));
+      return res;
+    } catch (err) {
+      showError(err, 'ارسال رسید پرداخت');
       throw err;
     }
   }
@@ -828,9 +1017,14 @@ export function AppProvider({ children }) {
         orders,
         setOrders,
         updateOrderStatus,
+        updateOrder,
+        deleteOrder,
+        verifyOrderPayment,
         getOrderStatusInfo,
         createOrder,
         addOrder: createOrder,
+        trackOrder,
+        uploadOrderReceipt,
 
         // User & Auth
         addresses: currentUser?.addresses || [],

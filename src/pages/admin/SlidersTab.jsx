@@ -1,13 +1,16 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context';
-import { Plus, Trash2, Image as ImageIcon, ExternalLink, X, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit3, Image as ImageIcon, ExternalLink, X, Loader2, Sparkles } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 import styles from './style.module.css';
 
 export function SlidersTab() {
   const { heroSlides: sliders, setHeroSlides: setSliders, slidersApi, showError, showSuccess } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSlide, setEditingSlide] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const initialForm = {
     title: '',
@@ -19,6 +22,7 @@ export function SlidersTab() {
   };
 
   const [formData, setFormData] = useState(initialForm);
+  const [formErrors, setFormErrors] = useState({});
 
   const sampleImages = [
     { label: 'شالیزار و برداشت', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=1200' },
@@ -26,12 +30,58 @@ export function SlidersTab() {
     { label: 'کیسه نخی و پخت', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=1200' },
   ];
 
+  function handleFieldChange(field, value) {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
+  function openAddModal() {
+    setEditingSlide(null);
+    setFormData(initialForm);
+    setFormErrors({});
+    setIsModalOpen(true);
+  }
+
+  function openEditModal(slide) {
+    setEditingSlide(slide);
+    setFormData({
+      title: slide.title || '',
+      subtitle: slide.subtitle || 'پیشنهاد طلا رایس',
+      description: slide.description || '',
+      ctaText: slide.ctaText || 'مشاهده محصولات',
+      link: slide.link || '/products',
+      image: slide.image || slide.imageUrl || ''
+    });
+    setFormErrors({});
+    setIsModalOpen(true);
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
+
+    const title = (formData.title || '').trim();
+    const newErrors = {};
+
+    if (!title) {
+      newErrors.title = 'لطفاً عنوان اصلی بنر اسلایدر را وارد فرمایید.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      return;
+    }
+
     setIsSubmitting(true);
+    setFormErrors({});
 
     const payload = {
-      title: formData.title,
+      title: title,
       subtitle: formData.subtitle,
       description: formData.description,
       ctaText: formData.ctaText || 'مشاهده محصولات',
@@ -40,30 +90,42 @@ export function SlidersTab() {
     };
 
     try {
-      const res = await slidersApi.addSlider(payload);
-      const created = res.data || {
-        _id: `slide_${Date.now()}`,
-        id: `slide_${Date.now()}`,
-        ...payload
-      };
-
-      setSliders([created, ...sliders]);
-      showSuccess('اسلایدر جدید با موفقیت ذخیره گردید.');
+      if (editingSlide) {
+        const slideId = editingSlide._id || editingSlide.id;
+        if (slidersApi?.updateSlider) {
+          const res = await slidersApi.updateSlider(slideId, payload);
+          const updated = res.data || { ...editingSlide, ...payload };
+          setSliders(prev => prev.map(s => (s._id === slideId || s.id === slideId ? { ...s, ...updated } : s)));
+        } else {
+          setSliders(prev => prev.map(s => (s._id === slideId || s.id === slideId ? { ...s, ...payload } : s)));
+        }
+        showSuccess('اسلایدر با موفقیت ویرایش و ذخیره گردید.');
+      } else {
+        const res = await slidersApi.addSlider(payload);
+        const created = res.data || {
+          _id: `slide_${Date.now()}`,
+          id: `slide_${Date.now()}`,
+          ...payload
+        };
+        setSliders(prev => [created, ...prev]);
+        showSuccess('اسلایدر جدید با موفقیت ذخیره و در صفحه اصلی فعال گردید.');
+      }
       setIsModalOpen(false);
       setFormData(initialForm);
+      setEditingSlide(null);
     } catch (err) {
-      showError(err, 'افزودن اسلایدر');
+      showError(err, editingSlide ? 'ویرایش اسلایدر' : 'افزودن اسلایدر');
     } finally {
       setIsSubmitting(false);
     }
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('آیا از حذف این بنر نمایشی اطمینان دارید؟')) return;
     try {
       await slidersApi.deleteSlider(id);
-      setSliders(sliders.filter(s => s._id !== id && s.id !== id));
+      setSliders(prev => prev.filter(s => s._id !== id && s.id !== id));
       showSuccess('اسلایدر با موفقیت حذف گردید.');
+      setDeleteConfirmId(null);
     } catch (err) {
       showError(err, 'حذف اسلایدر');
     }
@@ -78,10 +140,10 @@ export function SlidersTab() {
             <span>مدیریت ویترین و اسلایدرها</span>
           </h1>
           <p className={styles.tabSubtitle}>
-            تنظیم بنرهای تبلیغاتی، جشنواره‌های تخفیف و اسلایدر صفحه نخست طلا رایس
+            افزودن، ویرایش، حذف بنرهای تبلیغاتی و جشنواره‌های تخفیف صفحه نخست
           </p>
         </div>
-        <button onClick={function () { setIsModalOpen(true); }} className={styles.addBtn}>
+        <button onClick={openAddModal} className={styles.addBtn}>
           <Plus size={19} strokeWidth={2.5} />
           <span>افزودن بنر جدید</span>
         </button>
@@ -112,7 +174,18 @@ export function SlidersTab() {
                   />
                   <div className={styles.cardOverlay}>
                     <button
-                      onClick={function () { handleDelete(id); }}
+                      type="button"
+                      onClick={() => openEditModal(s)}
+                      className={styles.overlayActionBtn}
+                      style={{ background: '#042a1b', color: '#fef08a' }}
+                      title="ویرایش اسلایدر"
+                      aria-label="ویرایش اسلایدر"
+                    >
+                      <Edit3 size={16} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirmId(id)}
                       className={styles.overlayActionBtn}
                       title="حذف بنر"
                       aria-label="حذف بنر"
@@ -144,23 +217,34 @@ export function SlidersTab() {
                     <span style={{ fontSize: '0.75rem', color: '#047857', fontWeight: 800 }}>
                       دکمه: {s.ctaText || 'مشاهده'}
                     </span>
-                    <a
-                      href={s.link || '/products'}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        fontSize: '0.75rem',
-                        color: '#64748b',
-                        fontWeight: 700,
-                        textDecoration: 'none'
-                      }}
-                    >
-                      <span>لینک مقصد</span>
-                      <ExternalLink size={13} />
-                    </a>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(s)}
+                        className={styles.editBtn}
+                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem' }}
+                      >
+                        <Edit3 size={13} />
+                        <span>ویرایش</span>
+                      </button>
+                      <a
+                        href={s.link || '/products'}
+                        target="_blank"
+                        rel="noreferrer"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          fontSize: '0.75rem',
+                          color: '#64748b',
+                          fontWeight: 700,
+                          textDecoration: 'none'
+                        }}
+                      >
+                        <span>لینک مقصد</span>
+                        <ExternalLink size={13} />
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -169,18 +253,32 @@ export function SlidersTab() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteConfirmId)}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={() => handleDelete(deleteConfirmId)}
+        title="تأیید حذف بنر اسلایدر"
+        itemType="بنر تبلیغاتی"
+        itemName={sliders.find(s => (s.id || s._id) === deleteConfirmId)?.title || 'اسلایدر صفحه نخست'}
+        message="آیا از حذف این بنر نمایشی از صفحه نخست فروشگاه اطمینان دارید؟ این عمل بلافاصله در سایت اعمال خواهد شد."
+        confirmText="حذف قطعی بنر"
+      />
+
+      {/* Add / Edit Modal */}
       {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={function () { setIsModalOpen(false); }}>
-          <div className={styles.modalBox} onClick={function (e) { e.stopPropagation(); }}>
+        <div className={styles.modalOverlay} onClick={() => setIsModalOpen(false)}>
+          <div className={styles.modalBox} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div>
-                <h3 className={styles.modalTitle}>افزودن بنر جدید به ویترین</h3>
-                <p className={styles.modalDesc}>مشخصات بنر و تصویر مورد نظر را وارد کنید.</p>
+                <h3 className={styles.modalTitle}>
+                  {editingSlide ? 'ویرایش مشخصات بنر اسلایدر' : 'افزودن بنر جدید به ویترین'}
+                </h3>
+                <p className={styles.modalDesc}>مشخصات بنر، عنوان و تصویر مورد نظر را وارد کنید.</p>
               </div>
               <button
                 type="button"
-                onClick={function () { setIsModalOpen(false); }}
+                onClick={() => setIsModalOpen(false)}
                 className={styles.modalCloseBtn}
                 aria-label="بستن"
               >
@@ -189,18 +287,23 @@ export function SlidersTab() {
             </div>
 
             <div className={styles.modalContent}>
-              <form onSubmit={handleSubmit} className={styles.form}>
+              <form onSubmit={handleSubmit} noValidate className={styles.form}>
                 <div className={styles.formGrid}>
                   <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>عنوان اصلی بنر</label>
+                    <label className={styles.label}>عنوان اصلی بنر *</label>
                     <input
-                      required
                       type="text"
                       placeholder="مثال: جشنواره پاییزه برنج اصل کامفیروز"
                       value={formData.title}
-                      onChange={function (e) { setFormData({ ...formData, title: e.target.value }); }}
-                      className={styles.input}
+                      onChange={e => handleFieldChange('title', e.target.value)}
+                      className={`${styles.input} ${formErrors.title ? styles.inputError : ''}`}
+                      style={formErrors.title ? { borderColor: '#ef4444', backgroundColor: '#fef2f2' } : {}}
                     />
+                    {formErrors.title && (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                        {formErrors.title}
+                      </span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
@@ -209,7 +312,7 @@ export function SlidersTab() {
                       type="text"
                       placeholder="مثال: فروش ویژه فصل جدید"
                       value={formData.subtitle}
-                      onChange={function (e) { setFormData({ ...formData, subtitle: e.target.value }); }}
+                      onChange={e => handleFieldChange('subtitle', e.target.value)}
                       className={styles.input}
                     />
                   </div>
@@ -220,7 +323,7 @@ export function SlidersTab() {
                       type="text"
                       placeholder="مثال: خرید کیسه ۱۰ کیلویی"
                       value={formData.ctaText}
-                      onChange={function (e) { setFormData({ ...formData, ctaText: e.target.value }); }}
+                      onChange={e => handleFieldChange('ctaText', e.target.value)}
                       className={styles.input}
                     />
                   </div>
@@ -231,7 +334,7 @@ export function SlidersTab() {
                       type="text"
                       placeholder="مثال: تضمین پخت عالی، عطر نوستالژیک و ارسال سریع در گونی نخی"
                       value={formData.description}
-                      onChange={function (e) { setFormData({ ...formData, description: e.target.value }); }}
+                      onChange={e => handleFieldChange('description', e.target.value)}
                       className={styles.input}
                     />
                   </div>
@@ -240,7 +343,7 @@ export function SlidersTab() {
                     <ImageUploader
                       label="تصویر بنر اسلایدر *"
                       value={formData.image}
-                      onChange={function (url) { setFormData({ ...formData, image: url }); }}
+                      onChange={url => handleFieldChange('image', url)}
                       sampleImages={sampleImages}
                     />
                   </div>
@@ -251,7 +354,7 @@ export function SlidersTab() {
                       type="text"
                       placeholder="/products"
                       value={formData.link}
-                      onChange={function (e) { setFormData({ ...formData, link: e.target.value }); }}
+                      onChange={e => handleFieldChange('link', e.target.value)}
                       dir="ltr"
                       className={styles.input}
                     />
@@ -261,7 +364,7 @@ export function SlidersTab() {
                 <div className={styles.modalActions}>
                   <button
                     type="button"
-                    onClick={function () { setIsModalOpen(false); }}
+                    onClick={() => setIsModalOpen(false)}
                     className={styles.cancelBtn}
                     disabled={isSubmitting}
                   >
@@ -271,10 +374,10 @@ export function SlidersTab() {
                     {isSubmitting ? (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         <Loader2 size={16} className="animate-spin" />
-                        <span>در حال ارسال...</span>
+                        <span>در حال ذخیره...</span>
                       </span>
                     ) : (
-                      <span>افزودن و فعال‌سازی بنر</span>
+                      <span>{editingSlide ? 'ذخیره تغییرات بنر' : 'افزودن و فعال‌سازی بنر'}</span>
                     )}
                   </button>
                 </div>

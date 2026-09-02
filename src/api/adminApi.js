@@ -108,6 +108,103 @@ export const adminApi = {
   },
 
   /**
+   * Create a new user (Admin)
+   * POST /api/admin/users
+   */
+  async createUser(userData) {
+    try {
+      const response = await client.post('/admin/users', userData);
+      const rawUser = response?.data?.user || response?.data || userData;
+      return {
+        success: true,
+        statusCode: response?.statusCode || 201,
+        data: parseAdminUser(rawUser),
+        message: response?.message || 'کاربر جدید با موفقیت ایجاد شد'
+      };
+    } catch (err) {
+      const parsed = parseApiError(err);
+      throw parsed;
+    }
+  },
+
+  /**
+   * Update user details (Admin)
+   * PUT /api/admin/users/:id
+   */
+  async updateUser(userId, userData) {
+    try {
+      const response = await client.put(`/admin/users/${userId}`, userData);
+      const rawUser = response?.data?.user || response?.data || { id: userId, ...userData };
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        data: parseAdminUser(rawUser),
+        message: response?.message || 'اطلاعات کاربر با موفقیت به‌روزرسانی شد'
+      };
+    } catch (err) {
+      const parsed = parseApiError(err);
+      throw parsed;
+    }
+  },
+
+  /**
+   * Delete user (Admin)
+   * DELETE /api/admin/users/:id
+   */
+  async deleteUser(userId) {
+    try {
+      const response = await client.delete(`/admin/users/${userId}`);
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        data: response?.data,
+        message: response?.message || 'کاربر با موفقیت حذف گردید'
+      };
+    } catch (err) {
+      const parsed = parseApiError(err);
+      throw parsed;
+    }
+  },
+
+  /**
+   * Update full order details (Admin)
+   * PUT /api/admin/orders/:id
+   */
+  async updateOrder(orderId, orderData) {
+    try {
+      const response = await client.put(`/admin/orders/${orderId}`, orderData);
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        data: response?.data,
+        message: response?.message || 'سفارش با موفقیت به‌روزرسانی شد'
+      };
+    } catch (err) {
+      const parsed = parseApiError(err);
+      throw parsed;
+    }
+  },
+
+  /**
+   * Delete order (Admin)
+   * DELETE /api/admin/orders/:id
+   */
+  async deleteOrder(orderId) {
+    try {
+      const response = await client.delete(`/admin/orders/${orderId}`);
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        data: response?.data,
+        message: response?.message || 'سفارش با موفقیت حذف شد'
+      };
+    } catch (err) {
+      const parsed = parseApiError(err);
+      throw parsed;
+    }
+  },
+
+  /**
    * Get all orders in system
    * GET /api/admin/orders
    */

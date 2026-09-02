@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Wrench, FileWarning, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { User, Phone, Lock, Eye, EyeOff, AlertCircle, Wrench, FileWarning, X } from 'lucide-react';
 import { useApp } from '../../context';
 import { SEO } from '../../components/SEO';
 import { Logo } from '../../components/logo';
@@ -8,10 +8,19 @@ import styles from './style.module.css';
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const { loginUser, registerUser, serverHealth, checkHealth } = useApp();
+  const location = useLocation();
+  const { loginUser, registerUser, currentUser, isAuthenticated } = useApp();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // اگر کاربر از قبل وارد شده باشد، به صفحه مقصد یا پروفایل هدایت شود
+  const targetPath = location.state?.from?.pathname || '/profile';
+  useEffect(() => {
+    if (isAuthenticated && currentUser) {
+      navigate(targetPath, { replace: true });
+    }
+  }, [isAuthenticated, currentUser, navigate, targetPath]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -20,7 +29,21 @@ export function AuthPage() {
   });
 
   const [errors, setErrors] = useState({});
-  const [errorMeta, setErrorMeta] = useState(null); // { isServerError, isValidationError, title, advice }
+  const [errorMeta, setErrorMeta] = useState(null);
+  const errorTimerRef = useRef(null);
+
+  // Auto-dismiss error banner after 8 seconds so it disappears smoothly
+  useEffect(() => {
+    if (errorMeta) {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+      errorTimerRef.current = setTimeout(() => {
+        setErrorMeta(null);
+      }, 8000);
+    }
+    return () => {
+      if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+    };
+  }, [errorMeta]);
 
   function handleTabChange(tab) {
     setIsLogin(tab === 'login');
@@ -29,17 +52,19 @@ export function AuthPage() {
   }
 
   function handleInputChange(field, value) {
-    setFormData(function (prev) {
-      return { ...prev, [field]: value };
-    });
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (errorMeta) {
+      setErrorMeta(null);
+    }
     if (errors[field]) {
-      setErrors(function (prev) {
+      setErrors(prev => {
         const next = { ...prev };
         delete next[field];
         return next;
       });
     }
   }
+
 
   function toEnglishDigits(str) {
     if (!str) return '';
@@ -63,13 +88,11 @@ export function AuthPage() {
     if (!cleanPhone) {
       newErrors.phone = 'لطفاً شماره موبایل خود را وارد کنید.';
     } else if (!/^09\d{9}$/.test(cleanPhone)) {
-      newErrors.phone = 'شماره موبایل باید ۱۱ رقم با فرمت ۰۹xxxxxxxx باشد (خطا در فرمت انتخابی).';
+      newErrors.phone = 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود (مثال: 09121234567).';
     }
 
     if (!formData.password) {
       newErrors.password = 'لطفاً رمز عبور را وارد کنید.';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'رمز عبور باید حداقل ۸ رقم (کاراکتر) باشد (خطا در فرمت انتخابی).';
     }
 
     return newErrors;
@@ -82,9 +105,9 @@ export function AuthPage() {
       setErrors(validationErrors);
       setErrorMeta({
         isValidationError: true,
-        title: 'خطا در فرمت‌های انتخابی',
-        message: 'برخی اطلاعات وارد شده مطابق الگوی صحیح نیستند. لطفاً موارد مشخص شده را اصلاح فرمایید.',
-        advice: 'شماره موبایل باید ۱۱ رقم با ۰۹ شروع شود و رمز عبور حداقل ۸ کاراکتر باشد.'
+        title: 'بررسی اطلاعات ورودی',
+        message: 'لطفاً فیلدهای مشخص شده را تکمیل فرمایید.',
+        advice: 'شماره موبایل باید ۱۱ رقم با ۰۹ باشد.'
       });
       return;
     }
@@ -94,41 +117,45 @@ export function AuthPage() {
     setErrorMeta(null);
 
     const cleanPhone = toEnglishDigits(formData.phone).replace(/[\s-]/g, '');
+    
+    // تفکیک کامل منطق ورود و ثبت‌نام با فراخوانی مستقیم
     const res = isLogin
       ? await loginUser(cleanPhone, formData.password)
       : await registerUser(formData.name.trim(), cleanPhone, formData.password);
 
     setLoading(false);
-    if (res?.success) {
-      navigate('/profile');
-    } else {
-      const isServer = res?.isServerError || (res?.statusCode >= 500) || res?.errorType === 'NETWORK_ERROR' || res?.errorType === 'SERVER_MAINTENANCE';
-      const isValidation = res?.isUserError || res?.errorType === 'VALIDATION_ERROR';
 
-      const msg = res?.displayText || res?.message || 'خطا در عملیات ورود/ثبت‌نام';
-      const rawMsg = (res?.message || '').toLowerCase();
+    if (res?.success) {
+      navigate(targetPath, { replace: true });
+    } else {
+      const isServer = res?.statusCode === 0 || (res?.statusCode >= 500);
+      const backendMessage = res?.message || (isLogin ? 'خطا در ورود به سیستم' : 'خطا در ثبت‌نام');
+      const rawMsg = backendMessage.toLowerCase();
 
       if (isServer) {
         setErrorMeta({
           isServerError: true,
-          title: '🛠️ سرور در حال به‌روزرسانی است',
-          message: 'سرویس‌دهنده موقتاً در حال به‌روزرسانی زیرساخت است یا ارتباط شبکه قطع شده است. لطفاً بعداً مجدداً امتحان کنید.',
-          advice: 'اطلاعات شما محفوظ است. می‌توانید دقایقی دیگر مجدداً تلاش فرمایید.'
+          title: '🛠️ وضعیت سرور',
+          message: backendMessage,
+          advice: 'لطفاً اتصال اینترنت خود را بررسی کرده یا دقایقی دیگر مجدداً تلاش کنید.'
         });
       } else {
+        // مدیریت مستقیم خطای ۴۰۰ یا سایر خطاهای اعتبارسنجی ارسالی از سرور
+        const isDuplicatePhone = rawMsg.includes('قبلاً') || rawMsg.includes('تکراری') || rawMsg.includes('ثبت نام کرده');
+        
         setErrorMeta({
           isValidationError: true,
-          title: '⚠️ خطا در اطلاعات ارسالی یا مشخصات کاربری',
-          message: msg,
-          advice: 'لطفاً فرمت شماره موبایل و صحت رمز عبور را مجدداً بررسی فرمایید.'
+          title: isLogin ? 'خطا در ورود' : 'خطا در ثبت‌نام',
+          message: backendMessage,
+          advice: isDuplicatePhone ? 'این شماره قبلاً ثبت شده است. می‌توانید از تب «ورود» وارد شوید.' : ''
         });
 
-        if (rawMsg.includes('رمز') || rawMsg.includes('کلمه عبور') || rawMsg.includes('پسورد')) {
-          setErrors({ password: 'کلمه عبور وارد شده نادرست یا نامعتبر است.' });
-        } else if (rawMsg.includes('شماره') || rawMsg.includes('موبایل') || rawMsg.includes('کاربر') || rawMsg.includes('یافت نشد') || rawMsg.includes('تکراری')) {
-          setErrors({ phone: msg });
+        if (rawMsg.includes('رمز') || rawMsg.includes('پسورد') || rawMsg.includes('کلمه عبور')) {
+          setErrors({ password: backendMessage });
+        } else if (rawMsg.includes('شماره') || rawMsg.includes('موبایل') || rawMsg.includes('کاربر') || isDuplicatePhone) {
+          setErrors({ phone: backendMessage });
         } else if (rawMsg.includes('نام') && !isLogin) {
-          setErrors({ name: msg });
+          setErrors({ name: backendMessage });
         }
       }
     }
@@ -151,7 +178,7 @@ export function AuthPage() {
           <button
             type="button"
             id="auth-tab-login"
-            onClick={function () { handleTabChange('login'); }}
+            onClick={() => handleTabChange('login')}
             className={`${styles.tabBtn} ${isLogin ? styles.tabActive : styles.tabInactive}`}
           >
             ورود
@@ -159,19 +186,29 @@ export function AuthPage() {
           <button
             type="button"
             id="auth-tab-register"
-            onClick={function () { handleTabChange('register'); }}
+            onClick={() => handleTabChange('register')}
             className={`${styles.tabBtn} ${!isLogin ? styles.tabActive : styles.tabInactive}`}
           >
             ثبت نام
           </button>
         </div>
 
-        {/* Server Maintenance Box */}
+        {/* جعبه خطای سرور */}
         {errorMeta?.isServerError && (
           <div className={styles.serverMaintenanceBox} role="alert">
             <div className={styles.serverMaintenanceHeader}>
-              <Wrench size={16} />
-              <span>{errorMeta.title}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <Wrench size={16} />
+                <span>{errorMeta.title}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMeta(null)}
+                className={styles.errorBoxCloseBtn}
+                aria-label="بستن پیام"
+              >
+                <X size={15} />
+              </button>
             </div>
             <p className={styles.serverMaintenanceDesc}>{errorMeta.message}</p>
             {errorMeta.advice && (
@@ -182,14 +219,24 @@ export function AuthPage() {
           </div>
         )}
 
-        {/* Validation / User Error Box */}
+        {/* جعبه پیام خطا یا اعتبارسنجی سرور */}
         {errorMeta?.isValidationError && (
           <div className={styles.validationErrorBox} role="alert">
             <div className={styles.validationErrorHeader}>
-              <FileWarning size={16} />
-              <span>{errorMeta.title}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                <FileWarning size={16} />
+                <span>{errorMeta.title}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setErrorMeta(null)}
+                className={styles.errorBoxCloseBtn}
+                aria-label="بستن پیام"
+              >
+                <X size={15} />
+              </button>
             </div>
-            <p style={{ margin: 0, fontSize: '0.78rem' }}>{errorMeta.message}</p>
+            <p style={{ margin: 0, fontSize: '0.85rem', fontWeight: 600 }}>{errorMeta.message}</p>
             {errorMeta.advice && (
               <span className={styles.validationErrorAdvice}>
                 💡 {errorMeta.advice}
@@ -212,7 +259,7 @@ export function AuthPage() {
                   id="auth-name-input"
                   type="text"
                   value={formData.name}
-                  onChange={function (e) { handleInputChange('name', e.target.value); }}
+                  onChange={e => handleInputChange('name', e.target.value)}
                   placeholder="نام و نام خانوادگی خود را وارد کنید"
                   className={`${styles.input} ${errors.name ? styles.inputError : ''}`}
                   autoComplete="name"
@@ -243,7 +290,7 @@ export function AuthPage() {
                 type="tel"
                 dir="ltr"
                 value={formData.phone}
-                onChange={function (e) { handleInputChange('phone', e.target.value); }}
+                onChange={e => handleInputChange('phone', e.target.value)}
                 placeholder="09121234567"
                 className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
                 autoComplete="tel"
@@ -273,8 +320,8 @@ export function AuthPage() {
                 type={showPassword ? 'text' : 'password'}
                 dir="ltr"
                 value={formData.password}
-                onChange={function (e) { handleInputChange('password', e.target.value); }}
-                placeholder={isLogin ? 'رمز عبور خود را وارد کنید' : 'حداقل ۸ رقم (کاراکتر)'}
+                onChange={e => handleInputChange('password', e.target.value)}
+                placeholder="رمز عبور خود را وارد کنید"
                 className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
                 autoComplete={isLogin ? 'current-password' : 'new-password'}
               />
@@ -283,7 +330,7 @@ export function AuthPage() {
               </span>
               <button
                 type="button"
-                onClick={function () { setShowPassword(!showPassword); }}
+                onClick={() => setShowPassword(!showPassword)}
                 className={styles.passwordToggleBtn}
                 aria-label={showPassword ? 'مخفی‌سازی رمز عبور' : 'نمایش رمز عبور'}
                 tabIndex={-1}

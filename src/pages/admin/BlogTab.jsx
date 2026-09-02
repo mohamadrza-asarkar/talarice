@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useApp } from '../../context';
 import { Plus, Trash2, BookOpen, Clock, Calendar, X, Eye } from 'lucide-react';
 import { ImageUploader } from './ImageUploader';
+import { DeleteConfirmModal } from './DeleteConfirmModal';
 import styles from './style.module.css';
 
 export function BlogTab() {
   const { articles: posts, setArticles: setPosts } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [previewPost, setPreviewPost] = useState(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null);
 
   const initialForm = {
     title: '',
@@ -20,6 +22,7 @@ export function BlogTab() {
   };
 
   const [formData, setFormData] = useState(initialForm);
+  const [formErrors, setFormErrors] = useState({});
 
   const sampleBlogImages = [
     { label: 'پخت و قد کشیدن', url: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=800' },
@@ -27,19 +30,53 @@ export function BlogTab() {
     { label: 'نگهداری کیسه نخی', url: 'https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=800' }
   ];
 
+  function handleFieldChange(field, value) {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    if (formErrors[field]) {
+      setFormErrors(prev => {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      });
+    }
+  }
+
   function handleSubmit(e) {
     e.preventDefault();
+
+    const title = (formData.title || '').trim();
+    const excerpt = (formData.excerpt || '').trim();
+    const content = (formData.content || '').trim();
+    const newErrors = {};
+
+    if (!title) {
+      newErrors.title = 'لطفاً عنوان مقاله را وارد فرمایید.';
+    }
+    if (!excerpt) {
+      newErrors.excerpt = 'لطفاً خلاصه کوتاهی از مقاله را بنویسید.';
+    }
+    if (!content) {
+      newErrors.content = 'لطفاً متن کامل مقاله را وارد فرمایید.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      return;
+    }
+
+    setFormErrors({});
+
     const newId = `art_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     const newPost = {
       _id: newId,
       id: newId,
-      title: formData.title,
-      category: formData.category,
-      readTime: formData.readTime,
+      title: title,
+      category: formData.category || 'آموزش پخت',
+      readTime: formData.readTime || '۵ دقیقه',
       author: formData.author || 'تیم طلا رایس',
-      excerpt: formData.excerpt,
-      summary: formData.excerpt,
-      content: formData.content.split('\n').filter(function (p) { return p.trim(); }),
+      excerpt: excerpt,
+      summary: excerpt,
+      content: content.split('\n').filter(function (p) { return p.trim(); }),
       image: formData.image || sampleBlogImages[0].url,
       date: new Intl.DateTimeFormat('fa-IR').format(new Date()),
       proTips: ['نکات مهم پخت و نگهداری این مقاله را در آشپزی خانگی به کار بگیرید.']
@@ -51,8 +88,8 @@ export function BlogTab() {
   }
 
   function handleDelete(id) {
-    if (!window.confirm('آیا از حذف این مقاله آموزشی اطمینان دارید؟')) return;
     setPosts(posts.filter(function (p) { return p._id !== id && p.id !== id; }));
+    setDeleteConfirmId(null);
   }
 
   return (
@@ -98,7 +135,7 @@ export function BlogTab() {
                   />
                   <div className={styles.cardOverlay}>
                     <button
-                      onClick={function () { handleDelete(id); }}
+                      onClick={function () { setDeleteConfirmId(id); }}
                       className={styles.overlayActionBtn}
                       title="حذف مقاله"
                     >
@@ -181,25 +218,30 @@ export function BlogTab() {
             </div>
 
             <div className={styles.modalContent}>
-              <form onSubmit={handleSubmit} className={styles.form}>
+              <form onSubmit={handleSubmit} noValidate className={styles.form}>
                 <div className={styles.formGrid}>
                   <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>عنوان جذاب مقاله</label>
+                    <label className={styles.label}>عنوان جذاب مقاله *</label>
                     <input
-                      required
                       type="text"
                       placeholder="مثال: ۱۰ فوت و فن قد کشیدن برنج اصیل کامفیروز در مجالس"
                       value={formData.title}
-                      onChange={function (e) { setFormData({ ...formData, title: e.target.value }); }}
-                      className={styles.input}
+                      onChange={e => handleFieldChange('title', e.target.value)}
+                      className={`${styles.input} ${formErrors.title ? styles.inputError : ''}`}
+                      style={formErrors.title ? { borderColor: '#ef4444', backgroundColor: '#fef2f2' } : {}}
                     />
+                    {formErrors.title && (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                        {formErrors.title}
+                      </span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label className={styles.label}>دسته‌بندی موضوعی</label>
                     <select
                       value={formData.category}
-                      onChange={function (e) { setFormData({ ...formData, category: e.target.value }); }}
+                      onChange={e => handleFieldChange('category', e.target.value)}
                       className={styles.select}
                     >
                       <option value="رازهای پخت">رازهای پخت</option>
@@ -215,7 +257,7 @@ export function BlogTab() {
                       type="text"
                       placeholder="مثال: ۵ دقیقه مطالعه"
                       value={formData.readTime}
-                      onChange={function (e) { setFormData({ ...formData, readTime: e.target.value }); }}
+                      onChange={e => handleFieldChange('readTime', e.target.value)}
                       className={styles.input}
                     />
                   </div>
@@ -224,33 +266,43 @@ export function BlogTab() {
                     <ImageUploader
                       label="تصویر شاخص مقاله *"
                       value={formData.image}
-                      onChange={function (url) { setFormData({ ...formData, image: url }); }}
+                      onChange={url => handleFieldChange('image', url)}
                       sampleImages={sampleBlogImages}
                     />
                   </div>
 
                   <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>خلاصه مقاله (نمایش در کارت‌ها)</label>
+                    <label className={styles.label}>خلاصه مقاله (نمایش در کارت‌ها) *</label>
                     <textarea
-                      required
                       placeholder="یک یا دو خط توضیح مختصر درباره موضوع مقاله..."
                       value={formData.excerpt}
-                      onChange={function (e) { setFormData({ ...formData, excerpt: e.target.value }); }}
+                      onChange={e => handleFieldChange('excerpt', e.target.value)}
                       rows="2"
-                      className={styles.textarea}
+                      className={`${styles.textarea} ${formErrors.excerpt ? styles.inputError : ''}`}
+                      style={formErrors.excerpt ? { borderColor: '#ef4444', backgroundColor: '#fef2f2' } : {}}
                     />
+                    {formErrors.excerpt && (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                        {formErrors.excerpt}
+                      </span>
+                    )}
                   </div>
 
                   <div className={`${styles.formGroup} ${styles.fullCol}`}>
-                    <label className={styles.label}>متن کامل مقاله</label>
+                    <label className={styles.label}>متن کامل مقاله *</label>
                     <textarea
-                      required
                       placeholder="متن کامل پاراگراف‌های مقاله را اینجا بنویسید (پاراگراف‌ها را با Enter جدا کنید)..."
                       value={formData.content}
-                      onChange={function (e) { setFormData({ ...formData, content: e.target.value }); }}
+                      onChange={e => handleFieldChange('content', e.target.value)}
                       rows="6"
-                      className={styles.textarea}
+                      className={`${styles.textarea} ${formErrors.content ? styles.inputError : ''}`}
+                      style={formErrors.content ? { borderColor: '#ef4444', backgroundColor: '#fef2f2' } : {}}
                     />
+                    {formErrors.content && (
+                      <span style={{ color: '#ef4444', fontSize: '0.75rem', fontWeight: 700, marginTop: '3px', display: 'block' }}>
+                        {formErrors.content}
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -350,6 +402,17 @@ export function BlogTab() {
           </div>
         </div>
       )}
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmModal
+        isOpen={Boolean(deleteConfirmId)}
+        onClose={() => setDeleteConfirmId(null)}
+        onConfirm={() => handleDelete(deleteConfirmId)}
+        title="تأیید حذف مقاله آموزشی"
+        itemType="مقاله"
+        itemName={posts.find(p => (p.id || p._id) === deleteConfirmId)?.title || 'این مقاله آموزشی'}
+        message="آیا از حذف این مقاله از دانشنامه و وبلاگ فروشگاه اطمینان دارید؟ محتوا به طور کامل پاک خواهد شد."
+        confirmText="حذف قطعی مقاله"
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../../context';
+import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react';
 import styles from './style.module.css';
 
 export function BottomNav() {
@@ -11,14 +12,14 @@ export function BottomNav() {
   }
 
   return (
-    <nav className={styles.bottomNav}>
+    <nav className={styles.bottomNav} aria-label="ناوبری اصلی">
       <NavLink to="/" end className={getLinkClass}>
-        <i className="fa-solid fa-house" />
+        <Home size={20} />
         <span>خانه</span>
       </NavLink>
 
       <NavLink to="/catalog" className={getLinkClass}>
-        <i className="fa-solid fa-table-cells-large" />
+        <LayoutGrid size={20} />
         <span>محصولات</span>
       </NavLink>
 
@@ -26,22 +27,19 @@ export function BottomNav() {
         type="button"
         onClick={function () { setIsCartOpen(true); }}
         className={`${styles.navButton} ${styles.navButtonUnselected} ${styles.cartButton}`}
+        aria-label="سبد خرید"
       >
-        <i className="fa-solid fa-cart-shopping" />
+        <ShoppingBag size={20} />
         {cartCount > 0 && <span className={styles.badge}>{cartCount.toLocaleString('fa-IR')}</span>}
         <span>سبد خرید</span>
       </button>
 
-      <NavLink to="/blog" className={getLinkClass}>
-        <i className="fa-solid fa-book-open" />
-        <span>دانشنامه</span>
-      </NavLink>
-
       <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
-        <i className="fa-solid fa-user" />
-        <span>پروفایل</span>
+        <User size={20} />
+        <span>{isAuthenticated ? 'پروفایل' : 'ورود'}</span>
       </NavLink>
     </nav>
   );
 }
 
+export default BottomNav;

@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { UploadCloud, Image as ImageIcon, Link as LinkIcon, X, Check, Sparkles } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { UploadCloud, Image as ImageIcon, Link as LinkIcon, X, Check, Sparkles, AlertCircle } from 'lucide-react';
 import styles from './style.module.css';
 
 const DEFAULT_SAMPLES = [
@@ -13,19 +13,33 @@ export function ImageUploader({
   value,
   onChange,
   label = 'تصویر شاخص',
-  sampleImages = DEFAULT_SAMPLES
+  sampleImages,
+  presets
 }) {
+  const effectiveSamples = presets || sampleImages || DEFAULT_SAMPLES;
   const [mode, setMode] = useState('upload'); // 'upload' | 'url' | 'samples'
   const [dragActive, setDragActive] = useState(false);
   const [urlInput, setUrlInput] = useState(value || '');
+  const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => {
+        setErrorMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
 
   // Compress image before setting DataURL to keep state lightweight
   function processFile(file) {
     if (!file || !file.type.startsWith('image/')) {
-      alert('لطفاً یک فایل تصویری معتبر (JPG, PNG, WebP) انتخاب نمایید.');
+      setErrorMessage('لطفاً یک فایل تصویری معتبر (JPG, PNG, WebP) انتخاب نمایید.');
       return;
     }
+    setErrorMessage('');
+
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -103,12 +117,26 @@ export function ImageUploader({
   }
 
   return (
-    <div className={styles.formGroup} style={{ marginBottom: '1rem' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.375rem' }}>
-        <label className={styles.label}>{label}</label>
+    <div className={styles.formGroup} style={{ marginBottom: '1rem', width: '100%' }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '0.5rem',
+        marginBottom: '0.4rem'
+      }}>
+        <label className={styles.label} style={{ margin: 0, whiteSpace: 'nowrap' }}>{label}</label>
         
         {/* Mode Selector Tabs */}
-        <div style={{ display: 'flex', gap: '0.25rem', background: '#f1f5f9', padding: '2px', borderRadius: '8px' }}>
+        <div style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '0.25rem',
+          background: '#f1f5f9',
+          padding: '3px',
+          borderRadius: '8px'
+        }}>
           <button
             type="button"
             onClick={() => setMode('upload')}
@@ -118,13 +146,14 @@ export function ImageUploader({
               color: mode === 'upload' ? '#042a1b' : '#64748b',
               fontWeight: 800,
               fontSize: '0.72rem',
-              padding: '3px 8px',
+              padding: '4px 8px',
               borderRadius: '6px',
               cursor: 'pointer',
               boxShadow: mode === 'upload' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              whiteSpace: 'nowrap'
             }}
           >
             <UploadCloud size={13} />
@@ -140,13 +169,14 @@ export function ImageUploader({
               color: mode === 'url' ? '#042a1b' : '#64748b',
               fontWeight: 800,
               fontSize: '0.72rem',
-              padding: '3px 8px',
+              padding: '4px 8px',
               borderRadius: '6px',
               cursor: 'pointer',
               boxShadow: mode === 'url' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              whiteSpace: 'nowrap'
             }}
           >
             <LinkIcon size={13} />
@@ -162,13 +192,14 @@ export function ImageUploader({
               color: mode === 'samples' ? '#042a1b' : '#64748b',
               fontWeight: 800,
               fontSize: '0.72rem',
-              padding: '3px 8px',
+              padding: '4px 8px',
               borderRadius: '6px',
               cursor: 'pointer',
               boxShadow: mode === 'samples' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '4px'
+              gap: '4px',
+              whiteSpace: 'nowrap'
             }}
           >
             <Sparkles size={13} />
@@ -176,6 +207,37 @@ export function ImageUploader({
           </button>
         </div>
       </div>
+
+      {/* Error notification banner */}
+      {errorMessage && (
+        <div style={{
+          backgroundColor: '#fef2f2',
+          border: '1.5px solid #fecaca',
+          color: '#dc2626',
+          borderRadius: '0.625rem',
+          padding: '0.5rem 0.75rem',
+          fontSize: '0.8125rem',
+          fontWeight: 700,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '0.75rem',
+          animation: 'slideDown 0.2s ease-out'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
+            <AlertCircle size={16} />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setErrorMessage('')}
+            style={{ background: 'transparent', border: 'none', color: '#dc2626', cursor: 'pointer', padding: '2px', display: 'flex' }}
+            aria-label="بستن"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
 
       {/* Preview Box if image exists */}
       {value ? (
@@ -326,7 +388,7 @@ export function ImageUploader({
       {/* Mode: Preset Sample Images */}
       {mode === 'samples' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
-          {sampleImages.map((s, idx) => {
+          {effectiveSamples.map((s, idx) => {
             const isSelected = value === s.url;
             return (
               <button

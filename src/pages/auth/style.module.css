@@ -202,6 +202,7 @@
 .validationErrorHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   color: #c2410c;
   font-weight: 800;
@@ -231,9 +232,30 @@
 .serverMaintenanceHeader {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.5rem;
   color: #1e40af;
   font-weight: 800;
+}
+
+.errorBoxCloseBtn {
+  background: transparent;
+  border: none;
+  color: currentColor;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.errorBoxCloseBtn:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.08);
+  transform: scale(1.1);
 }
 
 .serverMaintenanceDesc {

@@ -124,6 +124,48 @@ export const slidersApi = {
   },
 
   /**
+   * Update slide (Admin)
+   * PUT /api/slides/:id
+   */
+  async updateSlider(id, slideData) {
+    try {
+      const payload = {
+        imageBase64: slideData.imageBase64 || (typeof slideData.image === 'string' && slideData.image.startsWith('data:') ? slideData.image : undefined),
+        image: typeof slideData.image === 'string' ? slideData.image : undefined,
+        title: slideData.title,
+        subtitle: slideData.subtitle,
+        description: slideData.description,
+        ctaText: slideData.ctaText,
+        link: slideData.link
+      };
+
+      Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+      let response;
+      try {
+        response = await client.put(`/slides/${id}`, payload);
+      } catch (err) {
+        if (err.statusCode === 404) {
+          response = await client.put(`/sliders/${id}`, payload);
+        } else {
+          throw err;
+        }
+      }
+
+      const raw = response?.data?.slide || response?.data || { id, ...payload };
+      return {
+        success: true,
+        statusCode: response?.statusCode || 200,
+        data: parseSlide(raw),
+        message: response?.message || 'اسلاید با موفقیت ویرایش شد'
+      };
+    } catch (err) {
+      const parsed = parseApiError(err);
+      throw parsed;
+    }
+  },
+
+  /**
    * Delete slide (Admin)
    * DELETE /api/slides/:id
    */

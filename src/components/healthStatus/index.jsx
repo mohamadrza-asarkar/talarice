@@ -3,10 +3,12 @@ import { Activity, AlertTriangle, RefreshCw, Server, WifiOff, Wrench, CheckCircl
 import styles from './style.module.css';
 
 export function HealthStatusIndicator({ health, onRetry }) {
+  const [isRetrying, setIsRetrying] = useState(false);
+
   if (!health) return null;
 
   const isHealthy = health.status === 'healthy';
-  const isChecking = health.status === 'checking';
+  const isChecking = health.status === 'checking' || isRetrying;
 
   let statusClass = styles.healthy;
   let statusText = 'سرور فعال و برخط';
@@ -19,15 +21,35 @@ export function HealthStatusIndicator({ health, onRetry }) {
     statusText = 'سرور در حال به‌روزرسانی';
   }
 
+  async function handleClick() {
+    if (onRetry && !isChecking) {
+      setIsRetrying(true);
+      try {
+        await onRetry();
+      } finally {
+        setTimeout(() => setIsRetrying(false), 500);
+      }
+    }
+  }
+
   return (
-    <div
+    <button
+      type="button"
+      onClick={handleClick}
       className={`${styles.healthBadge} ${statusClass}`}
-      title={isHealthy ? `سرور طلا رایس فعال است (پایش خودکار هر ۲۰ ثانیه)` : 'سرور در حال به‌روزرسانی است - لطفاً بعداً امتحان کنید'}
+      style={{ cursor: onRetry ? 'pointer' : 'default' }}
+      title={isHealthy ? 'وضعیت سرور: فعال و برخط (برای بررسی و به‌روزرسانی کلیک کنید)' : 'در حال تلاش برای اتصال به سرور'}
     >
       <span className={styles.pulseDot} />
-      {isHealthy ? <Activity size={13} /> : <Wrench size={13} />}
+      {isChecking ? (
+        <RefreshCw size={13} className="spin-animation" />
+      ) : isHealthy ? (
+        <Activity size={13} />
+      ) : (
+        <Wrench size={13} />
+      )}
       <span>{statusText}</span>
-    </div>
+    </button>
   );
 }
 

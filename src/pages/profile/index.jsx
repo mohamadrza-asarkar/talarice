@@ -1,12 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Package,
+  MapPin,
+  Building,
+  Search,
+  CheckCircle2,
+  Clock,
+  Truck,
+  Check,
+  Copy,
+  Upload,
+  Image as ImageIcon,
+  AlertCircle,
+  ShieldCheck,
+  ArrowLeft
+} from 'lucide-react';
 import { useApp } from '../../context';
-import { AuthPage } from '../auth';
 import styles from './style.module.css';
 
 export function ProfilePage() {
-  const { orders, addresses, logout, currentUser, isAdmin, isLoadingUser, getOrderStatusInfo } = useApp();
+  const {
+    orders,
+    addresses,
+    logout,
+    currentUser,
+    isAdmin,
+    getOrderStatusInfo,
+    trackOrder,
+    uploadOrderReceipt,
+    showToast
+  } = useApp();
+
   const [activeSubTab, setActiveSubTab] = useState('orders');
+  const [trackingInput, setTrackingInput] = useState('');
+  const [trackingResult, setTrackingResult] = useState(null);
+  const [isSearchingTrack, setIsSearchingTrack] = useState(false);
+  const [trackError, setTrackError] = useState('');
+  const [copiedCode, setCopiedCode] = useState('');
 
   const [wholesaleForm, setWholesaleForm] = useState({
     businessName: '',
@@ -17,20 +48,9 @@ export function ProfilePage() {
   });
   const [wholesaleSuccess, setWholesaleSuccess] = useState(false);
 
-  const [supportText, setSupportText] = useState('');
-  const [supportSuccess, setSupportSuccess] = useState(false);
-
-  if (isLoadingUser && !currentUser) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', color: '#94a3b8' }}>
-        <span>در حال بارگذاری مشخصات کاربری...</span>
-      </div>
-    );
-  }
-
-  if (!currentUser) {
-    return <AuthPage />;
-  }
+  // Receipt upload handling
+  const fileInputRef = useRef(null);
+  const [selectedOrderId, setSelectedOrderId] = useState(null);
 
   function handleWholesaleSubmit(e) {
     e.preventDefault();
@@ -47,11 +67,59 @@ export function ProfilePage() {
     }, 4000);
   }
 
+  async function handleTrackSubmit(e) {
+    e.preventDefault();
+    if (!trackingInput.trim()) return;
+    setIsSearchingTrack(true);
+    setTrackError('');
+    setTrackingResult(null);
+
+    try {
+      const res = await trackOrder(trackingInput.trim());
+      if (res && res.data) {
+        setTrackingResult(res.data);
+      } else {
+        setTrackError('سفارشی با این کد رهگیری یافت نشد.');
+      }
+    } catch (err) {
+      setTrackError(err?.message || 'سفارشی با این کد رهگیری پستی یافت نشد.');
+    } finally {
+      setIsSearchingTrack(false);
+    }
+  }
+
+  function handleCopy(text) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function () {
+      setCopiedCode(text);
+      setTimeout(function () { setCopiedCode(''); }, 2000);
+    });
+  }
+
+  function handleFileChange(e) {
+    const file = e.target.files?.[0];
+    if (!file || !selectedOrderId) return;
+
+    const reader = new FileReader();
+    reader.onload = async function (uploadEvent) {
+      const base64 = uploadEvent.target?.result;
+      if (base64) {
+        try {
+          await uploadOrderReceipt(selectedOrderId, base64);
+          setSelectedOrderId(null);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
   const tabs = [
-    { id: 'orders', label: 'سفارش‌ها' },
-    { id: 'addresses', label: 'آدرس‌ها' },
-    { id: 'wholesale', label: 'خرید عمده' },
-    { id: 'support', label: 'پشتیبانی' }
+    { id: 'orders', label: 'سفارش‌ها', icon: Package },
+    { id: 'tracking', label: 'رهگیری مرسوله', icon: Search },
+    { id: 'addresses', label: 'آدرس‌ها', icon: MapPin },
+    { id: 'wholesale', label: 'خرید عمده', icon: Building }
   ];
 
   return (
@@ -63,10 +131,10 @@ export function ProfilePage() {
               {currentUser?.name ? currentUser.name.charAt(0) : 'م'}
             </div>
             <div>
-              <h2 className={styles.userName}>{currentUser?.name}</h2>
-              <p className={styles.userPhone}>{currentUser?.mobile || currentUser?.phone}</p>
+              <h2 className={styles.userName}>{currentUser?.name || 'مشتری طلا رایس'}</h2>
+              <p className={styles.userPhone} dir="ltr">{currentUser?.phone || currentUser?.mobile}</p>
               <span className={styles.userBadge}>
-                {currentUser?.role === 'admin' ? 'مدیر ارشد طلا رایس' : 'مشتری طلایی'}
+                {currentUser?.role === 'admin' ? 'مدیر ارشد طلا رایس' : 'مشتری طلایی شالیزار'}
               </span>
             </div>
           </div>
@@ -88,19 +156,31 @@ export function ProfilePage() {
 
       <nav className={styles.tabsContainer}>
         {tabs.map(function (t) {
+          const IconComp = t.icon;
           return (
             <button
               key={t.id}
               onClick={function () { setActiveSubTab(t.id); }}
               className={`${styles.tabBtn} ${activeSubTab === t.id ? styles.tabActive : styles.tabInactive}`}
             >
-              {t.label}
+              {IconComp && <IconComp size={15} style={{ display: 'inline-block', verticalAlign: 'middle', marginLeft: '4px' }} />}
+              <span>{t.label}</span>
             </button>
           );
         })}
       </nav>
 
+      {/* Hidden file input for receipt uploads */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleFileChange}
+        style={{ display: 'none' }}
+      />
+
       <main className={styles.tabContent}>
+        {/* Tab 1: Orders */}
         {activeSubTab === 'orders' && (
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>تاریخچه سفارش‌های شما:</h3>
@@ -111,24 +191,26 @@ export function ProfilePage() {
               </div>
             ) : (
               orders.map(function (ord) {
-                const statusInfo = (typeof getOrderStatusInfo === 'function' ? getOrderStatusInfo(ord.status) : null) || {
-                  key: ord.status || 'reviewing',
-                  label: ord.status === 'shipping' ? 'در حال ارسال' : ord.status === 'shipped' ? 'ارسال شده' : ord.status === 'delivered' ? 'تحویل شده' : 'درحال بررسی',
-                  desc: 'سفارش در حال پردازش و آماده‌سازی در انبار است.',
-                  color: '#b45309',
-                  bg: '#fffbeb',
-                  border: '#fde68a',
-                  step: ord.status === 'delivered' ? 4 : ord.status === 'shipped' ? 4 : ord.status === 'shipping' ? 3 : 2
+                const orderId = ord.id || ord._id;
+                const state = ord.state || ord.status || 'pending';
+                const statusInfo = (typeof getOrderStatusInfo === 'function' ? getOrderStatusInfo(state) : null) || {
+                  key: state,
+                  label: state === 'shipped' ? 'ارسال شده' : state === 'delivered' ? 'تحویل شده' : state === 'processing' ? 'در حال بسته‌بندی' : 'در انتظار بررسی',
+                  desc: ord.adminNote || 'سفارش در حال پردازش و آماده‌سازی در انبار طلا رایس است.',
+                  color: state === 'shipped' ? '#166534' : '#b45309',
+                  bg: state === 'shipped' ? '#f0fdf4' : '#fffbeb',
+                  border: state === 'shipped' ? '#86efac' : '#fde68a',
+                  step: state === 'delivered' ? 4 : state === 'shipped' ? 3 : state === 'processing' ? 2 : 1
                 };
 
-                const currentStep = statusInfo.step || (ord.status === 'delivered' ? 4 : ord.status === 'shipped' ? 4 : ord.status === 'shipping' ? 3 : 2);
+                const currentStep = statusInfo.step || 1;
 
                 return (
-                  <article key={ord.id} className={styles.card}>
+                  <article key={orderId} className={styles.card}>
                     <div className={`${styles.row} ${styles.rowBorder}`}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <i className="fa-solid fa-receipt" style={{ color: '#d4af37' }} />
-                        <span className={styles.monoText}>سفارش #{ord.id}</span>
+                        <span className={styles.monoText}>سفارش #{orderId}</span>
                       </div>
                       <span
                         className={styles.statusBadge}
@@ -138,10 +220,10 @@ export function ProfilePage() {
                           borderColor: statusInfo.border
                         }}
                       >
-                        {statusInfo.key === 'reviewing' && <i className="fa-regular fa-clock" />}
-                        {statusInfo.key === 'shipping' && <i className="fa-solid fa-truck-fast" />}
-                        {statusInfo.key === 'shipped' && <i className="fa-solid fa-box-open" />}
-                        {statusInfo.key === 'delivered' && <i className="fa-solid fa-circle-check" />}
+                        {state === 'pending' && <Clock size={13} style={{ display: 'inline', marginLeft: '3px' }} />}
+                        {state === 'processing' && <Package size={13} style={{ display: 'inline', marginLeft: '3px' }} />}
+                        {state === 'shipped' && <Truck size={13} style={{ display: 'inline', marginLeft: '3px' }} />}
+                        {state === 'delivered' && <CheckCircle2 size={13} style={{ display: 'inline', marginLeft: '3px' }} />}
                         <span>{statusInfo.label}</span>
                       </span>
                     </div>
@@ -156,7 +238,7 @@ export function ProfilePage() {
                       }}
                     >
                       <i className="fa-solid fa-circle-info" />
-                      <span>{statusInfo.desc}</span>
+                      <span>{ord.adminNote || statusInfo.desc}</span>
                     </div>
 
                     {/* Progress Stepper */}
@@ -165,7 +247,7 @@ export function ProfilePage() {
                         <div
                           className={styles.stepperLineFill}
                           style={{
-                            width: currentStep === 4 ? '100%' : currentStep === 3 ? '66%' : '33%'
+                            width: currentStep === 4 ? '100%' : currentStep === 3 ? '66%' : currentStep === 2 ? '33%' : '0%'
                           }}
                         />
                       </div>
@@ -190,7 +272,7 @@ export function ProfilePage() {
                             currentStep > 2 ? styles.stepperLabelDone : currentStep === 2 ? styles.stepperLabelActive : ''
                           }`}
                         >
-                          درحال بررسی
+                          پردازش و بسته‌بندی
                         </span>
                       </div>
 
@@ -207,7 +289,7 @@ export function ProfilePage() {
                             currentStep > 3 ? styles.stepperLabelDone : currentStep === 3 ? styles.stepperLabelActive : ''
                           }`}
                         >
-                          در حال ارسال
+                          تحویل به اداره پست
                         </span>
                       </div>
 
@@ -224,44 +306,81 @@ export function ProfilePage() {
                             currentStep >= 4 ? styles.stepperLabelDone : ''
                           }`}
                         >
-                          {ord.status === 'delivered' ? 'تحویل شده' : 'ارسال شده'}
+                          تحویل به مشتری
                         </span>
                       </div>
                     </div>
 
                     <div className={`${styles.row} ${styles.mediumText}`}>
-                      <span>تاریخ ثبت: {ord.date}</span>
-                      <span>کد رهگیری: <strong className={styles.monoText}>{ord.trackingCode}</strong></span>
+                      <span>تاریخ ثبت: {ord.date || ord.createdAt?.split('T')[0]}</span>
+                      {ord.postTrackingCode ? (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <span>کد رهگیری پستی:</span>
+                          <strong className={styles.monoText} dir="ltr">{ord.postTrackingCode}</strong>
+                          <button
+                            type="button"
+                            onClick={function () { handleCopy(ord.postTrackingCode); }}
+                            className={styles.copyInlineBtn}
+                            title="کپی کد رهگیری"
+                          >
+                            {copiedCode === ord.postTrackingCode ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                          </button>
+                        </div>
+                      ) : (
+                        <span>کد پیگیری سیستمی: <strong className={styles.monoText}>{ord.trackingCode || orderId}</strong></span>
+                      )}
                     </div>
 
                     {/* Order Items preview */}
-                    {ord.items && ord.items.length > 0 && (
+                    {(ord.products || ord.items) && (ord.products || ord.items).length > 0 && (
                       <div className={styles.orderItemsList}>
-                        {ord.items.map(function (item, idx) {
-                          const pName = item.product?.name || item.name || 'برنج کامفیروز ممتاز';
-                          const weight = item.weightKg || item.product?.weightKg || 10;
+                        {(ord.products || ord.items).map(function (item, idx) {
+                          const pName = item.product?.name || item.name || item.title || 'برنج کامفیروز ممتاز';
                           const qty = item.quantity || 1;
+                          const price = Number(item.price || item.product?.price || 0);
                           return (
                             <div key={idx} className={styles.orderItemRow}>
-                              <span>🌾 {pName} ({weight.toLocaleString('fa-IR')} کیلوگرم)</span>
-                              <strong>{qty.toLocaleString('fa-IR')} عدد</strong>
+                              <span>🌾 {pName}</span>
+                              <span>{qty.toLocaleString('fa-IR')} عدد ({price.toLocaleString('fa-IR')} تومان)</span>
                             </div>
                           );
                         })}
                       </div>
                     )}
 
-                    {ord.fullAddress && (
+                    {/* Receipt Status or Upload Button */}
+                    <div className={styles.receiptStatusBar}>
+                      {ord.paymentReceipt ? (
+                        <div className={styles.receiptPresentBadge}>
+                          <CheckCircle2 size={14} color="#16a34a" />
+                          <span>رسید واریزی ضمیمه شده است</span>
+                        </div>
+                      ) : ord.paymentMethod === 'card' ? (
+                        <button
+                          type="button"
+                          onClick={function () {
+                            setSelectedOrderId(orderId);
+                            fileInputRef.current?.click();
+                          }}
+                          className={styles.uploadReceiptSmallBtn}
+                        >
+                          <Upload size={13} />
+                          <span>ارسال / تغییر تصویر فیش بانکی</span>
+                        </button>
+                      ) : null}
+                    </div>
+
+                    {ord.address && (
                       <div style={{ fontSize: '0.75rem', color: '#4b5563', display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
                         <i className="fa-solid fa-location-dot" style={{ color: '#d4af37' }} />
-                        <span>تحویل به: {ord.recipientName || 'خریدار'} - {ord.fullAddress}</span>
+                        <span>تحویل به: {ord.name || 'خریدار'} - {ord.address}</span>
                       </div>
                     )}
 
                     <div className={styles.totalRow}>
                       <span>مبلغ کل پرداختی:</span>
                       <strong className={styles.totalValue}>
-                        {((ord.finalAmount ?? ord.totalAmount) ?? 0).toLocaleString('fa-IR')} تومان
+                        {((ord.totalPrice ?? ord.finalAmount) ?? 0).toLocaleString('fa-IR')} تومان
                       </strong>
                     </div>
                   </article>
@@ -271,6 +390,86 @@ export function ProfilePage() {
           </section>
         )}
 
+        {/* Tab 2: Postal Tracking */}
+        {activeSubTab === 'tracking' && (
+          <section className={styles.card}>
+            <h3 className={styles.sectionTitle}>
+              <Search size={18} style={{ color: '#d4af37' }} />
+              <span>رهگیری آنلاین مرسوله پستی</span>
+            </h3>
+            <p className={styles.mediumText}>
+              با وارد کردن کد رهگیری مرسوله پستی ۲۴ رقمی یا شناسه سفارش خود، وضعیت ارسال برنج را لحظه‌ای بررسی نمایید.
+            </p>
+
+            <form onSubmit={handleTrackSubmit} className={styles.trackingSearchForm}>
+              <div className={styles.inputGroup}>
+                <input
+                  type="text"
+                  dir="ltr"
+                  value={trackingInput}
+                  onChange={function (e) { setTrackingInput(e.target.value); }}
+                  placeholder="کد ۲۴ رقمی رهگیری پستی یا شناسه سفارش..."
+                  className={styles.input}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSearchingTrack || !trackingInput.trim()}
+                className={styles.primaryButton}
+              >
+                {isSearchingTrack ? 'در حال جستجو...' : 'استعلام وضعیت مرسوله'}
+              </button>
+            </form>
+
+            {trackError && (
+              <div className={styles.trackErrorBox}>
+                <AlertCircle size={16} />
+                <span>{trackError}</span>
+              </div>
+            )}
+
+            {trackingResult && (
+              <div className={styles.trackResultBox}>
+                <div className={styles.trackResultHeader}>
+                  <ShieldCheck size={20} color="#16a34a" />
+                  <strong>اطلاعات مرسوله یافت شد</strong>
+                </div>
+                <div className={styles.trackResultRow}>
+                  <span>شناسه سفارش:</span>
+                  <strong dir="ltr">{trackingResult.id || trackingResult._id}</strong>
+                </div>
+                {trackingResult.postTrackingCode && (
+                  <div className={styles.trackResultRow}>
+                    <span>کد رهگیری پستی:</span>
+                    <strong dir="ltr" style={{ color: '#073822' }}>{trackingResult.postTrackingCode}</strong>
+                  </div>
+                )}
+                <div className={styles.trackResultRow}>
+                  <span>وضعیت سفارش:</span>
+                  <span className={styles.statusBadge} style={{ backgroundColor: '#f0fdf4', color: '#166534' }}>
+                    {trackingResult.state === 'shipped' ? 'تحویل به پست' : trackingResult.state === 'delivered' ? 'تحویل شده' : 'در حال بسته‌بندی'}
+                  </span>
+                </div>
+                <div className={styles.trackResultRow}>
+                  <span>تحویل‌گیرنده:</span>
+                  <span>{trackingResult.name}</span>
+                </div>
+                <div className={styles.trackResultRow}>
+                  <span>نشانی مقصد:</span>
+                  <span>{trackingResult.address}</span>
+                </div>
+                {trackingResult.adminNote && (
+                  <div className={styles.adminNoteBanner}>
+                    <span>پیام واحد ارسال: </span>
+                    <em>{trackingResult.adminNote}</em>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Tab 3: Addresses */}
         {activeSubTab === 'addresses' && (
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>آدرس‌های ثبت شده:</h3>
@@ -291,6 +490,7 @@ export function ProfilePage() {
           </section>
         )}
 
+        {/* Tab 4: Wholesale */}
         {activeSubTab === 'wholesale' && (
           <section className={styles.card}>
             <div>
@@ -371,53 +571,6 @@ export function ProfilePage() {
                 </button>
               </form>
             )}
-          </section>
-        )}
-
-        {activeSubTab === 'support' && (
-          <section className={styles.card}>
-            <h3 className={styles.sectionTitle}>ارتباط مستقیم با واحد فروش و امور مشتریان:</h3>
-
-            <div className={styles.grid2}>
-              <a href="tel:09170000000" className={styles.contactCard}>
-                <i className="fa-solid fa-phone" />
-                <span>تماس تلفنی</span>
-              </a>
-              <a href="https://wa.me/#" target="_blank" rel="noreferrer" className={styles.contactCard}>
-                <i className="fa-brands fa-whatsapp" />
-                <span>واتساپ پشتیبانی</span>
-              </a>
-            </div>
-
-            <div className={styles.supportBox}>
-              <label className={styles.label}>ارسال پیام یا سوال به پشتیبانی:</label>
-              <textarea
-                rows={2}
-                value={supportText}
-                onChange={function (e) { setSupportText(e.target.value); }}
-                placeholder="سوال خود درباره پخت، ارسال یا کیفیت برنج را بنویسید..."
-                className={styles.input}
-              />
-              {supportSuccess ? (
-                <div className={styles.successState}>
-                  پیام شما دریافت شد. همکاران ما به زودی پاسخ خواهند داد.
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={function () {
-                    if (supportText.trim()) {
-                      setSupportSuccess(true);
-                      setSupportText('');
-                      setTimeout(function () { setSupportSuccess(false); }, 3000);
-                    }
-                  }}
-                  className={styles.supportButton}
-                >
-                  ارسال تیکت پشتیبانی
-                </button>
-              )}
-            </div>
           </section>
         )}
       </main>

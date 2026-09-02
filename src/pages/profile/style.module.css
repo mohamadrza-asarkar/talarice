@@ -480,3 +480,109 @@
   font-size: 0.75rem;
 }
 
+.copyInlineBtn {
+  background: #e2e8f0;
+  border: none;
+  border-radius: 0.25rem;
+  padding: 0.15rem 0.35rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.receiptStatusBar {
+  padding-top: 0.25rem;
+}
+
+.receiptPresentBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #f0fdf4;
+  color: #166534;
+  border: 1px solid #86efac;
+  border-radius: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.uploadReceiptSmallBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background-color: #fefce8;
+  color: #854d0e;
+  border: 1px dashed #ca8a04;
+  border-radius: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.725rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.uploadReceiptSmallBtn:hover {
+  background-color: #fef08a;
+}
+
+/* Tracking Form & Results */
+.trackingSearchForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.trackErrorBox {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  padding: 0.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.775rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.trackResultBox {
+  background: #f8fafc;
+  border: 1.5px solid #073b27;
+  border-radius: 0.75rem;
+  padding: 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.trackResultHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #073b27;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 0.4rem;
+}
+
+.trackResultRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.775rem;
+  color: #334155;
+}
+
+.adminNoteBanner {
+  background-color: #fefce8;
+  border: 1px dashed #ca8a04;
+  border-radius: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.75rem;
+  color: #854d0e;
+}
+
