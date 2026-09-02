@@ -54,7 +54,7 @@ export function AmazingDeals() {
       </header>
 
       <div className={styles.gridContainer}>
-        {dealProducts.slice(0, 2).map(function (product) {
+        {dealProducts.map(function (product) {
           return <ProductCard key={product.id} product={product} />;
         })}
       </div>

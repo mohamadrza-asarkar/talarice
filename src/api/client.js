@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { parseApiError } from '../utils/errorHandler';
 
-// Default backend Base URL from technical documentation
-export const DEFAULT_API_BASE_URL = 'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
+// Default backend Base URL
+export const DEFAULT_API_BASE_URL = 'http://localhost:5000/api';
 
 const client = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,

@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context';
-import { InitialLoadingScreen } from './maintenanceScreen';
 
 /**
  * کامپوننت محافظت از مسیرها (Protected Route)
@@ -9,13 +8,8 @@ import { InitialLoadingScreen } from './maintenanceScreen';
  * و آدرس صفحه قبلی را ذخیره می‌کند تا پس از ورود به همان‌جا برگردد.
  */
 export function ProtectedRoute({ children, requireAdmin = false }) {
-  const { isAuthenticated, isAdmin, isLoadingUser } = useApp();
+  const { isAuthenticated, isAdmin } = useApp();
   const location = useLocation();
-
-  // در حال بررسی اعتبار کاربر
-  if (isLoadingUser) {
-    return <InitialLoadingScreen />;
-  }
 
   // ۱. هدایت کاربر مهمان به صفحه ورود
   if (!isAuthenticated) {

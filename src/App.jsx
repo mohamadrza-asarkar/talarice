@@ -13,18 +13,19 @@ import { useApp } from './context/index.jsx';
 import { InitialLoadingScreen, MaintenanceScreen } from './components/maintenanceScreen/index.jsx';
 
 function App() {
-  const { isConnecting, serverHealth, checkHealth } = useApp();
+  const { serverHealth, checkHealth } = useApp();
 
-  // نمایش انیمیشن ۳ خوشه سنبله برنج طلا رایس در هنگام بارگذاری اولیه داده‌ها
-  if (isConnecting) {
+  // تا زمانی که سرور پاسخ نداده و در حال بررسی سلامت است، انیمیشن ۳ خوشه سنبله برنج نمایش داده می‌شود
+  if (serverHealth && serverHealth.status === 'checking') {
     return <InitialLoadingScreen />;
   }
 
-  // نمایش صفحه عدم دسترسی یا خطای بحرانی سرور در صورت بروز مشکل در اتصال
+  // در صورت عدم دسترسی به سرور یا بروز خطا در API هلث
   if (serverHealth && serverHealth.status === 'unhealthy') {
     return <MaintenanceScreen health={serverHealth} onRetry={checkHealth} />;
   }
 
+  // در صورتی که سرور پاسخگو و سالم بود، بدون هیچ لودینگ یا مانعی برنامه کارش را انجام می‌دهد
   return (
     <Routes>
       {/* صفحات دارای لایه استاندارد همراه با هدر و ناوبری */}

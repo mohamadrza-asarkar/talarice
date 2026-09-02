@@ -5,7 +5,7 @@ import axios from 'axios';
  */
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
+  'http://localhost:5000/api';
 
 /**
  * دریافت هدرهای احراز هویت شامل توکن کاربر
