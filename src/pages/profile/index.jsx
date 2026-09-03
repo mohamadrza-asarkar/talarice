@@ -37,10 +37,12 @@ export function ProfilePage() {
 
   const location = useLocation();
 
-  // با هر بار رفتن به پروفایل کاربری، درخواست مستقیم به سرور (/api/auth/me) ارسال می‌شود
+  // واکشی اطلاعات پروفایل فقط در صورت لزوم (در صورت عدم وجود کش)
   useEffect(() => {
-    fetchUserProfile();
-  }, [location.pathname, fetchUserProfile]);
+    if (!currentUser) {
+      fetchUserProfile();
+    }
+  }, [currentUser, fetchUserProfile]);
 
   const [activeSubTab, setActiveSubTab] = useState('orders');
   const [trackingInput, setTrackingInput] = useState('');
@@ -151,7 +153,7 @@ export function ProfilePage() {
               </div>
               <p className={styles.userPhone} dir="ltr">{currentUser?.phone || currentUser?.mobile}</p>
               <span className={styles.userBadge}>
-                {currentUser?.role === 'admin' ? 'مدیر ارشد طلا رایس' : 'مشتری طلایی شالیزار'}
+                {isAdmin ? 'مدیر ارشد طلا رایس' : 'مشتری طلایی شالیزار'}
               </span>
             </div>
           </div>

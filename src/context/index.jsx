@@ -8,6 +8,8 @@ import {
   slidersApi,
   couponsApi,
   authApi,
+  checkIsAdmin,
+  formatUser,
   reviewsApi,
   cartApi,
   adminApi,
@@ -551,16 +553,35 @@ export function AppProvider({ children }) {
     return localStorage.getItem('userId') || localStorage.getItem('tala_user_id') || '';
   });
   
-  const [currentUser, setCurrentUser] = useState(null);
-
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('tala_user') || localStorage.getItem('user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return formatUser ? formatUser(parsed) : parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
 
   const [isLoadingUser, setIsLoadingUser] = useState(Boolean(token && !currentUser));
 
-  const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.isAdmin === true));
+  const isAdmin = Boolean(
+    currentUser &&
+    (checkIsAdmin(currentUser) ||
+      currentUser.role === 'admin' ||
+      currentUser.isAdmin === true ||
+      (Array.isArray(currentUser.roles) && currentUser.roles.includes('admin')))
+  );
   const isAuthenticated = Boolean(token && (currentUser || userId));
 
-  // Live profile fetcher from backend (/api/auth/me)
-  const fetchUserProfile = useCallback(async () => {
+  // رفرنس جلوگیری از ارسال مکرر درخواست /auth/me
+  const hasFetchedProfileRef = useRef(false);
+
+  // Live profile fetcher from backend (/api/auth/me) with deduplication
+  const fetchUserProfile = useCallback(async (force = false) => {
     const activeToken = localStorage.getItem('token') || localStorage.getItem('tala_token');
     if (!activeToken) {
       setCurrentUser(null);
@@ -571,7 +592,7 @@ export function AppProvider({ children }) {
 
     try {
       setIsLoadingUser(true);
-      const res = await authApi.getProfile();
+      const res = await authApi.getProfile(force);
       if (res.success && res.user) {
         setCurrentUser(res.user);
         const uid = res.user.id || res.user._id || '';
@@ -616,8 +637,12 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     if (token) {
-      fetchUserProfile();
+      if (!hasFetchedProfileRef.current) {
+        hasFetchedProfileRef.current = true;
+        fetchUserProfile();
+      }
     } else {
+      hasFetchedProfileRef.current = false;
       setIsLoadingUser(false);
     }
   }, [token, fetchUserProfile]);
@@ -628,18 +653,22 @@ export function AppProvider({ children }) {
       localStorage.setItem('token', jwtToken);
       localStorage.setItem('tala_token', jwtToken);
     }
-    const uid = userData?.id || userData?._id || '';
+    const formatted = formatUser(userData);
+    const uid = formatted?.id || formatted?._id || userData?.id || userData?._id || '';
     if (uid) {
       setUserId(uid);
       localStorage.setItem('userId', uid);
       localStorage.setItem('tala_user_id', uid);
     }
-    if (userData) {
-      setCurrentUser(userData);
+    if (formatted) {
+      setCurrentUser(formatted);
+      localStorage.setItem('tala_user', JSON.stringify(formatted));
+      localStorage.setItem('user', JSON.stringify(formatted));
     }
   }
 
   function logout() {
+    hasFetchedProfileRef.current = false;
     authApi.logout();
     setCurrentUser(null);
     setUserId('');
@@ -658,8 +687,8 @@ export function AppProvider({ children }) {
     try {
       const res = await authApi.login({ phone, password });
       if (res.success && res.token) {
+        hasFetchedProfileRef.current = true;
         login(res.user, res.token);
-        fetchUserProfile();
         showSuccess(res.message || 'ورود با موفقیت انجام شد');
         return { success: true, user: res.user, message: res.message };
       }
@@ -682,8 +711,8 @@ export function AppProvider({ children }) {
     try {
       const res = await authApi.register({ name, phone, password, address });
       if (res.success && res.token) {
+        hasFetchedProfileRef.current = true;
         login(res.user, res.token);
-        fetchUserProfile();
         showSuccess(res.message || 'ثبت‌نام با موفقیت انجام شد');
         return { success: true, user: res.user, message: res.message };
       }

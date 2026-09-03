@@ -5,7 +5,7 @@ import ordersApi from './ordersApi';
 import blogApi from './blogApi';
 import slidersApi from './slidersApi';
 import couponsApi from './couponsApi';
-import authApi from './authApi';
+import authApi, { checkIsAdmin, formatUser } from './authApi';
 import reviewsApi from './reviewsApi';
 import categoriesApi from './categoriesApi';
 import cartApi from './cartApi';
@@ -22,6 +22,8 @@ export {
   slidersApi,
   couponsApi,
   authApi,
+  checkIsAdmin,
+  formatUser,
   reviewsApi,
   categoriesApi,
   cartApi,
