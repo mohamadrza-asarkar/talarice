@@ -1,11 +1,42 @@
 import axios from 'axios';
 import { parseApiError } from '../utils/errorHandler';
 
+/**
+ * دریافت آدرس پایه وب‌سرویس بک‌اند (API Base URL)
+ * مناسب برای اجرا روی ترموکس (Termux)، لوکال‌هاست یا محیط پروداکشن
+ */
+export function getApiBaseUrl() {
+  // ۱. بررسی آدرس سفارشی ذخیره شده در حافظه مرورگر
+  if (typeof localStorage !== 'undefined') {
+    const custom = localStorage.getItem('tala_api_url');
+    // پاکسازی آدرس‌های قدیمی کلودران که دیگر در دسترس نیستند
+    if (custom && (custom.includes('rpvkewlvjilhjnoamjgjvq') || !custom.trim())) {
+      localStorage.removeItem('tala_api_url');
+    } else if (custom && custom.trim()) {
+      return custom.trim().replace(/\/+$/, '');
+    }
+  }
+
+  // ۲. بررسی متغیر محیطی VITE_API_BASE_URL
+  const envUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envUrl && typeof envUrl === 'string' && envUrl.trim() && !envUrl.includes('rpvkewlvjilhjnoamjgjvq')) {
+    return envUrl.trim().replace(/\/+$/, '');
+  }
+
+  // ۳. در محیط مرورگر، اتصال پویا به پورت ۵۰۰۰ همان هاست (مناسب ترموکس و شبکه محلی گوشی)
+  if (typeof window !== 'undefined' && window.location) {
+    const hostname = window.location.hostname || 'localhost';
+    return `http://${hostname}:5000/api`;
+  }
+
+  return 'http://localhost:5000/api';
+}
+
 // Default backend Base URL
-export const DEFAULT_API_BASE_URL = 'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
+export const DEFAULT_API_BASE_URL = 'http://localhost:5000/api';
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || DEFAULT_API_BASE_URL,
+  baseURL: getApiBaseUrl(),
   headers: {
     'Content-Type': 'application/json'
   },
@@ -13,13 +44,10 @@ const client = axios.create({
   withCredentials: true
 });
 
-// Request interceptor: attach token & custom base URL if configured
+// Request interceptor: attach token & dynamic base URL
 client.interceptors.request.use(
   function (config) {
-    const customUrl = localStorage.getItem('tala_api_url');
-    if (customUrl && customUrl.trim()) {
-      config.baseURL = customUrl.trim();
-    }
+    config.baseURL = getApiBaseUrl();
     const token = localStorage.getItem('tala_token') || localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
