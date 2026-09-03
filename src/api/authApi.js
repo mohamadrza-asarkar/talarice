@@ -8,31 +8,14 @@ export { getApiBaseUrl };
  */
 export const API_BASE_URL = getApiBaseUrl();
 
-const authClient = axios.create({
-  baseURL: getApiBaseUrl(),
-  headers: {
-    'Content-Type': 'application/json'
-  },
-  timeout: 15000,
-  withCredentials: true
-});
-
-authClient.interceptors.request.use(config => {
-  config.baseURL = getApiBaseUrl();
-  const token = localStorage.getItem('token') || localStorage.getItem('tala_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
 /**
  * دریافت هدرهای احراز هویت شامل توکن کاربر
  */
 export function getAuthHeaders() {
   const token =
-    localStorage.getItem('token') ||
-    localStorage.getItem('tala_token');
+    typeof localStorage !== 'undefined'
+      ? (localStorage.getItem('token') || localStorage.getItem('tala_token'))
+      : null;
 
   const headers = {
     'Content-Type': 'application/json'
@@ -79,8 +62,7 @@ export const authApi = {
   async register(userData) {
     try {
       const response = await axios.post(`${getApiBaseUrl()}/auth/register`, userData, {
-        headers: getAuthHeaders(),
-        withCredentials: true
+        headers: getAuthHeaders()
       });
 
       const responseData = response.data || {};
@@ -142,8 +124,7 @@ export const authApi = {
   async login(credentials) {
     try {
       const response = await axios.post(`${getApiBaseUrl()}/auth/login`, credentials, {
-        headers: getAuthHeaders(),
-        withCredentials: true
+        headers: getAuthHeaders()
       });
 
       const responseData = response.data || {};
@@ -214,8 +195,7 @@ export const authApi = {
       }
 
       const response = await axios.get(`${getApiBaseUrl()}/auth/me`, {
-        headers: getAuthHeaders(),
-        withCredentials: true
+        headers: getAuthHeaders()
       });
 
       const responseData = response.data || {};
@@ -277,8 +257,7 @@ export const authApi = {
   async updateProfile(profileData) {
     try {
       const response = await axios.put(`${getApiBaseUrl()}/auth/profile`, profileData, {
-        headers: getAuthHeaders(),
-        withCredentials: true
+        headers: getAuthHeaders()
       });
 
       const responseData = response.data || {};
@@ -327,8 +306,7 @@ export const authApi = {
         newPassword: passwordData.newPassword
       };
       const response = await axios.put(`${getApiBaseUrl()}/auth/change-password`, payload, {
-        headers: getAuthHeaders(),
-        withCredentials: true
+        headers: getAuthHeaders()
       });
 
       const responseData = response.data || {};
