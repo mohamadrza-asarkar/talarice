@@ -4,15 +4,24 @@ import { parseApiError } from '../utils/errorHandler';
 export const healthApi = {
   /**
    * Check Backend Server Health
-   * Endpoint: GET /api/health
-   * Handles various formats:
-   * - { status: "online", database: { isConnected: true }, uptime: 19 }
-   * - { status: "healthy", ... }
-   * - { status: "ok", ... }
+   * Endpoints:
+   * 1. GET /api/docs/health (As documented in System & Labs spec)
+   * 2. GET /api/health (Fallback standard health endpoint)
    */
   async checkHealth() {
     try {
-      const res = await client.get('/health');
+      let res = null;
+      try {
+        res = await client.get('/docs/health');
+      } catch (docErr) {
+        // If /docs/health returns 404 or other error, fallback to /health
+        if (docErr.statusCode === 404 || !res) {
+          res = await client.get('/health');
+        } else {
+          throw docErr;
+        }
+      }
+
       const statusStr = String(res?.status || '').toLowerCase();
       const isDbConnected = res?.database?.isConnected === true || res?.database?.connectionState === 'connected' || res?.isConnected === true;
       

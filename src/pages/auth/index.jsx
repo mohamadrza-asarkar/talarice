@@ -17,10 +17,10 @@ export function AuthPage() {
   // اگر کاربر از قبل وارد شده باشد، به صفحه مقصد یا پروفایل هدایت شود
   const targetPath = location.state?.from?.pathname || '/profile';
   useEffect(() => {
-    if (isAuthenticated && currentUser) {
+    if (isAuthenticated) {
       navigate(targetPath, { replace: true });
     }
-  }, [isAuthenticated, currentUser, navigate, targetPath]);
+  }, [isAuthenticated, navigate, targetPath]);
 
   const [formData, setFormData] = useState({
     name: '',

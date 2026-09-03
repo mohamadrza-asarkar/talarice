@@ -8,18 +8,20 @@ export function ProtectedRoute({ children, requireAdmin = false }) {
 
   if (isLoadingUser) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
-        <p>در حال بررسی هویت...</p>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', height: '60vh', gap: '0.75rem', color: '#fef08a' }}>
+        <i className="fa-solid fa-wheat-awn fa-spin text-2xl text-amber-400" />
+        <p style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>در حال بررسی دسترسی...</p>
       </div>
     );
   }
 
-  if (!isAuthenticated) {
-    return <Navigate to="/auth" state={{ from: location }} replace />;
+  if (requireAdmin) {
+    // Let Admin component render its dedicated AdminAuthModal if not admin
+    return children;
   }
 
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/profile" replace />;
+  if (!isAuthenticated) {
+    return <Navigate to="/auth" state={{ from: location }} replace />;
   }
 
   return children;

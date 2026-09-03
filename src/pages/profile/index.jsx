@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import {
   Package,
   MapPin,
@@ -14,7 +14,8 @@ import {
   Image as ImageIcon,
   AlertCircle,
   ShieldCheck,
-  ArrowLeft
+  ArrowLeft,
+  RotateCw
 } from 'lucide-react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
@@ -29,8 +30,17 @@ export function ProfilePage() {
     getOrderStatusInfo,
     trackOrder,
     uploadOrderReceipt,
-    showToast
+    showToast,
+    fetchUserProfile,
+    isLoadingUser
   } = useApp();
+
+  const location = useLocation();
+
+  // با هر بار رفتن به پروفایل کاربری، درخواست مستقیم به سرور (/api/auth/me) ارسال می‌شود
+  useEffect(() => {
+    fetchUserProfile();
+  }, [location.pathname, fetchUserProfile]);
 
   const [activeSubTab, setActiveSubTab] = useState('orders');
   const [trackingInput, setTrackingInput] = useState('');
@@ -128,10 +138,17 @@ export function ProfilePage() {
         <div className={styles.headerTop}>
           <div className={styles.userInfo}>
             <div className={styles.avatar}>
-              {currentUser?.name ? currentUser.name.charAt(0) : 'م'}
+              {currentUser?.name ? currentUser.name.charAt(0) : (isLoadingUser ? '...' : 'م')}
             </div>
             <div>
-              <h2 className={styles.userName}>{currentUser?.name || 'مشتری طلا رایس'}</h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <h2 className={styles.userName}>
+                  {currentUser?.name || (isLoadingUser ? 'در حال دریافت اطلاعات...' : 'مشتری طلا رایس')}
+                </h2>
+                {isLoadingUser && (
+                  <RotateCw size={14} className="animate-spin text-amber-500" title="در حال همگام‌سازی با سرور..." />
+                )}
+              </div>
               <p className={styles.userPhone} dir="ltr">{currentUser?.phone || currentUser?.mobile}</p>
               <span className={styles.userBadge}>
                 {currentUser?.role === 'admin' ? 'مدیر ارشد طلا رایس' : 'مشتری طلایی شالیزار'}

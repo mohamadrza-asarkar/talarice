@@ -7,6 +7,23 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
   'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
 
+const authClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  timeout: 15000,
+  withCredentials: true
+});
+
+authClient.interceptors.request.use(config => {
+  const token = localStorage.getItem('token') || localStorage.getItem('tala_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 /**
  * دریافت هدرهای احراز هویت شامل توکن کاربر
  */
@@ -60,7 +77,8 @@ export const authApi = {
   async register(userData) {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, userData, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
 
       const responseData = response.data || {};
@@ -68,17 +86,20 @@ export const authApi = {
       const rawUser = responseData.user || responseData.data?.user || responseData.data;
       const user = formatUser(rawUser);
 
-      // ذخیره توکن و مشخصات در localStorage برای ورود خودکار
+      // ذخیره منحصراً توکن و شناسه کاربر (ID) در localStorage
       if (token) {
         localStorage.setItem('token', token);
         localStorage.setItem('tala_token', token);
       }
-      if (user) {
-        if (user.id) {
-          localStorage.setItem('userId', user.id);
-          localStorage.setItem('tala_user_id', user.id);
-        }
+      const uid = user?.id || rawUser?.id || rawUser?._id;
+      if (uid) {
+        localStorage.setItem('userId', uid);
+        localStorage.setItem('tala_user_id', uid);
       }
+      // عدم ذخیره هرگونه شیء کاربر در localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('tala_user');
+      localStorage.removeItem('tala_auth');
 
       return {
         success: true,
@@ -119,7 +140,8 @@ export const authApi = {
   async login(credentials) {
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, credentials, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
 
       const responseData = response.data || {};
@@ -127,17 +149,20 @@ export const authApi = {
       const rawUser = responseData.user || responseData.data?.user || responseData.data;
       const user = formatUser(rawUser);
 
-      // ذخیره توکن و مشخصات در localStorage برای ماندگاری و ورود خودکار
+      // ذخیره منحصراً توکن و شناسه کاربر (ID) در localStorage
       if (token) {
         localStorage.setItem('token', token);
         localStorage.setItem('tala_token', token);
       }
-      if (user) {
-        if (user.id) {
-          localStorage.setItem('userId', user.id);
-          localStorage.setItem('tala_user_id', user.id);
-        }
+      const uid = user?.id || rawUser?.id || rawUser?._id;
+      if (uid) {
+        localStorage.setItem('userId', uid);
+        localStorage.setItem('tala_user_id', uid);
       }
+      // عدم ذخیره هرگونه شیء کاربر در localStorage
+      localStorage.removeItem('user');
+      localStorage.removeItem('tala_user');
+      localStorage.removeItem('tala_auth');
 
       return {
         success: true,
@@ -187,19 +212,22 @@ export const authApi = {
       }
 
       const response = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
 
       const responseData = response.data || {};
       const rawUser = responseData.user || responseData.data?.user || responseData.data || responseData;
       const user = formatUser(rawUser);
 
-      if (user && (user.id || user.name || user.phone)) {
-        if (user.id) {
-          localStorage.setItem('userId', user.id);
-          localStorage.setItem('tala_user_id', user.id);
-        }
+      const uid = user?.id || rawUser?.id || rawUser?._id;
+      if (uid) {
+        localStorage.setItem('userId', uid);
+        localStorage.setItem('tala_user_id', uid);
       }
+      localStorage.removeItem('user');
+      localStorage.removeItem('tala_user');
+      localStorage.removeItem('tala_auth');
 
       return {
         success: true,
@@ -247,7 +275,8 @@ export const authApi = {
   async updateProfile(profileData) {
     try {
       const response = await axios.put(`${API_BASE_URL}/auth/profile`, profileData, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
 
       const responseData = response.data || {};
@@ -291,8 +320,13 @@ export const authApi = {
    */
   async changePassword(passwordData) {
     try {
-      const response = await axios.put(`${API_BASE_URL}/auth/change-password`, passwordData, {
-        headers: getAuthHeaders()
+      const payload = {
+        oldPassword: passwordData.oldPassword || passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      };
+      const response = await axios.put(`${API_BASE_URL}/auth/change-password`, payload, {
+        headers: getAuthHeaders(),
+        withCredentials: true
       });
 
       const responseData = response.data || {};

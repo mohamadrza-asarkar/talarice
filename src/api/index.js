@@ -11,6 +11,7 @@ import categoriesApi from './categoriesApi';
 import cartApi from './cartApi';
 import adminApi from './adminApi';
 import healthApi from './healthApi';
+import docsApi from './docsApi';
 
 export {
   client,
@@ -25,7 +26,8 @@ export {
   categoriesApi,
   cartApi,
   adminApi,
-  healthApi
+  healthApi,
+  docsApi
 };
 
 export default {
@@ -41,5 +43,6 @@ export default {
   categories: categoriesApi,
   cart: cartApi,
   admin: adminApi,
-  health: healthApi
+  health: healthApi,
+  docs: docsApi
 };

@@ -9,13 +9,19 @@ import Auth from './pages/Auth.jsx';
 import Admin from './pages/Admin.jsx';
 import { Layout, SimpleLayout } from './components/Layout.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
+import { InitialLoadingScreen } from './components/maintenanceScreen/index.jsx';
 import { useApp } from './context/index.jsx';
-// No maintenance screens
 
 function App() {
-  const { serverHealth, checkHealth } = useApp();
+  const { serverHealth } = useApp();
 
-  // در صورتی که سرور پاسخگو و سالم بود، بدون هیچ لودینگ یا مانعی برنامه کارش را انجام می‌دهد
+  // لودینگ منحصراً مطابق با پاسخ API سلامتی کار می‌کند:
+  // اگر سرور پاسخ سالم داد (healthy)، لودینگ رندر نمی‌شود و برنامه لود می‌شود.
+  // در غیر این صورت (عدم اتصال یا خطا)، لودینگ به طور کامل رندر می‌شود.
+  if (serverHealth.status !== 'healthy') {
+    return <InitialLoadingScreen />;
+  }
+
   return (
     <Routes>
       {/* صفحات دارای لایه استاندارد همراه با هدر و ناوبری */}

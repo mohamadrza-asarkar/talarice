@@ -4,15 +4,16 @@ import { parseApiError } from '../utils/errorHandler';
 function parseProduct(p) {
   if (!p) return null;
   const price = typeof p.price === 'number' ? p.price : Number(p.price) || 0;
-  const discount = typeof p.discount === 'number' ? p.discount : (typeof p.discountPercent === 'number' ? p.discountPercent : 0);
-  const finalPrice = p.finalPrice ? Number(p.finalPrice) : (discount > 0 ? Math.round(price * (1 - discount / 100)) : price);
-  const oldPrice = p.oldPrice ? Number(p.oldPrice) : (discount > 0 ? price : null);
-  const stock = p.count !== undefined ? Number(p.count) : (p.countInStock !== undefined ? Number(p.countInStock) : (p.stock ?? 0));
+  const originalPrice = typeof p.originalPrice === 'number' ? p.originalPrice : (Number(p.originalPrice) || price);
+  const discount = typeof p.discountPercent === 'number' ? p.discountPercent : (typeof p.discount === 'number' ? p.discount : 0);
+  const finalPrice = p.finalPrice ? Number(p.finalPrice) : price;
+  const oldPrice = p.oldPrice ? Number(p.oldPrice) : (originalPrice > price ? originalPrice : null);
+  const stock = p.countInStock !== undefined ? Number(p.countInStock) : (p.count !== undefined ? Number(p.count) : (p.stock ?? 0));
   const inStock = p.isAvailable !== undefined ? Boolean(p.isAvailable) : (stock > 0);
   const image = p.fullImageUrl || p.imageUrl || p.image || (Array.isArray(p.images) ? p.images[0] : '');
 
   const id = String(p._id || p.id || '');
-  const title = p.title || p.name || '';
+  const title = p.name || p.title || '';
 
   return {
     id,
@@ -20,15 +21,18 @@ function parseProduct(p) {
     title,
     name: title,
     description: p.description || '',
-    price: discount > 0 && p.finalPrice ? finalPrice : price,
-    rawPrice: price,
-    oldPrice: oldPrice || (discount > 0 ? price : null),
+    price: price,
+    rawPrice: originalPrice,
+    originalPrice: originalPrice,
+    oldPrice: oldPrice,
     discount: discount,
     discountPercent: discount,
     finalPrice: finalPrice,
     stock: stock,
     count: stock,
+    countInStock: stock,
     inStock: inStock,
+    isAvailable: inStock,
     category: p.category || 'all',
     image: image,
     imageUrl: image,
@@ -37,8 +41,8 @@ function parseProduct(p) {
     farmer: p.farmer || '',
     cookingRatio: p.cookingRatio || '',
     rating: Number(p.rating || 0),
-    reviewCount: Number(p.numReviews || p.reviewCount || 0),
-    numReviews: Number(p.numReviews || p.reviewCount || 0),
+    reviewCount: Number(p.numReviews || p.reviewCount || (Array.isArray(p.reviews) ? p.reviews.length : 0)),
+    numReviews: Number(p.numReviews || p.reviewCount || (Array.isArray(p.reviews) ? p.reviews.length : 0)),
     gallery: Array.isArray(p.gallery) && p.gallery.length ? p.gallery : (image ? [image] : []),
     features: Array.isArray(p.features) ? p.features : [],
     cookingTime: p.cookingTime || '',
@@ -46,6 +50,7 @@ function parseProduct(p) {
     grainType: p.grainType || '',
     isFeatured: Boolean(p.isFeatured || p.isAmazing),
     isAmazing: Boolean(p.isAmazing || p.isFeatured || p.isDeal),
+    amazingExpiresAt: p.amazingExpiresAt || null,
     isDeal: Boolean(p.isDeal || p.isAmazing),
     createdAt: p.createdAt || ''
   };

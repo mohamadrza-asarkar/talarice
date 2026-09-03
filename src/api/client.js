@@ -9,7 +9,8 @@ const client = axios.create({
   headers: {
     'Content-Type': 'application/json'
   },
-  timeout: 15000
+  timeout: 15000,
+  withCredentials: true
 });
 
 // Request interceptor: attach token & custom base URL if configured

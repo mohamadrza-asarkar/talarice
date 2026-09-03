@@ -7,6 +7,10 @@ import styles from './style.module.css';
 export function BestSellers() {
   const { products } = useApp();
 
+  if (!products?.length) {
+    return null;
+  }
+
   return (
     <section className={styles.section}>
       <header className={styles.headerRow}>

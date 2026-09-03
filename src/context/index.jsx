@@ -242,14 +242,14 @@ export function AppProvider({ children }) {
     navigate(target);
   }
 
-  // Core Data states
+  // Core Data states - purely loaded from API
   const [products, setProducts] = useState([]);
   const [amazingProducts, setAmazingProducts] = useState([]);
   const [articles, setArticles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [heroSlides, setHeroSlides] = useState([]);
-  const [isConnecting, setIsConnecting] = useState(true);
+  const isConnecting = serverHealth.status !== 'healthy';
   const [connectionError, setConnectionError] = useState(null);
 
   const [categories, setCategories] = useState([]);
@@ -259,130 +259,148 @@ export function AppProvider({ children }) {
 
   // Fetch all primary data from backend API to populate context
   const fetchRealData = useCallback(async () => {
-    setIsConnecting(true);
     let hasProdError = false;
     let prodErrorMessage = '';
     let prodStatusCode = null;
 
-    // 1. Fetch Products
     try {
-      const prodRes = await productsApi.getProducts();
-      if (prodRes?.data && Array.isArray(prodRes.data)) {
-        setProducts(prodRes.data);
+      // 1. Fetch Products
+      try {
+        const prodRes = await productsApi.getProducts();
+        const prodList = (prodRes?.data && Array.isArray(prodRes.data))
+          ? prodRes.data
+          : (Array.isArray(prodRes) ? prodRes : []);
+        setProducts(prodList);
+        const deals = prodList.filter(p => p.isAmazing || p.isDeal);
+        setAmazingProducts(deals);
+      } catch (err) {
+        const parsed = parseApiError(err);
+        hasProdError = true;
+        prodErrorMessage = parsed.message;
+        prodStatusCode = parsed.statusCode;
+        setProducts([]);
+        setAmazingProducts([]);
       }
-    } catch (err) {
-      const parsed = parseApiError(err);
-      hasProdError = true;
-      prodErrorMessage = parsed.message;
-      prodStatusCode = parsed.statusCode;
-    }
 
-    // 2. Fetch Amazing Products
-    try {
-      const amazingRes = await amazingProductsApi.getAmazingProducts();
-      if (amazingRes?.data && Array.isArray(amazingRes.data)) {
-        setAmazingProducts(amazingRes.data);
-      }
-    } catch (err) {
-      // Keep default or fallback
-    }
-
-    // 3. Fetch Categories
-    try {
-      const catRes = await categoriesApi.getCategories();
-      if (catRes?.data && Array.isArray(catRes.data) && catRes.data.length > 0) {
-        setCategories(catRes.data);
-      }
-    } catch (err) {
-      // Keep default categories
-    }
-
-    // 4. Fetch Home Meta (Trust items, brand story, test tips)
-    try {
-      const metaRes = await categoriesApi.getHomeMeta();
-      if (metaRes?.success) {
-        if (Array.isArray(metaRes.trustItems) && metaRes.trustItems.length > 0) {
-          setTrustItems(metaRes.trustItems);
+      // 2. Fetch Amazing Products
+      try {
+        const amazingRes = await amazingProductsApi.getAmazingProducts();
+        const amazingList = (amazingRes?.data && Array.isArray(amazingRes.data))
+          ? amazingRes.data
+          : (Array.isArray(amazingRes) ? amazingRes : []);
+        if (amazingList.length > 0) {
+          setAmazingProducts(amazingList);
         }
-        if (metaRes.brandStory) {
-          if (typeof metaRes.brandStory === 'object') {
-            setBrandStory(metaRes.brandStory);
-          } else if (typeof metaRes.brandStory === 'string') {
-            setBrandStory(prev => ({ ...prev, description: metaRes.brandStory }));
+      } catch (err) {
+        // keep derived deals from products
+      }
+
+      // 3. Fetch Categories
+      try {
+        const catRes = await categoriesApi.getCategories();
+        const catList = (catRes?.data && Array.isArray(catRes.data))
+          ? catRes.data
+          : (Array.isArray(catRes) ? catRes : []);
+        setCategories(catList);
+      } catch (err) {
+        setCategories([]);
+      }
+
+      // 4. Fetch Home Meta (Trust items, brand story, test tips)
+      try {
+        const metaRes = await categoriesApi.getHomeMeta();
+        if (metaRes?.success || metaRes?.data) {
+          const metaData = metaRes.data || metaRes;
+          if (Array.isArray(metaData.trustItems)) {
+            setTrustItems(metaData.trustItems);
+          }
+          if (metaData.brandStory) {
+            if (typeof metaData.brandStory === 'object') {
+              setBrandStory(metaData.brandStory);
+            } else if (typeof metaData.brandStory === 'string') {
+              setBrandStory({ description: metaData.brandStory });
+            }
+          }
+          if (Array.isArray(metaData.testTips)) {
+            setTestTips(metaData.testTips);
           }
         }
-        if (Array.isArray(metaRes.testTips) && metaRes.testTips.length > 0) {
-          setTestTips(metaRes.testTips);
-        }
+      } catch (err) {
+        // Keep empty
       }
-    } catch (err) {
-      // Keep default meta
-    }
 
-    // 5. Fetch Sliders
-    try {
-      const sliderRes = await slidersApi.getSliders();
-      if (sliderRes?.data && Array.isArray(sliderRes.data)) {
-        setHeroSlides(sliderRes.data);
+      // 5. Fetch Sliders
+      try {
+        const sliderRes = await slidersApi.getSliders();
+        const sliderList = (sliderRes?.data && Array.isArray(sliderRes.data))
+          ? sliderRes.data
+          : (Array.isArray(sliderRes) ? sliderRes : []);
+        setHeroSlides(sliderList);
+      } catch (err) {
+        setHeroSlides([]);
       }
-    } catch (err) {
-      // Keep default slides
-    }
 
-    // 6. Fetch Articles / Blog
-    try {
-      const artRes = await blogApi.getArticles();
-      if (artRes?.data && Array.isArray(artRes.data)) {
-        setArticles(artRes.data);
+      // 6. Fetch Articles / Blog
+      try {
+        const artRes = await blogApi.getArticles();
+        const artList = (artRes?.data && Array.isArray(artRes.data))
+          ? artRes.data
+          : (Array.isArray(artRes) ? artRes : []);
+        setArticles(artList);
+      } catch (err) {
+        setArticles([]);
       }
-    } catch (err) {
-      // Keep articles
-    }
 
-    // 7. Fetch Coupons
-    try {
-      const couponRes = await couponsApi.getCoupons();
-      if (couponRes?.data && Array.isArray(couponRes.data)) {
-        setCoupons(couponRes.data);
+      // 7. Fetch Coupons
+      try {
+        const couponRes = await couponsApi.getCoupons();
+        const couponList = (couponRes?.data && Array.isArray(couponRes.data))
+          ? couponRes.data
+          : (Array.isArray(couponRes) ? couponRes : []);
+        setCoupons(couponList);
+      } catch (err) {
+        setCoupons([]);
       }
-    } catch (err) {
-      // Keep coupons
-    }
 
-    // 8. Fetch Reviews
-    try {
-      const revRes = await reviewsApi.getReviews();
-      if (revRes?.data && Array.isArray(revRes.data)) {
-        setReviews(revRes.data);
+      // 8. Fetch Reviews
+      try {
+        const revRes = await reviewsApi.getReviews();
+        const revList = (revRes?.data && Array.isArray(revRes.data))
+          ? revRes.data
+          : (Array.isArray(revRes) ? revRes : []);
+        setReviews(revList);
+      } catch (err) {
+        setReviews([]);
       }
-    } catch (err) {
-      // Keep reviews
-    }
 
-    // 9. Fetch Orders
-    try {
-      const orderRes = await ordersApi.getOrders();
-      if (orderRes?.data && Array.isArray(orderRes.data)) {
-        setOrders(orderRes.data);
+      // 9. Fetch Orders
+      try {
+        const orderRes = await ordersApi.getOrders();
+        const orderList = (orderRes?.data && Array.isArray(orderRes.data))
+          ? orderRes.data
+          : (Array.isArray(orderRes) ? orderRes : []);
+        setOrders(orderList);
+      } catch (err) {
+        // Keep empty for guest
       }
-    } catch (err) {
-      // Ignore guest orders error
-    }
 
-    // Connection Error summary
-    if (hasProdError) {
-      const statusLabel = prodStatusCode ? `[کد خطا: ${prodStatusCode}] ` : '';
-      setConnectionError(`${statusLabel}${prodErrorMessage}`);
-    } else {
-      setConnectionError(null);
+      // Connection Error summary
+      if (hasProdError) {
+        const statusLabel = prodStatusCode ? `[کد خطا: ${prodStatusCode}] ` : '';
+        setConnectionError(`${statusLabel}${prodErrorMessage}`);
+      } else {
+        setConnectionError(null);
+      }
+    } catch {
+      // Handled in sub-fetches
     }
-
-    setIsConnecting(false);
   }, []);
 
-  // Populate context immediately on mount/render and on server health changes
+  // Fetch real data whenever the server health becomes healthy
   useEffect(() => {
-    fetchRealData();
+    if (serverHealth.status === 'healthy') {
+      fetchRealData();
+    }
   }, [fetchRealData, serverHealth.status]);
 
   // Search & Filter state
@@ -961,7 +979,9 @@ export function AppProvider({ children }) {
         isLoadingUser,
         fetchUserProfile,
         refreshProfile: fetchUserProfile,
-        usersCount: users.length,
+        usersCount: 0,
+        users: [],
+        setUsers: () => {},
         login,
         logout,
         loginUser,

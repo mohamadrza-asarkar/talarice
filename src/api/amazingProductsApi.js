@@ -4,9 +4,11 @@ import { parseApiError } from '../utils/errorHandler';
 function parseAmazingProduct(p) {
   if (!p) return null;
   const price = typeof p.price === 'number' ? p.price : Number(p.price) || 0;
-  const discount = typeof p.discount === 'number' ? p.discount : (typeof p.discountPercent === 'number' ? p.discountPercent : 0);
-  const finalPrice = p.finalPrice ? Number(p.finalPrice) : (discount > 0 ? Math.round(price * (1 - discount / 100)) : price);
-  const stock = p.count !== undefined ? Number(p.count) : (p.stock ?? 0);
+  const originalPrice = typeof p.originalPrice === 'number' ? p.originalPrice : (Number(p.originalPrice) || price);
+  const discount = typeof p.discountPercent === 'number' ? p.discountPercent : (typeof p.discount === 'number' ? p.discount : 0);
+  const finalPrice = p.finalPrice ? Number(p.finalPrice) : price;
+  const oldPrice = p.oldPrice ? Number(p.oldPrice) : (originalPrice > price ? originalPrice : null);
+  const stock = p.countInStock !== undefined ? Number(p.countInStock) : (p.count !== undefined ? Number(p.count) : (p.stock ?? 0));
   const image = p.fullImageUrl || p.imageUrl || p.image || '';
   const id = String(p._id || p.id || '');
 
@@ -17,6 +19,8 @@ function parseAmazingProduct(p) {
     name: p.title || p.name || '',
     description: p.description || '',
     price: price,
+    originalPrice: originalPrice,
+    oldPrice: oldPrice,
     discount: discount,
     discountPercent: discount,
     finalPrice: finalPrice,
@@ -28,6 +32,7 @@ function parseAmazingProduct(p) {
     rating: Number(p.rating || 0),
     numReviews: Number(p.numReviews || 0),
     isAmazing: true,
+    amazingExpiresAt: p.amazingExpiresAt || null,
     createdAt: p.createdAt || ''
   };
 }
@@ -39,7 +44,16 @@ export const amazingProductsApi = {
    */
   async getAmazingProducts() {
     try {
-      const response = await client.get('/amazing-products');
+      let response;
+      try {
+        response = await client.get('/amazing-products');
+      } catch (err) {
+        if (err.statusCode === 404) {
+          response = await client.get('/products/amazing');
+        } else {
+          throw err;
+        }
+      }
       let list = [];
       if (Array.isArray(response)) {
         list = response;
