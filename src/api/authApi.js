@@ -5,7 +5,7 @@ import axios from 'axios';
  */
 export const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL ||
-  'http://localhost:5000/api';
+  'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
 
 /**
  * دریافت هدرهای احراز هویت شامل توکن کاربر
@@ -32,7 +32,7 @@ export function getAuthHeaders() {
 function formatUser(userData) {
   if (!userData) return null;
   const role = String(userData.role || '').toLowerCase().trim();
-  const isAdmin = role === 'admin' || userData.isAdmin === true;
+  const isAdmin = role === 'admin' || role === 'superadmin' || role === 'manager' || userData.isAdmin === true;
 
   return {
     id: String(userData._id || userData.id || ''),

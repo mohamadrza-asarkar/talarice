@@ -415,7 +415,7 @@ export function AppProvider({ children }) {
   // Orders state
   const [orders, setOrders] = useState(() => {
     try {
-      const saved = localStorage.getItem('tala_orders');
+      const saved = null;
       if (saved) {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
@@ -428,7 +428,7 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     try {
-      localStorage.setItem('tala_orders', JSON.stringify(orders));
+      // removed local storage for orders
     } catch {}
   }, [orders]);
 
@@ -535,24 +535,6 @@ export function AppProvider({ children }) {
   
   const [currentUser, setCurrentUser] = useState(null);
 
-  const [users, setUsers] = useState(() => {
-    try {
-      const saved = localStorage.getItem('tala_users_list');
-      if (saved) return JSON.parse(saved);
-    } catch {}
-    return [
-      {
-        id: 'u_admin',
-        _id: 'u_admin',
-        name: 'مدیر ارشد طلا رایس',
-        phone: '09171234567',
-        role: 'admin',
-        address: 'فارس، شیراز، دفتر مرکزی طلا رایس',
-        isActive: true,
-        isAdmin: true
-      }
-    ];
-  });
 
   const [isLoadingUser, setIsLoadingUser] = useState(Boolean(token && !currentUser));
 
@@ -636,15 +618,6 @@ export function AppProvider({ children }) {
     }
     if (userData) {
       setCurrentUser(userData);
-      setUsers(prev => {
-        const exists = prev.some(u => (u.id === uid || u._id === uid || u.phone === userData.phone));
-        if (exists) {
-          return prev.map(u => (u.id === uid || u._id === uid || u.phone === userData.phone ? { ...u, ...userData } : u));
-        }
-        const updated = [userData, ...prev];
-        try { localStorage.setItem('tala_users_list', JSON.stringify(updated)); } catch {}
-        return updated;
-      });
     }
   }
 
@@ -988,8 +961,6 @@ export function AppProvider({ children }) {
         isLoadingUser,
         fetchUserProfile,
         refreshProfile: fetchUserProfile,
-        users,
-        setUsers,
         usersCount: users.length,
         login,
         logout,

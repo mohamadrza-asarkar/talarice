@@ -193,7 +193,7 @@ export function UsersTab() {
         });
         setUserList(updatedList);
         if (setUsers) setUsers(updatedList);
-        try { localStorage.setItem('tala_users_list', JSON.stringify(updatedList)); } catch {}
+        // removed local storage
 
         showSuccess(`اطلاعات کاربر "${payload.name}" با موفقیت به‌روزرسانی شد.`);
         setIsModalOpen(false);
@@ -222,7 +222,7 @@ export function UsersTab() {
         const updatedList = [created, ...userList];
         setUserList(updatedList);
         if (setUsers) setUsers(updatedList);
-        try { localStorage.setItem('tala_users_list', JSON.stringify(updatedList)); } catch {}
+        // removed local storage
 
         showSuccess(`کاربر جدید "${payload.name}" با موفقیت به سامانه افزوده شد.`);
         setIsModalOpen(false);
@@ -250,7 +250,7 @@ export function UsersTab() {
       const updatedList = userList.filter(u => u._id !== userId && u.id !== userId);
       setUserList(updatedList);
       if (setUsers) setUsers(updatedList);
-      try { localStorage.setItem('tala_users_list', JSON.stringify(updatedList)); } catch {}
+      // removed local storage
 
       showSuccess(`حساب کاربری "${user.name || 'کاربر'}" با موفقیت حذف گردید.`);
       setDeleteConfirmUser(null);
@@ -266,7 +266,7 @@ export function UsersTab() {
       const updatedList = userList.map(u => (u._id === userId || u.id === userId ? { ...u, isActive: !u.isActive } : u));
       setUserList(updatedList);
       if (setUsers) setUsers(updatedList);
-      try { localStorage.setItem('tala_users_list', JSON.stringify(updatedList)); } catch {}
+      // removed local storage
       showSuccess(`وضعیت حساب کاربری "${user.name || 'کاربر'}" تغییر یافت.`);
     } catch (err) {
       showError(err, 'تغییر وضعیت کاربر');
@@ -280,7 +280,7 @@ export function UsersTab() {
       const updatedList = userList.map(u => (u._id === userId || u.id === userId ? { ...u, role: newRole, isAdmin: newRole === 'admin' } : u));
       setUserList(updatedList);
       if (setUsers) setUsers(updatedList);
-      try { localStorage.setItem('tala_users_list', JSON.stringify(updatedList)); } catch {}
+      // removed local storage
       showSuccess(`سطح دسترسی کاربر "${user.name || ''}" به "${newRole === 'admin' ? 'مدیر سیستم' : 'مشتری عادی'}" تغییر یافت.`);
     } catch (err) {
       showError(err, 'تغییر نقش کاربر');
