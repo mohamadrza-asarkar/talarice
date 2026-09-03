@@ -37,13 +37,6 @@ export function ProfilePage() {
 
   const location = useLocation();
 
-  // واکشی اطلاعات پروفایل فقط در صورت لزوم (در صورت عدم وجود کش)
-  useEffect(() => {
-    if (!currentUser) {
-      fetchUserProfile();
-    }
-  }, [currentUser, fetchUserProfile]);
-
   const [activeSubTab, setActiveSubTab] = useState('orders');
   const [trackingInput, setTrackingInput] = useState('');
   const [trackingResult, setTrackingResult] = useState(null);

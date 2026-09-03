@@ -22,7 +22,11 @@ export function getAuthHeaders() {
   };
 
   if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+    const cleanToken = token.startsWith('Bearer ') ? token.slice(7).trim() : token.trim();
+    headers['Authorization'] = `Bearer ${cleanToken}`;
+    headers['authorization'] = `Bearer ${cleanToken}`;
+    headers['x-auth-token'] = cleanToken;
+    headers['token'] = cleanToken;
   }
 
   return headers;
@@ -34,8 +38,19 @@ export function getAuthHeaders() {
 export function checkIsAdmin(userData) {
   if (!userData || typeof userData !== 'object') return false;
 
-  // ۱. فیلدهای بولی صریح
-  if (userData.isAdmin === true || userData.is_admin === true) return true;
+  // ۱. فیلدهای بولی یا عددی صریح
+  if (
+    userData.isAdmin === true ||
+    userData.isAdmin === 1 ||
+    userData.isAdmin === 'true' ||
+    userData.isAdmin === '1' ||
+    userData.is_admin === true ||
+    userData.is_admin === 1 ||
+    userData.is_admin === 'true' ||
+    userData.is_admin === '1'
+  ) {
+    return true;
+  }
 
   // ۲. فیلدهای متنی نقش
   const rawRole = String(
@@ -43,10 +58,12 @@ export function checkIsAdmin(userData) {
     userData.userType ||
     userData.user_type ||
     userData.type ||
+    userData.access ||
+    userData.level ||
     ''
   ).toLowerCase().trim();
 
-  const adminRoles = ['admin', 'superadmin', 'manager', 'owner', 'مدیر', 'ادمین'];
+  const adminRoles = ['admin', 'superadmin', 'manager', 'owner', 'administrator', 'root', 'مدیر', 'ادمین'];
   if (adminRoles.includes(rawRole)) return true;
 
   // ۳. آرایه‌های نقش
@@ -58,6 +75,10 @@ export function checkIsAdmin(userData) {
     return true;
   }
 
+  // ۴. بررسی ویژگی‌های تو در تو
+  if (userData.user && typeof userData.user === 'object' && checkIsAdmin(userData.user)) return true;
+  if (userData.data && typeof userData.data === 'object' && checkIsAdmin(userData.data)) return true;
+
   return false;
 }
 
@@ -68,23 +89,23 @@ export function formatUser(raw) {
   if (!raw || typeof raw !== 'object') return null;
 
   // استخراج شیء اصلی کاربر در صورتی که در زیرمجموعه قرار داشته باشد
-  const u = raw.user || raw.data?.user || raw.data || raw.profile || raw;
+  const u = raw.user || raw.data?.user || raw.data?.profile || raw.profile || raw.result?.user || raw.data || raw;
   if (!u || typeof u !== 'object') return null;
 
-  const isAdmin = checkIsAdmin(u);
-  const rawRole = String(u.role || u.userType || u.user_type || '').toLowerCase().trim();
+  const isAdmin = checkIsAdmin(u) || checkIsAdmin(raw) || checkIsAdmin(raw?.data);
+  const rawRole = String(u.role || u.userType || u.user_type || raw.role || '').toLowerCase().trim();
   const normalizedRole = isAdmin ? 'admin' : (rawRole || 'user');
 
-  const userId = String(u._id || u.id || u.userId || '');
+  const userId = String(u._id || u.id || u.userId || raw._id || raw.id || raw.userId || '');
 
   return {
     id: userId,
     _id: userId,
-    name: u.name || u.fullName || u.username || '',
-    phone: u.phone || u.mobile || u.phoneNumber || '',
+    name: u.name || u.fullName || u.username || raw.name || raw.username || 'کاربر گرامی',
+    phone: u.phone || u.mobile || u.phoneNumber || raw.phone || raw.mobile || '',
     role: normalizedRole,
     roles: Array.isArray(u.roles) ? u.roles : [normalizedRole],
-    address: u.address || '',
+    address: u.address || raw.address || '',
     addresses: Array.isArray(u.addresses) ? u.addresses : (u.address ? [u.address] : []),
     avatar: u.avatar || '',
     isActive: u.isActive !== undefined ? u.isActive : true,
@@ -99,7 +120,7 @@ export function formatUser(raw) {
 let inFlightProfilePromise = null;
 let cachedProfileData = null;
 let lastProfileFetchTime = 0;
-const PROFILE_CACHE_TTL = 4000; // ۴ ثانیه کش سبک جهت ادغام فراخوانی‌های همزمان
+const PROFILE_CACHE_TTL = 10000; // ۱۰ ثانیه کش سبک جهت ادغام فراخوانی‌های همزمان
 
 /**
  * متد کمکی اجرای Fetch بدون استفاده از XMLHttpRequest (کاملاً بدون XHR)
@@ -331,6 +352,7 @@ export const authApi = {
             message: responseData.message || responseData.error || 'خطا در دریافت اطلاعات کاربری',
             data: responseData
           };
+          lastProfileFetchTime = Date.now();
           return result;
         }
 
@@ -356,6 +378,7 @@ export const authApi = {
         lastProfileFetchTime = Date.now();
         return result;
       } catch (error) {
+        lastProfileFetchTime = Date.now();
         const parsed = parseApiError(error);
         return {
           success: false,

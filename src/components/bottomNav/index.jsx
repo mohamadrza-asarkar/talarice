@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../../context';
-import { Home, LayoutGrid, ShoppingBag, User } from 'lucide-react';
+import { Home, LayoutGrid, ShoppingBag, User, ShieldCheck } from 'lucide-react';
 import styles from './style.module.css';
 
 export function BottomNav() {
-  const { cartCount, setIsCartOpen, isAuthenticated } = useApp();
+  const { cartCount, setIsCartOpen, isAuthenticated, isAdmin } = useApp();
 
   function getLinkClass({ isActive }) {
     return `${styles.navButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
@@ -38,6 +38,13 @@ export function BottomNav() {
         <User size={20} />
         <span>{isAuthenticated ? 'پروفایل' : 'ورود'}</span>
       </NavLink>
+
+      {isAdmin && (
+        <NavLink to="/admin" className={getLinkClass} title="پنل مدیریت">
+          <ShieldCheck size={20} className="text-amber-400" />
+          <span className="text-amber-300 font-bold">مدیریت</span>
+        </NavLink>
+      )}
     </nav>
   );
 }
