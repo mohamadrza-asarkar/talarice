@@ -10,20 +10,10 @@ import Admin from './pages/Admin.jsx';
 import { Layout, SimpleLayout } from './components/Layout.jsx';
 import { ProtectedRoute } from './components/ProtectedRoute.jsx';
 import { useApp } from './context/index.jsx';
-import { InitialLoadingScreen, MaintenanceScreen } from './components/maintenanceScreen/index.jsx';
+// No maintenance screens
 
 function App() {
   const { serverHealth, checkHealth } = useApp();
-
-  // تا زمانی که سرور پاسخ نداده و در حال بررسی سلامت است، انیمیشن ۳ خوشه سنبله برنج نمایش داده می‌شود
-  if (serverHealth && serverHealth.status === 'checking') {
-    return <InitialLoadingScreen />;
-  }
-
-  // در صورت عدم دسترسی به سرور یا بروز خطا در API هلث
-  if (serverHealth && serverHealth.status === 'unhealthy') {
-    return <MaintenanceScreen health={serverHealth} onRetry={checkHealth} />;
-  }
 
   // در صورتی که سرور پاسخگو و سالم بود، بدون هیچ لودینگ یا مانعی برنامه کارش را انجام می‌دهد
   return (

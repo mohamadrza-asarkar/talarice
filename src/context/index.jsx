@@ -252,46 +252,9 @@ export function AppProvider({ children }) {
   const [isConnecting, setIsConnecting] = useState(true);
   const [connectionError, setConnectionError] = useState(null);
 
-  const [categories, setCategories] = useState([
-    { id: 'all', name: 'همه محصولات', iconClass: 'fa-solid fa-border-all' },
-    { id: 'hashemi', name: 'برنج هاشمی', iconClass: 'fa-solid fa-wheat-awn' },
-    { id: 'tarom', name: 'برنج طارم', iconClass: 'fa-solid fa-seedling' },
-    { id: 'smoky', name: 'برنج دودی', iconClass: 'fa-solid fa-fire' },
-    { id: 'broken', name: 'نیم‌دانه و سرلاشه', iconClass: 'fa-solid fa-mortar-pestle' }
-  ]);
-
-  const [trustItems, setTrustItems] = useState([
-    {
-      id: '1',
-      title: 'پخت عالی و قد کشیدن',
-      iconClass: 'fa-solid fa-bowl-rice',
-      description: 'دانه‌های برنج طلا رایس دارای ری‌کشی فوق‌العاده، قد بلند و پخت بی‌نظیر مجلسی هستند.'
-    },
-    {
-      id: '2',
-      title: 'ارسال سریع سراسری',
-      iconClass: 'fa-solid fa-truck-fast',
-      description: 'سفارشات شما در سریع‌ترین زمان ممکن با بسته‌بندی ایمن به سراسر کشور ارسال می‌شوند.'
-    },
-    {
-      id: '3',
-      title: 'ضمانت ۷ روزه کیفیت',
-      iconClass: 'fa-solid fa-shield-halved',
-      description: 'تضمین بازگشت وجه یا تعویض کالا تا ۷ روز در صورت هرگونه نارضایتی از کیفیت یا پخت.'
-    },
-    {
-      id: '4',
-      title: 'مستقیم از شالیزار',
-      iconClass: 'fa-solid fa-seedling',
-      description: 'تهیه مستقیم و بدون واسطه از کشاورزان معتمد شالیزارهای کامفیروز و شمال کشور.'
-    }
-  ]);
-
-  const [brandStory, setBrandStory] = useState({
-    title: 'داستان و اصالت برنج طلا رایس',
-    description: 'طلا رایس با هدف حذف واسطه‌ها و ارائه مستقیم برنج معطر کامفیروز و هاشمی شمال تأسیس شده است. ما با همکاری مستقیم شالیکاران سنتی، عطر و طعم واقعی سفره ایرانی را با تضمین اصالت و بهترین کیفیت به دست شما می‌رسانیم.'
-  });
-
+  const [categories, setCategories] = useState([]);
+  const [trustItems, setTrustItems] = useState([]);
+  const [brandStory, setBrandStory] = useState({});
   const [testTips, setTestTips] = useState([]);
 
   // Fetch all primary data from backend API to populate context
@@ -570,14 +533,7 @@ export function AppProvider({ children }) {
     return localStorage.getItem('userId') || localStorage.getItem('tala_user_id') || '';
   });
   
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('user') || localStorage.getItem('tala_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [users, setUsers] = useState(() => {
     try {
@@ -680,10 +636,6 @@ export function AppProvider({ children }) {
     }
     if (userData) {
       setCurrentUser(userData);
-      try {
-        localStorage.setItem('user', JSON.stringify(userData));
-        localStorage.setItem('tala_user', JSON.stringify(userData));
-      } catch {}
       setUsers(prev => {
         const exists = prev.some(u => (u.id === uid || u._id === uid || u.phone === userData.phone));
         if (exists) {

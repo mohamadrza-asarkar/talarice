@@ -74,8 +74,6 @@ export const authApi = {
         localStorage.setItem('tala_token', token);
       }
       if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('tala_user', JSON.stringify(user));
         if (user.id) {
           localStorage.setItem('userId', user.id);
           localStorage.setItem('tala_user_id', user.id);
@@ -135,8 +133,6 @@ export const authApi = {
         localStorage.setItem('tala_token', token);
       }
       if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('tala_user', JSON.stringify(user));
         if (user.id) {
           localStorage.setItem('userId', user.id);
           localStorage.setItem('tala_user_id', user.id);
@@ -199,8 +195,6 @@ export const authApi = {
       const user = formatUser(rawUser);
 
       if (user && (user.id || user.name || user.phone)) {
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('tala_user', JSON.stringify(user));
         if (user.id) {
           localStorage.setItem('userId', user.id);
           localStorage.setItem('tala_user_id', user.id);
@@ -261,8 +255,6 @@ export const authApi = {
       const user = formatUser(rawUser);
 
       if (user) {
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('tala_user', JSON.stringify(user));
       }
 
       return {

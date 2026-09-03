@@ -32,11 +32,17 @@
   justify-content: center;
 }
 
-.userBtn {
+.rightActions {
   position: absolute;
   right: 0;
   top: 50%;
   transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.userBtn {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -51,6 +57,11 @@
   text-decoration: none;
   transition: all 0.2s ease;
 }
+
+.adminBtnLink i {
+  color: #d4af37;
+}
+
 
 .userBtn:hover {
   background: rgba(212, 175, 55, 0.2);
