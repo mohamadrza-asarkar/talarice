@@ -86,10 +86,10 @@
 
 /* Success */
 .toastSuccess {
-  background: linear-gradient(135deg, #052e16 0%, #021f10 100%);
-  border-color: #10b981;
-  color: #f0fdf4;
-  box-shadow: 0 16px 36px -6px rgba(16, 185, 129, 0.35);
+  background: #1C3A27;
+  border-color: #1C3A27;
+  color: #ffffff;
+  box-shadow: 0 16px 36px -6px rgba(28, 58, 39, 0.4);
 }
 
 /* Warning */

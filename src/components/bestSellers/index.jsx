@@ -7,30 +7,33 @@ import styles from './style.module.css';
 export function BestSellers() {
   const { products } = useApp();
 
-  if (!products?.length) {
-    return null;
-  }
-
-  return (
+  return !products?.length ? null : (
     <section className={styles.section}>
       <header className={styles.headerRow}>
         <h3 className={styles.title}>
           <i className="fa-solid fa-wheat-awn" />
-          <span>پرفروش‌ترین گونی‌های برنج</span>
+          <span>محبوب‌ترین ارقام برنج کامفیروز</span>
         </h3>
-        <Link to="/catalog" className={styles.viewAllBtn}>
-          <span>مشاهده همه</span>
-          <i className="fa-solid fa-arrow-left" />
-        </Link>
       </header>
 
-      <div className={styles.gridContainer}>
-        {(products || []).map(function (product) {
-          return <ProductCard key={product.id} product={product} />;
+      <div className={styles.scrollContainer}>
+        {(products || []).slice(0, 3).map(function (product) {
+          return (
+            <div key={product.id} className={styles.scrollItem}>
+              <ProductCard product={product} />
+            </div>
+          );
         })}
+
+        <div className={styles.scrollItemMore}>
+          <Link to="/products" className={styles.moreProductsCard} aria-label="مشاهده تمام محصولات">
+            <div className={styles.moreIconCircle}>
+              <i className="fa-solid fa-arrow-left" />
+            </div>
+            <span className={styles.moreTitle}>مشاهده همه</span>
+          </Link>
+        </div>
       </div>
     </section>
   );
 }
-
-

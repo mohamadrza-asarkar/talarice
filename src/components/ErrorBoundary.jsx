@@ -24,8 +24,7 @@ export class ErrorBoundary extends React.Component {
   };
 
   render() {
-    if (this.state.hasError) {
-      return (
+    return this.state.hasError ? (
         <div
           dir="rtl"
           style={{
@@ -92,7 +91,7 @@ export class ErrorBoundary extends React.Component {
                   justifyContent: 'center',
                   gap: '0.5rem',
                   background: '#d4af37',
-                  color: '#042a1b',
+                  color: '#041c14',
                   fontWeight: 700,
                   fontSize: '0.9rem',
                   padding: '0.75rem',
@@ -130,9 +129,9 @@ export class ErrorBoundary extends React.Component {
             </div>
           </div>
         </div>
-      );
-    }
-    return this.props.children;
+    ) : (
+      this.props.children
+    );
   }
 }
 

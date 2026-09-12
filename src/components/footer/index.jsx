@@ -3,11 +3,11 @@ import { Logo } from '../logo';
 import styles from './style.module.css';
 
 export function Footer() {
-  const features = [
-    { icon: 'fa-solid fa-truck-fast', title: 'ارسال سریع کشوری', sub: 'پست پیشتاز و باربری' },
-    { icon: 'fa-solid fa-shield-halved', title: 'ضمانت اصالت و عطر', sub: '۷ روز بازگشت وجه' },
-    { icon: 'fa-solid fa-seedling', title: 'برنج تازه شالیزار', sub: 'کامفیروز استان فارس' },
-    { icon: 'fa-solid fa-headset', title: 'پشتیبانی مشتریان', sub: 'مشاوره آنلاین خرید' }
+  const serviceLinks = [
+    { icon: 'fa-solid fa-box-check', title: 'رهگیری سفارشات پستی', desc: 'پیگیری آنلاین کد مرسوله پیشتاز' },
+    { icon: 'fa-solid fa-book-open', title: 'راهنمای پخت و دم‌آوری', desc: 'روش قد کشیدن برنج اصیل کامفیروز' },
+    { icon: 'fa-solid fa-scale-balanced', title: 'شرایط عودت وجه', desc: 'ضمانت بازگشت ۷ روزه کالا' },
+    { icon: 'fa-solid fa-certificate', title: 'تضمین اصالت شالیزار', desc: 'خلوص ۱۰۰٪ بدون اختلاط ارقام' }
   ];
 
   const socials = [
@@ -17,60 +17,91 @@ export function Footer() {
   ];
 
   return (
-    <footer className={styles.footer}>
-      <header className={styles.branding}>
-        <Logo />
-        <h3 className={styles.brandTitle}>فروشگاه آنلاین برنج طلا رایس</h3>
-        <p className={styles.brandDesc}>
-          عرضه‌کننده مستقیم برنج ۱۰۰٪ اصل و معطر کامفیروز شیراز در گونی‌های نخی سفید سفارشی
-        </p>
-      </header>
-
-      <div className={styles.featuresGrid}>
-        {features.map(function (f, i) {
-          return (
-            <div key={i} className={styles.featureItem}>
-              <i className={f.icon} />
-              <div>
-                <strong>{f.title}</strong>
-                <small>{f.sub}</small>
-              </div>
-            </div>
-          );
-        })}
+    <div className={styles.footerWrapper}>
+      {/* Soft Transition Strip from light canvas to dark footer */}
+      <div className={styles.transitionBand}>
+        <div className={styles.transitionCurve} />
       </div>
 
-      <address className={styles.contactInfo}>
-        <div className={styles.phoneRow}>
-          <span><i className="fa-solid fa-phone" /> شماره پشتیبانی:</span>
-          <strong>۰۹۱۷۰۰۰۰۰۰۰</strong>
-        </div>
-        <p className={styles.addressRow}>
-          <i className="fa-solid fa-location-dot" /> استان فارس، مرودشت، منطقه کامفیروز
-        </p>
-      </address>
+      <footer className={styles.footer}>
+        <header className={styles.branding}>
+          <Logo variant="dark" />
+          <h3 className={styles.brandTitle}>فروشگاه برنج کامفیروز</h3>
+          <p className={styles.brandDesc}>
+            عرضه مستقیم و بی‌واسطه برنج معطر و خوش‌پخت کامفیروز از مزارع حاصلخیز حاشیه سد درودزن فارس در گونی‌های نخی تنفس‌پذیر.
+          </p>
+        </header>
 
-      <nav className={styles.socials} aria-label="شبکه‌های اجتماعی">
-        {socials.map(function (s, i) {
-          return (
-            <a
-              key={i}
-              href={s.href}
-              target="_blank"
-              rel="noreferrer"
-              className={styles.socialLink}
-              aria-label={s.label}
-            >
-              <i className={s.icon} />
-            </a>
-          );
-        })}
-      </nav>
+        {/* Informative service links instead of duplicate guarantee badges */}
+        <section className={styles.servicesGrid} aria-label="خدمات پس از فروش">
+          {serviceLinks.map(function (item, i) {
+            return (
+              <div key={i} className={styles.serviceItem}>
+                <i className={item.icon} />
+                <div className={styles.serviceText}>
+                  <strong>{item.title}</strong>
+                  <small>{item.desc}</small>
+                </div>
+              </div>
+            );
+          })}
+        </section>
 
-      <small className={styles.copyright}>
-        تمامی حقوق برای برند طلا رایس (Tala Rice) محفوظ است.
-      </small>
-    </footer>
+        {/* Real phone and contact details with typography hierarchy */}
+        <address className={styles.contactCard}>
+          <h4 className={styles.contactTitle}>
+            <i className="fa-solid fa-headset" />
+            <span>واحد پشتیبانی و سفارشات</span>
+          </h4>
+
+          <div className={styles.phoneList}>
+            <div className={styles.phoneItem}>
+              <span className={styles.phoneLabel}>تلفن دفتر مرکزی:</span>
+              <a href="tel:07138301560" className={styles.phoneNumber} dir="ltr">
+                ۰۷۱-۳۸۳۰۱۵۶۰
+              </a>
+            </div>
+            <div className={styles.phoneItem}>
+              <span className={styles.phoneLabel}>مشاوره و همراه:</span>
+              <a href="tel:09173147852" className={styles.phoneNumber} dir="ltr">
+                ۰۹۱۷-۳۱۴-۷۸۵۲
+              </a>
+            </div>
+          </div>
+
+          <div className={styles.hoursItem}>
+            <i className="fa-regular fa-clock" />
+            <span>ساعات پاسخگویی: همه‌روزه از ۸:۰۰ الی ۲۱:۰۰</span>
+          </div>
+
+          <p className={styles.addressLine}>
+            <i className="fa-solid fa-location-dot" />
+            <span>فارس، مرودشت، بخش کامفیروز، دفتر مرکزی طلا رایس</span>
+          </p>
+        </address>
+
+        <nav className={styles.socials} aria-label="شبکه‌های اجتماعی">
+          {socials.map(function (s, i) {
+            return (
+              <a
+                key={i}
+                href={s.href}
+                target="_blank"
+                rel="noreferrer"
+                className={styles.socialLink}
+                aria-label={s.label}
+              >
+                <i className={s.icon} />
+              </a>
+            );
+          })}
+        </nav>
+
+        <small className={styles.copyright}>
+          تمامی حقوق مادی و معنوی برای طلا رایس (Tala Rice) محفوظ است.
+        </small>
+      </footer>
+    </div>
   );
 }
 

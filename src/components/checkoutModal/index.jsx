@@ -44,7 +44,6 @@ export function CheckoutModal() {
     setIsCartOpen,
     cart,
     cartSubtotal,
-    discountAmount,
     shippingFee,
     finalTotal,
     createOrder,
@@ -89,8 +88,6 @@ export function CheckoutModal() {
       });
     }
   }, [currentUser, isCheckoutOpen]);
-
-  if (!isCheckoutOpen) return null;
 
   function handleInputChange(field, value) {
     setFormData(function (prev) {
@@ -223,9 +220,22 @@ export function CheckoutModal() {
 
   const stepLabels = ['آدرس و تحویل', 'بررسی اقلام', 'پرداخت نهایی'];
 
-  return (
-    <aside className={styles.overlay} onClick={function () { if (step !== 4 && !isSubmitting) setIsCheckoutOpen(false); }}>
-      <dialog open className={styles.modal} onClick={function (e) { e.stopPropagation(); }}>
+  function handleOverlayClick(e) {
+    if (e.target.getAttribute('data-role') === 'overlay-close') {
+      if (step !== 4 && !isSubmitting) {
+        setIsCheckoutOpen(false);
+      }
+    }
+  }
+
+  return !isCheckoutOpen ? null : (
+    <dialog
+      open
+      className={styles.overlay}
+      data-role="overlay-close"
+      onClick={handleOverlayClick}
+    >
+      <section className={styles.modal}>
         <header className={styles.header}>
           <h3 className={styles.headerTitle}>
             <Truck size={20} className={styles.headerIcon} />
@@ -482,7 +492,7 @@ export function CheckoutModal() {
                   type="button"
                   onClick={function () {
                     setIsCheckoutOpen(false);
-                    setIsCartOpen(true);
+                    navigate('/cart');
                   }}
                   className={styles.secondaryBtn}
                 >
@@ -505,13 +515,13 @@ export function CheckoutModal() {
 
               <ul className={styles.cartItemsList}>
                 {cart.map(function (item) {
-                  const unitP = Number(item.product?.price ?? 0);
+                  const unitP = Number(item.price ?? 0);
                   const total = unitP * (item.quantity ?? 1);
 
                   return (
-                    <li key={item.product?.id || item.product?._id} className={styles.cartReviewItem}>
+                    <li key={item.id} className={styles.cartReviewItem}>
                       <div>
-                        <strong>{item.product?.name ?? 'برنج کامفیروزی'}</strong>
+                        <strong>{item.name ?? 'برنج کامفیروزی'}</strong>
                         <div className={styles.variantText}>
                           تعداد: {(item.quantity ?? 1).toLocaleString('fa-IR')} کیسه نخی اعلا
                         </div>
@@ -659,12 +669,6 @@ export function CheckoutModal() {
                   <span>مبلغ سفارش:</span>
                   <span>{(cartSubtotal ?? 0).toLocaleString('fa-IR')} تومان</span>
                 </div>
-                {(discountAmount ?? 0) > 0 && (
-                  <div className={styles.discountRow}>
-                    <span>تخفیف:</span>
-                    <span>- {(discountAmount ?? 0).toLocaleString('fa-IR')} تومان</span>
-                  </div>
-                )}
                 <div className={styles.totalsRow}>
                   <span>هزینه ارسال:</span>
                   <span>{shippingFee === 0 ? 'رایگان' : `${(shippingFee ?? 0).toLocaleString('fa-IR')} تومان`}</span>
@@ -787,8 +791,8 @@ export function CheckoutModal() {
             </div>
           )}
         </div>
-      </dialog>
-    </aside>
+      </section>
+    </dialog>
   );
 }
 

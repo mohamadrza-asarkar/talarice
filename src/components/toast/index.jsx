@@ -153,9 +153,7 @@ function ToastItem({ toast, onDismiss }) {
 }
 
 export function ToastContainer({ toasts = [], onDismiss }) {
-  if (!toasts || toasts.length === 0) return null;
-
-  return (
+  return !toasts || toasts.length === 0 ? null : (
     <div className={styles.toastContainer} role="region" aria-label="اعلانات سیستم">
       {toasts.map(toast => (
         <ToastItem

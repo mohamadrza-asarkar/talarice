@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
@@ -8,29 +8,103 @@ export function HeroSlider() {
   const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
 
+  // Touch and Swipe state
+  const [touchStartX, setTouchStartX] = useState(null);
+  const [touchEndX, setTouchEndX] = useState(null);
+  const [isMouseDown, setIsMouseDown] = useState(false);
+  const isInteractingRef = useRef(false);
+
   useEffect(function () {
     if (!heroSlides?.length) return;
     const timer = setInterval(function () {
-      setCurrentSlide(function (prev) { return (prev + 1) % heroSlides.length; });
-    }, 5500);
+      if (!isInteractingRef.current) {
+        setCurrentSlide(function (prev) { return (prev + 1) % heroSlides.length; });
+      }
+    }, 6000);
     return function () { clearInterval(timer); };
   }, [heroSlides?.length]);
 
-  if (!heroSlides?.length) return null;
-  const slide = heroSlides[currentSlide];
+  const slide = heroSlides?.[currentSlide];
 
   function handleCta() {
-    if (slide.category) setSelectedCategory(slide.category);
-    navigate('/catalog');
+    if (slide?.category) setSelectedCategory(slide.category);
+    navigate('/products');
   }
 
-  return (
-    <section className={styles.sliderCard}>
+  // Touch event handlers
+  const handleTouchStart = (e) => {
+    isInteractingRef.current = true;
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchEndX(null);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEndX(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    isInteractingRef.current = false;
+    if (touchStartX === null || touchEndX === null) return;
+    const distance = touchStartX - touchEndX;
+    const minSwipeDistance = 35;
+
+    // In RTL layout:
+    // Left drag (finger moves left, touchStartX > touchEndX, distance > 35) -> Next Slide
+    // Right drag (finger moves right, touchStartX < touchEndX, distance < -35) -> Previous Slide
+    if (distance > minSwipeDistance) {
+      setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
+    } else if (distance < -minSwipeDistance) {
+      setCurrentSlide((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    }
+
+    setTouchStartX(null);
+    setTouchEndX(null);
+  };
+
+  // Mouse drag fallback handlers for desktop
+  const handleMouseDown = (e) => {
+    isInteractingRef.current = true;
+    setIsMouseDown(true);
+    setTouchStartX(e.clientX);
+    setTouchEndX(null);
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isMouseDown) return;
+    setTouchEndX(e.clientX);
+  };
+
+  const handleMouseUp = () => {
+    if (!isMouseDown) return;
+    setIsMouseDown(false);
+    handleTouchEnd();
+  };
+
+  const handleMouseLeave = () => {
+    if (isMouseDown) {
+      setIsMouseDown(false);
+      isInteractingRef.current = false;
+    }
+  };
+
+  return !heroSlides?.length ? null : (
+    <section
+      className={`${styles.sliderCard} ${isMouseDown ? styles.dragging : ''}`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      aria-label="اسلایدر ویژه محصولات"
+    >
       <img
         key={currentSlide}
         src={slide.image}
         alt={slide.title}
         className={styles.bgImage}
+        draggable={false}
       />
 
       <div className={styles.content}>
@@ -40,17 +114,22 @@ export function HeroSlider() {
       </div>
 
       <footer className={styles.controls}>
-        <button type="button" onClick={handleCta} className={styles.ctaButton}>
-          <span>{slide.ctaText || 'مشاهده تخفیف‌های امروز'}</span>
+        <button
+          type="button"
+          onClick={handleCta}
+          className={styles.ctaButton}
+          onMouseDown={(e) => e.stopPropagation()}
+        >
+          <span>{slide.ctaText || 'مشاهده و خرید محصولات'}</span>
           <i className="fa-solid fa-arrow-left" />
         </button>
 
-        <div className={styles.navRow}>
+        <div className={styles.navRow} onMouseDown={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={function () { setCurrentSlide(function (prev) { return (prev - 1 + heroSlides.length) % heroSlides.length; }); }}
             className={styles.navBtn}
-            aria-label="Previous slide"
+            aria-label="اسلاید قبلی"
           >
             <i className="fa-solid fa-chevron-right" />
           </button>
@@ -61,8 +140,8 @@ export function HeroSlider() {
                   key={idx}
                   type="button"
                   onClick={function () { setCurrentSlide(idx); }}
-                  className={currentSlide === idx ? styles.dotActive : styles.dot}
-                  aria-label={`Slide ${idx + 1}`}
+                  className={`${styles.dot} ${currentSlide === idx ? styles.dotActive : ''}`}
+                  aria-label={`اسلاید ${idx + 1}`}
                 />
               );
             })}
@@ -71,7 +150,7 @@ export function HeroSlider() {
             type="button"
             onClick={function () { setCurrentSlide(function (prev) { return (prev + 1) % heroSlides.length; }); }}
             className={styles.navBtn}
-            aria-label="Next slide"
+            aria-label="اسلاید بعدی"
           >
             <i className="fa-solid fa-chevron-left" />
           </button>
@@ -80,4 +159,3 @@ export function HeroSlider() {
     </section>
   );
 }
-

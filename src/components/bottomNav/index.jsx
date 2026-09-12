@@ -1,7 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useApp } from '../../context';
-import { Home, LayoutGrid, ShoppingBag, User, ShieldCheck } from 'lucide-react';
 import styles from './style.module.css';
 
 export function BottomNav() {
@@ -14,37 +13,25 @@ export function BottomNav() {
   return (
     <nav className={styles.bottomNav} aria-label="ناوبری اصلی">
       <NavLink to="/" end className={getLinkClass}>
-        <Home size={20} />
+        <i className="fa-solid fa-house" style={{ fontSize: '1.1rem' }} />
         <span>خانه</span>
       </NavLink>
 
-      <NavLink to="/catalog" className={getLinkClass}>
-        <LayoutGrid size={20} />
+      <NavLink to="/products" className={getLinkClass}>
+        <i className="fa-solid fa-shapes" style={{ fontSize: '1.1rem' }} />
         <span>محصولات</span>
       </NavLink>
 
-      <button
-        type="button"
-        onClick={function () { setIsCartOpen(true); }}
-        className={`${styles.navButton} ${styles.navButtonUnselected} ${styles.cartButton}`}
-        aria-label="سبد خرید"
-      >
-        <ShoppingBag size={20} />
+      <NavLink to="/cart" className={getLinkClass}>
+        <i className="fa-solid fa-bag-shopping" style={{ fontSize: '1.1rem' }} />
         {cartCount > 0 && <span className={styles.badge}>{cartCount.toLocaleString('fa-IR')}</span>}
         <span>سبد خرید</span>
-      </button>
-
-      <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
-        <User size={20} />
-        <span>{isAuthenticated ? 'پروفایل' : 'ورود'}</span>
       </NavLink>
 
-      {isAdmin && (
-        <NavLink to="/admin" className={getLinkClass} title="پنل مدیریت">
-          <ShieldCheck size={20} className="text-amber-400" />
-          <span className="text-amber-300 font-bold">مدیریت</span>
-        </NavLink>
-      )}
+      <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
+        <i className="fa-solid fa-user" style={{ fontSize: '1.1rem' }} />
+        <span>{isAuthenticated ? 'پروفایل' : 'ورود'}</span>
+      </NavLink>
     </nav>
   );
 }

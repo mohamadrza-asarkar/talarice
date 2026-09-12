@@ -7,33 +7,38 @@ export function BrandStory() {
 
   return (
     <section className={styles.storyCard}>
-      <h3 className={styles.title}>
-        <span>{brandStory?.title ?? 'داستان و اصالت برنج طلا رایس'}</span>
-        <i className="fa-solid fa-circle-check" />
-      </h3>
+      <header className={styles.headerRow}>
+        <div className={styles.titleGroup}>
+          <i className="fa-solid fa-award" />
+          <h3 className={styles.title}>
+            {brandStory?.title ?? 'اصالت و پیشینه برنج کامفیروز'}
+          </h3>
+        </div>
+        <span className={styles.originTag}>شالیزارهای فارس</span>
+      </header>
 
       <p className={styles.description}>
         {brandStory?.description ??
-          'طلا رایس با حذف کامل واسطه‌ها، اصیل‌ترین برنج معطر کامفیروز مرودشت استان فارس را در گونی‌های پارچه‌ای سفید با کیفیت مستقیماً به سفره‌های شما می‌رساند.'}
+          'عرضه مستقیم اصیل‌ترین برنج معطر کامفیروز مرودشت از شالیزارهای حوزه سد درودزن استان فارس در گونی‌های نخی سفید و بهداشتی، بدون اختلاط و با خلوص ۱۰۰ درصدی.'}
       </p>
 
       <div className={styles.features}>
         <div className={styles.featureItem}>
-          <strong>۱۰۰٪</strong>
-          <span>ارگانیک و تازه</span>
+          <strong>۱۰۰٪ خالص</strong>
+          <span>بدون ناخالصی و مخلوط</span>
         </div>
         <div className={`${styles.featureItem} ${styles.border}`}>
-          <strong>گونی سفید</strong>
-          <span>بسته‌بندی نخی ممتاز</span>
+          <strong>کیسه نخی</strong>
+          <span>تنفس‌پذیر و بهداشتی</span>
         </div>
         <div className={styles.featureItem}>
           <strong>۷ روز</strong>
-          <span>ضمانت برگشت</span>
+          <span>ضمانت عودت بی‌قیدوشرط</span>
         </div>
       </div>
     </section>
   );
-};
+}
 
 
 
