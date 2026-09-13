@@ -15,13 +15,13 @@ import {
   Sparkles,
   Share2
 } from 'lucide-react';
-import { reviewsApi } from '../services/api';
+import { productsApi } from '../api';
 import styles from './pages.module.css';
 
 export default function Product() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, addToCart, reviews, setReviews, currentUser, showSuccess, showToast } = useApp();
+  const { products, addToCart, reviews, setReviews, currentUser, showSuccess, showError, showToast } = useApp();
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'cooking', 'reviews'
   const [copied, setCopied] = useState(false);
@@ -285,27 +285,28 @@ export default function Product() {
                   setIsSubmittingReview(true);
                   const prodId = product._id || product.id;
                   try {
-                    await reviewsApi.createReview({
-                      productId: prodId,
+                    const res = await productsApi.addReview(prodId, {
                       comment: newComment.trim(),
                       rating: Number(newRating)
                     });
+                    const serverRev = res?.data || res?.review || res;
+                    const newRev = {
+                      id: serverRev?._id || serverRev?.id || `rev-${Date.now()}`,
+                      userName: currentUser?.name || 'خریدار محترم',
+                      author: currentUser?.name || 'خریدار محترم',
+                      rating: Number(newRating),
+                      productId: prodId,
+                      comment: newComment.trim(),
+                      city: 'ایران'
+                    };
+                    setReviews((prev) => [newRev, ...prev]);
+                    showSuccess('دیدگاه شما با موفقیت در سرور ثبت گردید.');
+                    setNewComment('');
                   } catch (err) {
-                    console.debug('Review API note:', err.message);
+                    showError(`خطا در ثبت دیدگاه: ${err.message}`);
+                  } finally {
+                    setIsSubmittingReview(false);
                   }
-                  const newRev = {
-                    id: `rev-${Date.now()}`,
-                    userName: currentUser?.name || 'خریدار محترم',
-                    author: currentUser?.name || 'خریدار محترم',
-                    rating: Number(newRating),
-                    productId: prodId,
-                    comment: newComment.trim(),
-                    city: 'ایران'
-                  };
-                  setReviews((prev) => [newRev, ...prev]);
-                  showSuccess('نظر شما با موفقیت ثبت گردید.');
-                  setNewComment('');
-                  setIsSubmittingReview(false);
                 }}
                 className={styles.cardHighlight}
                 style={{ marginBottom: '1rem', padding: '1rem' }}

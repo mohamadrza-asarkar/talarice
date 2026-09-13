@@ -4,10 +4,14 @@ import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export function BottomNav() {
-  const { cartCount, setIsCartOpen, isAuthenticated, isAdmin } = useApp();
+  const { cartCount, isAuthenticated, isAdmin } = useApp();
 
   function getLinkClass({ isActive }) {
     return `${styles.navButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
+  }
+
+  function getAdminLinkClass({ isActive }) {
+    return `${styles.navButton} ${styles.adminNavButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
   }
 
   return (
@@ -28,9 +32,16 @@ export function BottomNav() {
         <span>سبد خرید</span>
       </NavLink>
 
+      {isAdmin && (
+        <NavLink to="/admin" className={getAdminLinkClass}>
+          <i className="fa-solid fa-crown" style={{ fontSize: '1.1rem', color: '#d97706' }} />
+          <span>مدیریت</span>
+        </NavLink>
+      )}
+
       <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
         <i className="fa-solid fa-user" style={{ fontSize: '1.1rem' }} />
-        <span>{isAuthenticated ? 'پروفایل' : 'ورود'}</span>
+        <span>{isAuthenticated ? 'پنل کاربری' : 'ورود'}</span>
       </NavLink>
     </nav>
   );

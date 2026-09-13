@@ -16,28 +16,28 @@ export function Header() {
           <Logo showText={true} variant="dark" />
         </Link>
 
-        {/* دکمه حساب کاربری / ورود در سمت چپ */}
+        {/* دکمه حساب کاربری / ورود و پنل مدیریت در سمت چپ */}
         <div className={styles.userActionWrapper}>
           {isAdmin && (
-            <Link to="/admin" className={styles.adminBadgeLink} title="پنل مدیریت فروشگاه">
-              <i className="fa-solid fa-crown" />
-              <span>مدیریت</span>
+            <Link to="/admin" className={styles.adminBadgeLink} title="ورود به پنل مدیریت فروشگاه">
+              <i className="fa-solid fa-crown" style={{ color: '#fbbf24' }} />
+              <span>پنل مدیریت</span>
             </Link>
           )}
 
           <Link
             to={isAuthenticated ? '/profile' : '/auth'}
             className={styles.userBtn}
-            title={isAuthenticated ? (currentUser?.name || 'پروفایل کاربری') : 'ورود به حساب کاربری'}
-            aria-label={isAuthenticated ? 'پروفایل کاربری' : 'ورود به حساب'}
+            title={isAuthenticated ? `پنل کاربری ${currentUser?.name || ''}` : 'ورود به حساب کاربری'}
+            aria-label={isAuthenticated ? 'پنل کاربری' : 'ورود به حساب'}
           >
             {isAuthenticated ? (
-              <i className="fa-solid fa-user" />
+              <i className="fa-solid fa-user-circle" />
             ) : (
               <i className="fa-solid fa-arrow-right-to-bracket" />
             )}
             <span className={styles.userBtnText}>
-              {isAuthenticated ? (currentUser?.name?.split(' ')[0] || 'حساب من') : 'ورود به حساب'}
+              {isAuthenticated ? (currentUser?.name ? `پنل کاربری (${currentUser.name.split(' ')[0]})` : 'پنل کاربری') : 'ورود به حساب'}
             </span>
           </Link>
         </div>

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authApi, getStoredToken, setStoredToken } from '../services/api';
+import { authApi, getStoredToken, setStoredToken, normalizeUser } from '../api';
 
 const AuthContext = createContext();
 
@@ -49,7 +49,7 @@ export function AuthProvider({ children }) {
       }
       return null;
     }
-    return saved;
+    return normalizeUser(saved);
   });
 
   const [isLoadingAuth, setIsLoadingAuth] = useState(false);
@@ -76,18 +76,12 @@ export function AuthProvider({ children }) {
     authApi.getMe()
       .then((res) => {
         if (!isMounted) return;
-        const u = res?.data || res?.user;
-        if (u) {
-          const formatted = {
-            ...u,
-            id: u._id || u.id,
-            isAdmin: u.role === 'admin'
-          };
-          setCurrentUser(formatted);
+        const normalized = res?.user || normalizeUser(res);
+        if (normalized) {
+          setCurrentUser(normalized);
         }
       })
       .catch((err) => {
-        // Token might be invalid or expired
         console.debug('Failed to sync auth with server:', err.message);
       });
 
@@ -96,170 +90,102 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const loginUser = useCallback(async (identifier, password) => {
-    if (!identifier || !identifier.trim()) {
-      return { success: false, message: 'لطفاً ایمیل یا شماره موبایل را وارد کنید.' };
+  const loginUser = useCallback(async (phone, password) => {
+    const cleanPhone = (phone || '').trim();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanPhone) {
+      return { success: false, message: 'لطفاً شماره موبایل را وارد کنید.' };
     }
-    if (!password || !password.trim()) {
+    if (!cleanPassword) {
       return { success: false, message: 'وارد کردن رمز عبور الزامی است.' };
     }
-
-    const cleanInput = identifier.trim();
-    const cleanPassword = password.trim();
-    const isEmail = cleanInput.includes('@');
-    const email = isEmail ? cleanInput : `${cleanInput}@talarice.ir`;
 
     setIsLoadingAuth(true);
 
-    // 1. Try real API Login
     try {
-      const res = await authApi.login({ email, password: cleanPassword });
-      if (res.success && res.data?.user) {
-        const u = res.data.user;
-        const userObj = {
-          ...u,
-          id: u._id || u.id,
-          isAdmin: u.role === 'admin'
-        };
-        setCurrentUser(userObj);
-        triggerNotification(`خوش آمدید، ${userObj.name || 'کاربر گرامی'}`, 'success');
-        setIsLoadingAuth(false);
-        return { success: true, user: userObj };
+      const res = await authApi.login({ phone: cleanPhone, password: cleanPassword });
+      const userObj = res?.user || normalizeUser(res);
+      if (!userObj) {
+        throw new Error(res?.message || 'پاسخ نامعتبر از سرور دریافت شد.');
       }
+      setCurrentUser(userObj);
+      triggerNotification(`خوش آمدید، ${userObj.name || 'کاربر گرامی'}`, 'success');
+      setIsLoadingAuth(false);
+      return { success: true, user: userObj };
     } catch (apiErr) {
-      console.warn('API login error, checking local fallback:', apiErr.message);
-    }
-
-    // 2. Local Fallback Verification
-    const user = users.find(
-      (u) => (u.phone === cleanInput || u.email === cleanInput || u.email === email)
-    );
-
-    if (!user) {
       setIsLoadingAuth(false);
-      return { success: false, message: 'کاربری با این مشخصات یافت نشد. لطفاً ثبت‌نام فرمایید.' };
+      triggerNotification(apiErr.message, 'error');
+      return { success: false, message: apiErr.message };
     }
+  }, [triggerNotification]);
 
-    if (user.password !== cleanPassword) {
-      setIsLoadingAuth(false);
-      return { success: false, message: 'رمز عبور نادرست است.' };
-    }
+  const registerUser = useCallback(async (name, phone, password) => {
+    const cleanPhone = (phone || '').trim();
+    const cleanPassword = (password || '').trim();
+    const cleanName = (name || '').trim();
 
-    setCurrentUser(user);
-    triggerNotification(`خوش آمدید، ${user.name}`, 'success');
-    setIsLoadingAuth(false);
-    return { success: true, user };
-  }, [users, triggerNotification]);
-
-  const registerUser = useCallback(async (name, phone, password, emailInput) => {
-    if (!phone || !phone.trim()) {
+    if (!cleanPhone) {
       return { success: false, message: 'لطفاً شماره موبایل خود را وارد نمایید.' };
     }
-    if (!password || !password.trim()) {
+    if (!cleanPassword) {
       return { success: false, message: 'وارد کردن رمز عبور الزامی است.' };
     }
-    if (password.trim().length < 4) {
+    if (cleanPassword.length < 4) {
       return { success: false, message: 'رمز عبور باید حداقل ۴ کاراکتر باشد.' };
     }
 
-    const cleanPhone = phone.trim();
-    const cleanPassword = password.trim();
-    const cleanName = (name && name.trim()) ? name.trim() : `کاربر ${cleanPhone.slice(-4)}`;
-    const email = (emailInput && emailInput.trim()) ? emailInput.trim() : `${cleanPhone}@talarice.ir`;
-
     setIsLoadingAuth(true);
 
-    // 1. Try real API Register
     try {
       const res = await authApi.register({
-        name: cleanName,
-        email,
-        password: cleanPassword,
-        phone: cleanPhone
+        name: cleanName || `کاربر ${cleanPhone.slice(-4)}`,
+        phone: cleanPhone,
+        password: cleanPassword
       });
 
-      if (res.success && res.data?.user) {
-        const u = res.data.user;
-        const userObj = {
-          ...u,
-          id: u._id || u.id,
-          isAdmin: u.role === 'admin'
-        };
-        setCurrentUser(userObj);
-        setUsers((prev) => [...prev, userObj]);
-        triggerNotification(`ثبت‌نام شما با موفقیت انجام شد: ${userObj.name}`, 'success');
-        setIsLoadingAuth(false);
-        return { success: true, user: userObj };
+      const userObj = res?.user || normalizeUser(res);
+      if (!userObj) {
+        throw new Error(res?.message || 'پاسخ نامعتبر از سرور دریافت شد.');
       }
-    } catch (apiErr) {
-      console.warn('API register error, falling back to local creation:', apiErr.message);
-    }
-
-    // 2. Local Fallback Creation
-    const existingUser = users.find((u) => u.phone === cleanPhone || u.email === email);
-    if (existingUser) {
+      setCurrentUser(userObj);
+      triggerNotification(`ثبت‌نام شما با موفقیت انجام شد: ${userObj.name}`, 'success');
       setIsLoadingAuth(false);
-      return { success: false, message: 'این شماره یا ایمیل قبلاً ثبت‌نام شده است. لطفاً وارد شوید.' };
+      return { success: true, user: userObj };
+    } catch (apiErr) {
+      setIsLoadingAuth(false);
+      triggerNotification(apiErr.message, 'error');
+      return { success: false, message: apiErr.message };
     }
+  }, [triggerNotification]);
 
-    const newUser = {
-      id: `usr-${Date.now()}`,
-      _id: `usr-${Date.now()}`,
-      name: cleanName,
-      phone: cleanPhone,
-      email,
-      password: cleanPassword,
-      role: 'user',
-      isAdmin: false,
-      address: ''
-    };
-
-    setCurrentUser(newUser);
-    setUsers((prev) => [...prev, newUser]);
-    triggerNotification(`ثبت‌نام شما با موفقیت انجام شد: ${newUser.name}`, 'success');
-    setIsLoadingAuth(false);
-    return { success: true, user: newUser };
-  }, [users, triggerNotification]);
-
-  const updateProfile = useCallback(async (newName, newPhone) => {
+  const updateProfile = useCallback(async ({ name, phone, address, postalCode } = {}) => {
     try {
-      const res = await authApi.updateProfile({ name: newName, phone: newPhone });
-      if (res.success && res.data) {
-        const updated = {
-          ...currentUser,
-          ...res.data,
-          id: res.data._id || currentUser.id
-        };
-        setCurrentUser(updated);
-        triggerNotification('مشخصات کاربری با موفقیت در سرور به‌روزرسانی شد.', 'success');
-        return { success: true, user: updated };
-      }
+      const res = await authApi.updateProfile({ name, phone, address, postalCode });
+      const updatedUser = res?.user || normalizeUser(res) || {
+        ...currentUser,
+        ...(name !== undefined ? { name } : {}),
+        ...(phone !== undefined ? { phone } : {}),
+        ...(address !== undefined ? { address } : {}),
+        ...(postalCode !== undefined ? { postalCode } : {})
+      };
+      setCurrentUser(updatedUser);
+      triggerNotification('مشخصات کاربری با موفقیت به‌روزرسانی شد.', 'success');
+      return { success: true, user: updatedUser };
     } catch (err) {
-      console.debug('API updateProfile failed, updating locally:', err.message);
+      triggerNotification(`خطا در به‌روزرسانی مشخصات: ${err.message}`, 'error');
+      return { success: false, message: err.message };
     }
-
-    // Local update
-    const updated = {
-      ...currentUser,
-      name: newName,
-      phone: newPhone
-    };
-    setCurrentUser(updated);
-    triggerNotification('مشخصات کاربری به‌روزرسانی شد.', 'success');
-    return { success: true, user: updated };
   }, [currentUser, triggerNotification]);
 
   const changePassword = useCallback(async (oldPassword, newPassword) => {
     try {
       const res = await authApi.changePassword({ oldPassword, newPassword });
-      if (res.success) {
-        triggerNotification('رمز عبور با موفقیت تغییر یافت.', 'success');
-        return { success: true, message: res.message };
-      }
+      triggerNotification('رمز عبور با موفقیت تغییر یافت.', 'success');
+      return { success: true, message: res?.message || 'رمز عبور با موفقیت تغییر کرد.' };
     } catch (err) {
       return { success: false, message: err.message || 'خطا در تغییر رمز عبور' };
     }
-    return { success: true };
   }, [triggerNotification]);
 
   const logout = useCallback(() => {
@@ -300,3 +226,5 @@ export function useAuth() {
   }
   return context;
 }
+
+export default AuthProvider;

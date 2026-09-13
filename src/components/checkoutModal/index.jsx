@@ -68,6 +68,7 @@ export function CheckoutModal() {
   });
   const [errors, setErrors] = useState({});
   const [createdOrder, setCreatedOrder] = useState(null);
+  const [submitError, setSubmitError] = useState(null);
 
   const isLoggedIn = Boolean(isAuthenticated && currentUser);
 
@@ -179,6 +180,7 @@ export function CheckoutModal() {
 
   async function handleFinalPayment() {
     setIsSubmitting(true);
+    setSubmitError(null);
     try {
       const orderPayload = {
         recipientName: isLoggedIn ? (currentUser?.name || formData.recipientName) : formData.recipientName,
@@ -195,7 +197,7 @@ export function CheckoutModal() {
       setCreatedOrder(order);
       setStep(4);
     } catch (err) {
-      console.error('Error placing order:', err);
+      setSubmitError(err.message || 'خطا در ثبت نهایی سفارش در سرور.');
     } finally {
       setIsSubmitting(false);
     }
@@ -678,6 +680,24 @@ export function CheckoutModal() {
                   <strong>{(finalTotal ?? 0).toLocaleString('fa-IR')} تومان</strong>
                 </div>
               </div>
+
+              {submitError && (
+                <div style={{
+                  background: '#fff1f2',
+                  border: '1px solid #fecdd3',
+                  color: '#be123c',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '10px',
+                  marginBottom: '1rem',
+                  fontSize: '0.875rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}>
+                  <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                  <span>{submitError}</span>
+                </div>
+              )}
 
               <div className={styles.btnRow}>
                 <button

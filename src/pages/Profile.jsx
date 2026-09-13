@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context';
+import { ordersApi } from '../api';
 import {
   Package,
   Clock,
@@ -8,173 +9,334 @@ import {
   AlertCircle,
   Truck,
   User,
-  ShieldCheck,
-  ChevronLeft,
+  Crown,
   Search,
-  ExternalLink,
-  Phone,
-  Send,
+  Copy,
   LogOut,
   Headphones,
   Lock,
-  KeyRound
+  MapPin,
+  Phone,
+  ArrowRight,
+  ShieldCheck,
+  ShoppingBag
 } from 'lucide-react';
-import styles from './pages.module.css';
+import styles from './profile.module.css';
 
 export default function Profile() {
   const navigate = useNavigate();
   const {
     currentUser,
-    orders,
-    getOrderStatusInfo,
+    isAdmin,
+    orders: contextOrders,
     logout,
     updateProfile,
     changePassword,
-    trackOrder,
-    showSuccess,
-    showToast
+    showToast,
+    cartCount
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders', 'info', 'support', 'security'
+  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'tracking' | 'info' | 'security' | 'support'
+  const [userOrders, setUserOrders] = useState([]);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+
+  // Profile Form state
   const [name, setName] = useState(currentUser?.name || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
   const [address, setAddress] = useState(currentUser?.address || '');
+  const [postalCode, setPostalCode] = useState(currentUser?.postalCode || '');
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
-  // Password change state
+  // Password state
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  // Postal tracking query
+  // Postal Tracking state
   const [trackingQuery, setTrackingQuery] = useState('');
-  const [trackedOrderResult, setTrackedOrderResult] = useState(null);
+  const [trackedOrder, setTrackedOrder] = useState(null);
   const [isSearchingTracking, setIsSearchingTracking] = useState(false);
+  const [trackingError, setTrackingError] = useState('');
 
-  // Status mapping
-  const getStatusIcon = (statusStr) => {
-    switch (statusStr) {
-      case 'در حال پردازش':
-      case 'processing':
-      case 'pending':
-        return <Clock size={16} className="text-amber-400" />;
-      case 'ارسال شده':
-      case 'shipped':
-        return <Truck size={16} className="text-blue-400" />;
-      case 'تحویل شده':
-      case 'completed':
-        return <CheckCircle2 size={16} className="text-emerald-400" />;
-      default:
-        return <AlertCircle size={16} className="text-stone-400" />;
+  // Sync state if currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name || '');
+      setPhone(currentUser.phone || '');
+      setAddress(currentUser.address || '');
+      setPostalCode(currentUser.postalCode || '');
     }
-  };
+  }, [currentUser]);
+
+  // Fetch real user orders from API
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoadingOrders(true);
+    ordersApi.getMyOrders()
+      .then((data) => {
+        if (isMounted) {
+          setUserOrders(Array.isArray(data) ? data : []);
+        }
+      })
+      .catch((err) => {
+        console.debug('Orders sync notice:', err.message);
+        if (isMounted && Array.isArray(contextOrders)) {
+          setUserOrders(contextOrders);
+        }
+      })
+      .finally(() => {
+        if (isMounted) setIsLoadingOrders(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [contextOrders]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
-    await updateProfile(name, phone);
+    setIsUpdatingProfile(true);
+    try {
+      await updateProfile({ name, phone, address, postalCode });
+    } finally {
+      setIsUpdatingProfile(false);
+    }
   };
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
+    if (!oldPassword.trim()) {
+      showToast('لطفاً رمز عبور فعلی را وارد کنید.', 'warning');
+      return;
+    }
     if (newPassword !== confirmPassword) {
-      showToast('رمز عبور جدید و تکرار آن یکسان نیستند.', 'error');
+      showToast('رمز عبور جدید و تکرار آن یکسان نیستند.', 'warning');
       return;
     }
-    if (newPassword.length < 6) {
-      showToast('رمز عبور جدید باید حداقل ۶ کاراکتر باشد.', 'error');
+    if (newPassword.length < 4) {
+      showToast('رمز عبور جدید باید حداقل ۴ کاراکتر باشد.', 'warning');
       return;
     }
-    const res = await changePassword(oldPassword, newPassword);
-    if (res?.success) {
-      setOldPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-    } else if (res?.message) {
-      showToast(res.message, 'error');
+
+    setIsChangingPassword(true);
+    try {
+      const res = await changePassword(oldPassword, newPassword);
+      if (res?.success) {
+        setOldPassword('');
+        setNewPassword('');
+        setConfirmPassword('');
+      } else if (res?.message) {
+        showToast(res.message, 'error');
+      }
+    } finally {
+      setIsChangingPassword(false);
     }
   };
 
-  const handleTrackSearch = async (e) => {
+  const handleTrackingSearch = async (e) => {
     e.preventDefault();
-    if (!trackingQuery.trim()) return;
+    const query = trackingQuery.trim();
+    if (!query) {
+      setTrackingError('لطفاً شماره سفارش یا کد رهگیری پستی را وارد نمایید.');
+      return;
+    }
+
     setIsSearchingTracking(true);
-    setTrackedOrderResult(null);
+    setTrackingError('');
+    setTrackedOrder(null);
 
-    const result = await trackOrder(trackingQuery.trim());
-    setIsSearchingTracking(false);
-
-    if (result) {
-      setTrackedOrderResult(result);
-    } else {
-      showToast('سفارشی با این کد رهگیری پستی یافت نشد.', 'error');
+    try {
+      const res = await ordersApi.track(query);
+      setTrackedOrder(res);
+    } catch (err) {
+      // Check in local list as fallback
+      const found = userOrders.find(
+        (o) => String(o.id) === query || String(o.trackingCode) === query || String(o.postalTrackingCode) === query
+      );
+      if (found) {
+        setTrackedOrder(found);
+      } else {
+        setTrackingError('سفارشی با این شماره یا کد رهگیری در سامانه ثبت نشده است.');
+      }
+    } finally {
+      setIsSearchingTracking(false);
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const copyToClipboard = (text) => {
+    if (!text) return;
+    navigator.clipboard?.writeText(text);
+    showToast('کد رهگیری پستی در کلیپ‌بورد کپی شد.', 'success');
   };
+
+  const getStatusBadge = (status) => {
+    switch (status) {
+      case 'completed':
+      case 'تحویل شده':
+        return (
+          <span className={`${styles.orderStatusBadge} ${styles.statusCompleted}`}>
+            <CheckCircle2 size={14} />
+            تحویل شده
+          </span>
+        );
+      case 'shipped':
+      case 'ارسال شده':
+        return (
+          <span className={`${styles.orderStatusBadge} ${styles.statusShipped}`}>
+            <Truck size={14} />
+            ارسال شده (پست پیشتاز)
+          </span>
+        );
+      default:
+        return (
+          <span className={`${styles.orderStatusBadge} ${styles.statusPending}`}>
+            <Clock size={14} />
+            در حال پردازش در شالیزار
+          </span>
+        );
+    }
+  };
+
+  const activeOrdersCount = userOrders.filter(
+    (o) => o.status !== 'completed' && o.status !== 'تحویل شده' && o.status !== 'cancelled'
+  ).length;
+
+  const deliveredOrdersCount = userOrders.filter(
+    (o) => o.status === 'completed' || o.status === 'تحویل شده'
+  ).length;
 
   return (
-    <main className={styles.pageContainer}>
-      {/* کارت سربرگ مشخصات کاربر */}
-      <header className={styles.profileHeaderCard}>
-        <div className={styles.profileAvatarBox}>
-          <User size={36} />
-        </div>
+    <main className={styles.profileContainer}>
+      {/* 1. کارت هدر و اطلاعات اصلی کاربر */}
+      <section className={styles.userHeroCard}>
+        <div className={styles.heroMainRow}>
+          <div className={styles.userInfoGroup}>
+            <div className={styles.avatarCircle}>
+              {currentUser?.name ? currentUser.name.charAt(0) : <User size={28} />}
+            </div>
 
-        <div className={styles.profileMetaInfo}>
-          <div className={styles.profileNameRow}>
-            <h1 className={styles.profileUserName}>{currentUser?.name || 'کاربر گرامی'}</h1>
-            {currentUser?.isAdmin && (
-              <span className={styles.adminBadge}>
-                <ShieldCheck size={12} />
-                مدیر فروشگاه
+            <div className={styles.userMeta}>
+              <div className={styles.userNameRow}>
+                <h1 className={styles.userName}>{currentUser?.name || 'کاربر گرامی'}</h1>
+                {isAdmin ? (
+                  <span className={styles.roleBadgeAdmin}>
+                    <Crown size={12} />
+                    مدیر فروشگاه
+                  </span>
+                ) : (
+                  <span className={styles.roleBadgeCustomer}>
+                    <ShieldCheck size={12} />
+                    مشتری وفادار طلا رایس
+                  </span>
+                )}
+              </div>
+              <span className={styles.userPhone}>
+                <Phone size={13} />
+                {currentUser?.phone || 'بدون شماره تلفن'}
               </span>
-            )}
+            </div>
           </div>
-          <span className={styles.profileUserPhone} dir="ltr">
-            {currentUser?.phone || 'شماره ثبت‌نشده'}
-          </span>
+
+          <div className={styles.heroActions}>
+            {isAdmin && (
+              <Link to="/admin" className={styles.adminPanelBtn} title="ورود به داشبورد مدیریتی">
+                <Crown size={16} />
+                <span>پنل مدیریت فروشگاه</span>
+              </Link>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                navigate('/auth');
+              }}
+              className={styles.logoutBtn}
+              title="خروج از حساب"
+            >
+              <LogOut size={15} />
+              <span>خروج</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. آمارهای سریع پنل */}
+      <section className={styles.statsGrid}>
+        <div className={styles.statCard}>
+          <div className={`${styles.statIconBox} ${styles.statIconGreen}`}>
+            <Package size={22} />
+          </div>
+          <div className={styles.statTextGroup}>
+            <span className={styles.statValue}>{userOrders.length.toLocaleString('fa-IR')}</span>
+            <span className={styles.statLabel}>کل سفارش‌ها</span>
+          </div>
         </div>
 
-        {currentUser?.isAdmin && (
-          <button
-            type="button"
-            onClick={() => navigate('/admin')}
-            className={styles.btnAdminAccess}
-          >
-            <span>ورود به پنل مدیریت</span>
-            <ChevronLeft size={16} />
-          </button>
-        )}
-      </header>
+        <div className={styles.statCard}>
+          <div className={`${styles.statIconBox} ${styles.statIconAmber}`}>
+            <Clock size={22} />
+          </div>
+          <div className={styles.statTextGroup}>
+            <span className={styles.statValue}>{activeOrdersCount.toLocaleString('fa-IR')}</span>
+            <span className={styles.statLabel}>سفارش‌های فعال</span>
+          </div>
+        </div>
 
-      {/* ناوبری تب‌های پروفایل */}
-      <nav className={styles.tabsNavList}>
+        <div className={styles.statCard}>
+          <div className={`${styles.statIconBox} ${styles.statIconBlue}`}>
+            <Truck size={22} />
+          </div>
+          <div className={styles.statTextGroup}>
+            <span className={styles.statValue}>{deliveredOrdersCount.toLocaleString('fa-IR')}</span>
+            <span className={styles.statLabel}>تحویل موفق</span>
+          </div>
+        </div>
+
+        <div className={styles.statCard}>
+          <div className={`${styles.statIconBox} ${styles.statIconGold}`}>
+            <ShoppingBag size={22} />
+          </div>
+          <div className={styles.statTextGroup}>
+            <span className={styles.statValue}>{cartCount.toLocaleString('fa-IR')}</span>
+            <span className={styles.statLabel}>اقلام در سبد</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. تب‌های ناوبری پنل کاربری */}
+      <nav className={styles.tabsNav} aria-label="منوی پنل کاربری">
         <button
           type="button"
-          className={`${styles.tabNavItem} ${activeTab === 'orders' ? styles.tabNavItemActive : ''}`}
+          className={`${styles.tabItem} ${activeTab === 'orders' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('orders')}
         >
           <Package size={17} />
           <span>سفارش‌های من</span>
-          {orders.length > 0 && (
-            <span className={styles.tabBadgeCounter}>{orders.length.toLocaleString('fa-IR')}</span>
-          )}
         </button>
 
         <button
           type="button"
-          className={`${styles.tabNavItem} ${activeTab === 'info' ? styles.tabNavItemActive : ''}`}
+          className={`${styles.tabItem} ${activeTab === 'tracking' ? styles.tabItemActive : ''}`}
+          onClick={() => setActiveTab('tracking')}
+        >
+          <Search size={17} />
+          <span>رهگیری مرسوله</span>
+        </button>
+
+        <button
+          type="button"
+          className={`${styles.tabItem} ${activeTab === 'info' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('info')}
         >
           <User size={17} />
-          <span>اطلاعات فردی</span>
+          <span>مشخصات و آدرس</span>
         </button>
 
         <button
           type="button"
-          className={`${styles.tabNavItem} ${activeTab === 'security' ? styles.tabNavItemActive : ''}`}
+          className={`${styles.tabItem} ${activeTab === 'security' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('security')}
         >
           <Lock size={17} />
@@ -183,291 +345,346 @@ export default function Profile() {
 
         <button
           type="button"
-          className={`${styles.tabNavItem} ${activeTab === 'support' ? styles.tabNavItemActive : ''}`}
+          className={`${styles.tabItem} ${activeTab === 'support' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('support')}
         >
           <Headphones size={17} />
-          <span>پشتیبانی شالیزار</span>
+          <span>پشتیبانی</span>
         </button>
       </nav>
 
-      {/* تب ۱: سفارش‌های کاربر + رهگیری مرسوله پستی */}
-      {activeTab === 'orders' && (
-        <section className={styles.card}>
-          {/* فرم استعلام کد مرسوله پستی */}
-          <div className={styles.trackingSearchBox} style={{ marginBottom: '1.25rem', padding: '1rem', background: '#fcfbf8', borderRadius: '12px', border: '1px solid #eee5d0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <Truck size={18} className="text-yellow-500" />
-              <strong style={{ fontSize: '0.95rem' }}>رهگیری برخط مرسوله پستی</strong>
+      {/* 4. محتوای تب فعال */}
+      <section className={styles.contentCard}>
+        {/* تب ۱: سفارش‌های من */}
+        {activeTab === 'orders' && (
+          <>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <Package size={20} />
+                تاریخچه و وضعیت سفارش‌ها
+              </h2>
+              <span className={styles.sectionBadge}>
+                {userOrders.length.toLocaleString('fa-IR')} سفارش ثبت شده
+              </span>
             </div>
-            <form onSubmit={handleTrackSearch} style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="کد پیگیری پستی یا شماره سفارش..."
-                value={trackingQuery}
-                onChange={(e) => setTrackingQuery(e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <button
-                type="submit"
-                className={styles.btnPrimary}
-                disabled={isSearchingTracking}
-                style={{ padding: '0.5rem 1rem', whiteSpace: 'nowrap' }}
-              >
-                {isSearchingTracking ? 'در حال استعلام...' : 'رهگیری'}
-              </button>
-            </form>
 
-            {/* نتیجه رهگیری */}
-            {trackedOrderResult && (
-              <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#fff', borderRadius: '8px', border: '1px solid #dfd7be' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <strong>سفارش {trackedOrderResult.trackingCode || trackedOrderResult.postTrackingCode}</strong>
-                  <span className={styles.badge}>{trackedOrderResult.status || trackedOrderResult.state}</span>
+            {isLoadingOrders ? (
+              <div className={styles.emptyState}>
+                <Clock size={32} className="animate-spin text-emerald-700" />
+                <p>در حال دریافت اطلاعات سفارش‌ها از سرور...</p>
+              </div>
+            ) : userOrders.length === 0 ? (
+              <div className={styles.emptyState}>
+                <div className={styles.emptyStateIcon}>
+                  <ShoppingBag size={28} />
                 </div>
-                <p style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.3rem' }}>
-                  گیرنده: {trackedOrderResult.customerName || trackedOrderResult.name} | مبلغ: {(trackedOrderResult.finalAmount || trackedOrderResult.totalPrice || 0).toLocaleString('fa-IR')} تومان
-                </p>
-                {trackedOrderResult.postTrackingCode && (
-                  <p style={{ fontSize: '0.85rem', color: '#16a34a', marginTop: '0.3rem', direction: 'ltr', textAlign: 'left' }}>
-                    Post Barcode: <strong>{trackedOrderResult.postTrackingCode}</strong>
+                <p>شما هنوز سفارشی در طلا رایس ثبت نکرده‌اید.</p>
+                <Link to="/products" className={styles.primaryBtn}>
+                  مشاهده کاتالوگ برنج اصیل
+                </Link>
+              </div>
+            ) : (
+              <div className={styles.ordersList}>
+                {userOrders.map((order) => (
+                  <article key={order.id || order._id} className={styles.orderCard}>
+                    <div className={styles.orderTopRow}>
+                      <div className={styles.orderIdDate}>
+                        <span className={styles.orderIdText}>
+                          سفارش #{String(order.id || order._id).slice(-6)}
+                        </span>
+                        <span className={styles.orderDateText}>
+                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('fa-IR') : 'به تازگی'}
+                        </span>
+                      </div>
+                      {getStatusBadge(order.status)}
+                    </div>
+
+                    {/* لیست اقلام */}
+                    <div className={styles.orderItemsList}>
+                      {order.items && order.items.length > 0 ? (
+                        order.items.map((item, idx) => (
+                          <div key={idx} className={styles.orderItemRow}>
+                            <span className={styles.orderItemName}>{item.name || item.title || 'کیسه برنج اصیل'}</span>
+                            <span className={styles.orderItemQtyPrice}>
+                              {(item.quantity || item.qty || 1).toLocaleString('fa-IR')} عدد × {(item.price || 0).toLocaleString('fa-IR')} تومان
+                            </span>
+                          </div>
+                        ))
+                      ) : (
+                        <div className={styles.orderItemRow}>
+                          <span className={styles.orderItemName}>سفارش برنج ارگانیک کامفیروز</span>
+                          <span className={styles.orderItemQtyPrice}>۱ کیسه ۱۰ کیلویی</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={styles.orderBottomRow}>
+                      <div className={styles.orderTotalAmount}>
+                        <span>مبلغ کل:</span>
+                        <strong className={styles.orderTotalValue}>
+                          {(order.totalPrice || 0).toLocaleString('fa-IR')} تومان
+                        </strong>
+                      </div>
+
+                      {order.trackingCode && (
+                        <div className={styles.trackingCodeBox}>
+                          <span>کد رهگیری پستی:</span>
+                          <span className={styles.trackingCodeVal}>{order.trackingCode}</span>
+                          <button
+                            type="button"
+                            onClick={() => copyToClipboard(order.trackingCode)}
+                            className={styles.copyCodeBtn}
+                            title="کپی کد رهگیری"
+                          >
+                            <Copy size={13} />
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* تب ۲: رهگیری مرسوله پستی */}
+        {activeTab === 'tracking' && (
+          <>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <Search size={20} />
+                سامانه رهگیری ارسال مستقیم از شالیزار
+              </h2>
+            </div>
+
+            <form onSubmit={handleTrackingSearch} className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <Search size={15} />
+                  شماره سفارش یا کد ۲۴ رقمی پست پیشتاز
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    value={trackingQuery}
+                    onChange={(e) => setTrackingQuery(e.target.value)}
+                    placeholder="مثال: TR-98421 یا 192837465019283746501234"
+                    className={styles.inputField}
+                    style={{ direction: 'ltr', textAlign: 'right' }}
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSearchingTracking}
+                    className={styles.primaryBtn}
+                    style={{ whiteSpace: 'nowrap' }}
+                  >
+                    {isSearchingTracking ? 'در حال جستجو...' : 'استعلام وضعیت'}
+                  </button>
+                </div>
+                {trackingError && (
+                  <p style={{ color: '#e11d48', fontSize: '0.825rem', marginTop: '0.4rem', fontWeight: 600 }}>
+                    {trackingError}
                   </p>
                 )}
               </div>
+            </form>
+
+            {trackedOrder && (
+              <div style={{ marginTop: '1rem' }} className={styles.orderCard}>
+                <div className={styles.orderTopRow}>
+                  <span className={styles.orderIdText}>
+                    مرسوله مربوط به سفارش #{String(trackedOrder.id || trackedOrder._id).slice(-6)}
+                  </span>
+                  {getStatusBadge(trackedOrder.status)}
+                </div>
+                <p style={{ fontSize: '0.875rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
+                  مرسوله شما با بسته‌بندی نخی ویژه طلا رایس جهت حفظ عطر و تازگی، توسط پست پیشتاز ارسال شده است.
+                </p>
+                {trackedOrder.trackingCode && (
+                  <div className={styles.trackingCodeBox} style={{ alignSelf: 'flex-start' }}>
+                    <span>کد رهگیری ملی پست:</span>
+                    <span className={styles.trackingCodeVal}>{trackedOrder.trackingCode}</span>
+                    <button
+                      type="button"
+                      onClick={() => copyToClipboard(trackedOrder.trackingCode)}
+                      className={styles.copyCodeBtn}
+                    >
+                      کپی
+                    </button>
+                  </div>
+                )}
+              </div>
             )}
-          </div>
+          </>
+        )}
 
-          <div className={styles.formCardHeader}>
-            <Package size={18} className="text-yellow-400" />
-            <h2 className={styles.pageTitle}>تاریخچه سفارشات ثبت‌شده</h2>
-          </div>
+        {/* تب ۳: مشخصات و آدرس */}
+        {activeTab === 'info' && (
+          <>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <User size={20} />
+                مشخصات کاربری و آدرس ارسال
+              </h2>
+            </div>
 
-          {orders.length === 0 ? (
-            <div className={styles.emptyOrdersState}>
-              <Package size={44} className={styles.emptyIcon} />
-              <strong className={styles.emptyTitle}>هنوز هیچ سفارشی ثبت نشده است</strong>
-              <p className={styles.emptySubtitle}>
-                می‌توانید همین حالا انواع برنج ممتاز کامفیروز را بررسی و مستقیماً از شالیزار سفارش دهید.
-              </p>
-              <button
-                type="button"
-                onClick={() => navigate('/products')}
-                className={styles.btnPrimary}
-              >
-                مشاهده و خرید برنج
+            <form onSubmit={handleUpdateProfile} className={styles.formGrid}>
+              <div className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>نام و نام خانوادگی</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                    className={styles.inputField}
+                  />
+                </div>
+
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>شماره تلفن همراه</label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    className={styles.inputField}
+                    style={{ direction: 'ltr', textAlign: 'right' }}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>
+                  <MapPin size={15} />
+                  آدرس دقیق پستی جهت تحویل سفارش
+                </label>
+                <textarea
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="استان، شهر، خیابان، کوچه، پلاک، واحد..."
+                  rows={3}
+                  className={styles.inputField}
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>کد پستی ۱۰ رقمی</label>
+                <input
+                  type="text"
+                  value={postalCode}
+                  onChange={(e) => setPostalCode(e.target.value)}
+                  placeholder="مثال: ۷۱۸۵۸۴۹۲۱۵"
+                  maxLength={10}
+                  className={styles.inputField}
+                  style={{ direction: 'ltr', textAlign: 'right' }}
+                />
+              </div>
+
+              <button type="submit" disabled={isUpdatingProfile} className={styles.primaryBtn}>
+                {isUpdatingProfile ? 'در حال ذخیره‌سازی...' : 'ذخیره تغییرات مشخصات'}
               </button>
-            </div>
-          ) : (
-            <div className={styles.ordersListContainer}>
-              {orders.map((order) => {
-                const statusInfo = getOrderStatusInfo(order.status || order.state);
-                return (
-                  <article key={order._id || order.id} className={styles.orderCardItem}>
-                    <header className={styles.orderHeaderRow}>
-                      <div className={styles.orderMainDetails}>
-                        <div className={styles.orderTrackingCodeRow}>
-                          <span className={styles.codeLabel}>کد پیگیری:</span>
-                          <strong className={styles.orderCodeValue} dir="ltr">
-                            {order.postTrackingCode || order.trackingCode}
-                          </strong>
-                        </div>
-                        <time className={styles.orderDateText}>{order.date || 'به‌تازگی'}</time>
-                      </div>
+            </form>
+          </>
+        )}
 
-                      <div className={styles.orderStatusPill}>
-                        {getStatusIcon(order.status || order.state)}
-                        <span>{statusInfo.label}</span>
-                      </div>
-                    </header>
-
-                    <div className={styles.orderProductsSummary}>
-                      {(order.items || order.products || []).map((item, index) => (
-                        <div key={index} className={styles.orderProductRow}>
-                          <span className={styles.productNameText}>{item.name}</span>
-                          <span className={styles.productQtyBadge}>
-                            {(item.quantity || 1).toLocaleString('fa-IR')} کیسه
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <footer className={styles.orderFooterSummary}>
-                      <div className={styles.orderTotalAmount}>
-                        <span className={styles.totalLabel}>مبلغ کل سفارش:</span>
-                        <strong className={styles.amountValue}>
-                          {(order.finalAmount || order.totalPrice || 0).toLocaleString('fa-IR')}
-                        </strong>
-                        <span className={styles.currency}>تومان</span>
-                      </div>
-
-                      {order.postTrackingCode && (
-                        <span className={styles.postCodeNotice}>
-                          کد مرسوله پستی: <strong dir="ltr">{order.postTrackingCode}</strong>
-                        </span>
-                      )}
-                    </footer>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
-      )}
-
-      {/* تب ۲: فرم مشخصات و نشانی */}
-      {activeTab === 'info' && (
-        <section className={styles.card}>
-          <div className={styles.formCardHeader}>
-            <User size={18} className="text-yellow-400" />
-            <h2 className={styles.pageTitle}>ویرایش مشخصات فردی و نشانی تحویل</h2>
-          </div>
-
-          <form onSubmit={handleUpdateProfile} className={styles.profileForm}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>نام و نام خانوادگی:</label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={styles.input}
-                placeholder="مثال: علی رضایی"
-                required
-              />
+        {/* تب ۴: امنیت و تغییر رمز */}
+        {activeTab === 'security' && (
+          <>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <Lock size={20} />
+                تغییر رمز عبور حساب کاربری
+              </h2>
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label}>شماره تلفن همراه:</label>
-              <input
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={styles.input}
-                style={{ textAlign: 'left', direction: 'ltr' }}
-                placeholder="۰۹۱۲۳۴۵۶۷۸۹"
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>نشانی دقیق پستی:</label>
-              <textarea
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className={styles.textarea}
-                rows={3}
-                placeholder="استان، شهر، خیابان، کوچه، پلاک، واحد و کد پستی"
-              />
-            </div>
-
-            <button type="submit" className={styles.btnPrimary}>
-              <span>ذخیره تغییرات مشخصات</span>
-            </button>
-          </form>
-        </section>
-      )}
-
-      {/* تب ۳: امنیت و تغییر رمز عبور */}
-      {activeTab === 'security' && (
-        <section className={styles.card}>
-          <div className={styles.formCardHeader}>
-            <KeyRound size={18} className="text-yellow-400" />
-            <h2 className={styles.pageTitle}>تغییر کلمه عبور</h2>
-          </div>
-
-          <form onSubmit={handleChangePassword} className={styles.profileForm}>
-            <div className={styles.formGroup}>
-              <label className={styles.label}>رمز عبور فعلی:</label>
-              <input
-                type="password"
-                value={oldPassword}
-                onChange={(e) => setOldPassword(e.target.value)}
-                className={styles.input}
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>رمز عبور جدید (حداقل ۶ نویسه):</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className={styles.input}
-                required
-              />
-            </div>
-
-            <div className={styles.formGroup}>
-              <label className={styles.label}>تکرار رمز عبور جدید:</label>
-              <input
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className={styles.input}
-                required
-              />
-            </div>
-
-            <button type="submit" className={styles.btnPrimary}>
-              <span>تغییر و ذخیره رمز عبور</span>
-            </button>
-          </form>
-        </section>
-      )}
-
-      {/* تب ۴: پشتیبانی */}
-      {activeTab === 'support' && (
-        <section className={styles.card}>
-          <div className={styles.formCardHeader}>
-            <Headphones size={18} className="text-yellow-400" />
-            <h2 className={styles.pageTitle}>پشتیبانی و مشاوره خرید برنج</h2>
-          </div>
-
-          <p className={styles.descText}>
-            تیم شالیزار طلا رایس آماده پاسخگویی به سوالات شما در خصوص روش پخت، ارسال عمده و تضمین کیفیت ارقام برنج است.
-          </p>
-
-          <div className={styles.supportChannelsList}>
-            <a href="tel:09170000000" className={styles.supportChannelItem}>
-              <div className={styles.channelIconBox}>
-                <Phone size={18} />
+            <form onSubmit={handleChangePassword} className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel}>رمز عبور فعلی</label>
+                <input
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  required
+                  className={styles.inputField}
+                  placeholder="••••••••"
+                />
               </div>
-              <div className={styles.channelDetails}>
-                <strong>تماس تلفنی با واحد فروش</strong>
-                <small>شنبه تا پنج‌شنبه از ساعت ۸ صبح الی ۲۰ شب</small>
-              </div>
-              <ChevronLeft size={16} className="text-yellow-400" />
-            </a>
 
-            <a
-              href="https://wa.me/989170000000"
-              target="_blank"
-              rel="noreferrer"
-              className={styles.supportChannelItem}
-            >
-              <div className={styles.channelIconBox} style={{ background: 'rgba(34, 197, 94, 0.2)', color: '#4ade80' }}>
-                <Send size={18} />
-              </div>
-              <div className={styles.channelDetails}>
-                <strong>پشتیبانی آنلاین در واتساپ</strong>
-                <small>پاسخگویی سریع و پیگیری سفارشات ارسالی</small>
-              </div>
-              <ChevronLeft size={16} className="text-yellow-400" />
-            </a>
-          </div>
-        </section>
-      )}
+              <div className={styles.formGrid2} style={{ display: 'grid', gap: '1rem' }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>رمز عبور جدید</label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={4}
+                    className={styles.inputField}
+                    placeholder="حداقل ۴ کاراکتر"
+                  />
+                </div>
 
-      {/* دکمه خروج */}
-      <footer className={styles.profileFooterLogout}>
-        <button type="button" onClick={handleLogout} className={styles.btnLogout}>
-          <LogOut size={16} />
-          <span>خروج از حساب کاربری</span>
-        </button>
-      </footer>
+                <div className={styles.formGroup}>
+                  <label className={styles.formLabel}>تکرار رمز عبور جدید</label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    minLength={4}
+                    className={styles.inputField}
+                    placeholder="تکرار رمز عبور جدید"
+                  />
+                </div>
+              </div>
+
+              <button type="submit" disabled={isChangingPassword} className={styles.primaryBtn}>
+                {isChangingPassword ? 'در حال تغییر...' : 'ثبت رمز عبور جدید'}
+              </button>
+            </form>
+          </>
+        )}
+
+        {/* تب ۵: پشتیبانی و ارتباط */}
+        {activeTab === 'support' && (
+          <>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>
+                <Headphones size={20} />
+                ارتباط با واحد مشتریان طلا رایس
+              </h2>
+            </div>
+
+            <div className={styles.supportChannelsGrid}>
+              <div className={styles.supportChannelCard}>
+                <div className={styles.supportIconCircle}>
+                  <Phone size={20} />
+                </div>
+                <div className={styles.supportChannelInfo}>
+                  <span className={styles.supportTitle}>تماس تلفنی با دفتر شالیزار</span>
+                  <span className={styles.supportDetail}>
+                    ۰۷۱-۳۸۳۰۱۵۶۰ (خط مستقیم پشتیبانی شنبه تا پنجشنبه ۸ الی ۲۰)
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.supportChannelCard}>
+                <div className={styles.supportIconCircle}>
+                  <Truck size={20} />
+                </div>
+                <div className={styles.supportChannelInfo}>
+                  <span className={styles.supportTitle}>ارسال مستقیم و ضمانت پخت</span>
+                  <span className={styles.supportDetail}>
+                    تمامی محصولات با ۷ روز ضمانت بازگشت وجه در صورت عدم رضایت از عطر و ری ارائه می‌شوند.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </section>
     </main>
   );
 }
-
-export { Profile };

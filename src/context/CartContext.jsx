@@ -3,14 +3,10 @@ import { useAuth } from './AuthContext';
 import ToastContainer from '../components/toast';
 import {
   productsApi,
-  amazingApi,
-  slidesApi,
-  cartApi,
   ordersApi,
-  reviewsApi,
   adminApi,
   normalizeProduct
-} from '../services/api';
+} from '../api';
 
 const CartContext = createContext();
 
@@ -113,6 +109,7 @@ export function CartProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
+  const [apiError, setApiError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Categories list
@@ -126,9 +123,21 @@ export function CartProvider({ children }) {
   ];
 
   // 2. Toast Actions
-  const showToast = useCallback((message, type = 'info', duration = 3000) => {
-    const id = Date.now() + Math.random().toString();
-    setToasts((prev) => [...prev, { id, message, type }]);
+  const showToast = useCallback((message, type = 'info', duration = 3500) => {
+    if (!message) return;
+    const cleanMsg = typeof message === 'string' ? message : String(message);
+    const id = Date.now() + Math.random().toString(36).substring(2, 7);
+
+    setToasts((prev) => {
+      // Prevent identical duplicate toast stacking
+      if (prev.some(t => t.message === cleanMsg)) {
+        return prev;
+      }
+      // Cap at maximum 3 visible toasts
+      const next = prev.length >= 3 ? prev.slice(1) : prev;
+      return [...next, { id, message: cleanMsg, type, duration }];
+    });
+
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, duration);
@@ -160,13 +169,16 @@ export function CartProvider({ children }) {
   const refreshProductsFromApi = useCallback(async () => {
     try {
       setIsLoadingApi(true);
+      setApiError(null);
       const res = await productsApi.getProducts({ limit: 50 });
       if (res.data && Array.isArray(res.data)) {
         const cleanList = res.data.filter((p) => p && !['prod-1', 'prod-2', 'prod-3', 'prod-4'].includes(p.id) && !['prod-1', 'prod-2', 'prod-3', 'prod-4'].includes(p._id));
         setProducts(cleanList);
       }
     } catch (err) {
-      console.debug('Products API offline or busy, using local cached catalog:', err.message);
+      setApiError(err.message || 'خطا در بارگذاری لیست محصولات از سرور.');
+      // Quiet background log without annoying popup on initial load
+      console.debug('Product sync notice:', err.message);
     } finally {
       setIsLoadingApi(false);
     }
@@ -193,7 +205,7 @@ export function CartProvider({ children }) {
         setSliders([]);
       }
     } catch (err) {
-      console.debug('Slides API fetch note:', err.message);
+      // Slides can fail quietly or show in admin
     }
   }, []);
 
@@ -216,7 +228,7 @@ export function CartProvider({ children }) {
         })));
       }
     } catch (err) {
-      console.debug('Orders API fetch note:', err.message);
+      // Order sync error
     }
   }, [currentUser]);
 
@@ -291,7 +303,6 @@ export function CartProvider({ children }) {
 
   // 7. Order Actions
   const createOrder = useCallback(async (orderData) => {
-    const trackingCode = `TRK-${Math.floor(10000 + Math.random() * 90000)}`;
     const itemsList = cart.map((item) => ({
       name: item.name,
       price: Number(item.price),
@@ -308,44 +319,46 @@ export function CartProvider({ children }) {
       paymentReceipt: orderData.paymentReceipt || orderData.receiptImage || ''
     };
 
-    let serverOrder = null;
     try {
       const res = await ordersApi.createOrder(orderPayload);
-      if (res?.data) {
-        serverOrder = res.data;
+      const serverOrder = res?.data || res?.order || res;
+      if (!serverOrder) {
+        throw new Error('پاسخی از سرور برای ثبت سفارش دریافت نشد.');
       }
+
+      const newOrder = {
+        ...serverOrder,
+        id: serverOrder._id || serverOrder.id,
+        _id: serverOrder._id || serverOrder.id,
+        trackingCode: serverOrder.postTrackingCode || serverOrder.trackingCode || serverOrder._id,
+        postTrackingCode: serverOrder.postTrackingCode || serverOrder.trackingCode || serverOrder._id,
+        date: serverOrder.createdAt ? new Date(serverOrder.createdAt).toLocaleDateString('fa-IR') : new Date().toLocaleDateString('fa-IR'),
+        customerName: orderPayload.name,
+        customerPhone: orderPayload.phone,
+        customerAddress: orderPayload.address,
+        postalCode: orderPayload.postalCode,
+        items: [...cart],
+        totalPrice: cartSubtotal,
+        discountAmount: 0,
+        shippingFee,
+        finalAmount: finalTotal,
+        status: serverOrder.state || 'در حال پردازش',
+        state: serverOrder.state || 'pending',
+        paymentStatus: serverOrder.paymentStatus || 'pending',
+        paymentMethod: orderData.paymentMethod || 'آنلاین',
+        paymentReceipt: orderPayload.paymentReceipt
+      };
+
+      setOrders((prev) => [newOrder, ...prev]);
+      clearCart();
+      setIsCheckoutOpen(false);
+      showSuccess(`سفارش شما با موفقیت در سرور ثبت گردید (کد رهگیری: ${newOrder.trackingCode}).`);
+      return newOrder;
     } catch (err) {
-      console.warn('API createOrder offline fallback:', err.message);
+      showError(`خطا در ثبت سفارش در سرور: ${err.message}`);
+      throw err;
     }
-
-    const newOrder = {
-      id: serverOrder?._id || `ORD-${Date.now()}`,
-      _id: serverOrder?._id || `ORD-${Date.now()}`,
-      trackingCode: serverOrder?.postTrackingCode || trackingCode,
-      postTrackingCode: serverOrder?.postTrackingCode || trackingCode,
-      date: new Date().toLocaleDateString('fa-IR'),
-      customerName: orderPayload.name,
-      customerPhone: orderPayload.phone,
-      customerAddress: orderPayload.address,
-      postalCode: orderPayload.postalCode,
-      items: [...cart],
-      totalPrice: cartSubtotal,
-      discountAmount: 0,
-      shippingFee,
-      finalAmount: finalTotal,
-      status: serverOrder?.state || 'در حال پردازش',
-      state: serverOrder?.state || 'pending',
-      paymentStatus: serverOrder?.paymentStatus || 'pending',
-      paymentMethod: orderData.paymentMethod || 'آنلاین',
-      paymentReceipt: orderPayload.paymentReceipt
-    };
-
-    setOrders((prev) => [newOrder, ...prev]);
-    clearCart();
-    setIsCheckoutOpen(false);
-    showSuccess(`سفارش شما با کد رهگیری ${newOrder.trackingCode} ثبت گردید.`);
-    return newOrder;
-  }, [cart, cartSubtotal, shippingFee, finalTotal, currentUser, clearCart, showSuccess]);
+  }, [cart, cartSubtotal, shippingFee, finalTotal, currentUser, clearCart, showSuccess, showError]);
 
   const updateOrderStatus = useCallback(async (orderId, status, postTrackingCode = '', adminNote = '') => {
     try {
@@ -354,24 +367,24 @@ export function CartProvider({ children }) {
         postTrackingCode,
         adminNote
       });
+      setOrders((prev) =>
+        prev.map((o) =>
+          (o.id === orderId || o._id === orderId)
+            ? {
+                ...o,
+                status,
+                state: status,
+                postTrackingCode: postTrackingCode || o.postTrackingCode
+              }
+            : o
+        )
+      );
+      showSuccess('وضعیت سفارش در سرور بروزرسانی شد.');
     } catch (err) {
-      console.debug('API updateStatus offline note:', err.message);
+      showError(`خطا در بروزرسانی وضعیت سفارش: ${err.message}`);
+      throw err;
     }
-
-    setOrders((prev) =>
-      prev.map((o) =>
-        (o.id === orderId || o._id === orderId)
-          ? {
-              ...o,
-              status,
-              state: status,
-              postTrackingCode: postTrackingCode || o.postTrackingCode
-            }
-          : o
-      )
-    );
-    showSuccess('وضعیت سفارش بروزرسانی شد.');
-  }, [showSuccess]);
+  }, [showSuccess, showError]);
 
   const deleteOrder = useCallback((orderId) => {
     setOrders((prev) => prev.filter((o) => o.id !== orderId && o._id !== orderId));
@@ -382,11 +395,10 @@ export function CartProvider({ children }) {
     if (!query) return null;
     const clean = String(query).trim();
 
-    // 1. Try real API
     try {
       const res = await ordersApi.trackOrder(clean);
-      if (res?.data) {
-        const o = res.data;
+      const o = res?.data || res?.order || res;
+      if (o && (o._id || o.name || o.status || o.state)) {
         return {
           ...o,
           id: o._id || o.id,
@@ -396,27 +408,18 @@ export function CartProvider({ children }) {
           customerAddress: o.address,
           items: o.products || [],
           finalAmount: o.totalPrice,
-          status: o.state || 'در حال پردازش'
+          status: o.state || o.status || 'در حال پردازش'
         };
       }
+      return null;
     } catch (err) {
-      console.debug('API trackOrder check:', err.message);
+      showError(`خطا در استعلام سفارش از سرور: ${err.message}`);
+      return null;
     }
-
-    // 2. Local Fallback search
-    return orders.find(
-      (o) =>
-        o.trackingCode === clean ||
-        o.postTrackingCode === clean ||
-        o.id === clean ||
-        o._id === clean ||
-        o.customerPhone === clean
-    ) || null;
-  }, [orders]);
+  }, [showError]);
 
   // 8. Product Operations (Admin)
   const addProduct = useCallback(async (productData) => {
-    let created = null;
     try {
       const res = await productsApi.createProduct({
         name: productData.name,
@@ -426,52 +429,61 @@ export function CartProvider({ children }) {
         countInStock: Number(productData.stock || 20),
         imageBase64: productData.imageBase64 || productData.image
       });
-      if (res?.data) {
-        created = res.data;
+
+      const created = res?.data || res?.product || res;
+      if (!created || (!created._id && !created.id)) {
+        throw new Error('پاسخ معتبری از سرور دریافت نشد.');
       }
+
+      const newProd = {
+        ...created,
+        id: created._id || created.id,
+        _id: created._id || created.id,
+        price: Number(created.price || created.originalPrice || productData.price),
+        originalPrice: Number(created.originalPrice || productData.price),
+        stock: Number(created.countInStock || productData.stock || 20),
+        rating: created.rating || 5,
+        reviewsCount: created.reviewsCount || 0,
+        image: created.image || productData.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
+      };
+
+      setProducts((prev) => [newProd, ...prev]);
+      showSuccess('محصول جدید با موفقیت در سرور ثبت شد.');
+      return newProd;
     } catch (err) {
-      console.warn('API addProduct fallback to local:', err.message);
+      showError(`خطا در ثبت محصول در سرور: ${err.message}`);
+      throw err;
     }
-
-    const newProd = created || {
-      ...productData,
-      id: `prod-${Date.now()}`,
-      _id: `prod-${Date.now()}`,
-      rating: 5,
-      reviewsCount: 1,
-      image: productData.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
-    };
-
-    setProducts((prev) => [newProd, ...prev]);
-    showSuccess('محصول جدید با موفقیت ذخیره و منتشر شد.');
-    return newProd;
-  }, [showSuccess]);
+  }, [showSuccess, showError]);
 
   const updateProduct = useCallback(async (id, updatedData) => {
     try {
       await productsApi.updateProduct(id, updatedData);
+      setProducts((prev) => prev.map((p) => ((p.id === id || p._id === id) ? { ...p, ...updatedData } : p)));
+      showSuccess('اطلاعات محصول در سرور بروزرسانی شد.');
     } catch (err) {
-      console.debug('API updateProduct note:', err.message);
+      showError(`خطا در بروزرسانی محصول: ${err.message}`);
+      throw err;
     }
-    setProducts((prev) => prev.map((p) => ((p.id === id || p._id === id) ? { ...p, ...updatedData } : p)));
-    showSuccess('اطلاعات محصول بروزرسانی شد.');
-  }, [showSuccess]);
+  }, [showSuccess, showError]);
 
   const deleteProduct = useCallback(async (id) => {
     try {
       await productsApi.deleteProduct(id);
+      setProducts((prev) => prev.filter((p) => p.id !== id && p._id !== id));
+      showToast('محصول از سرور حذف گردید.', 'info');
     } catch (err) {
-      console.debug('API deleteProduct note:', err.message);
+      showError(`خطا در حذف محصول از سرور: ${err.message}`);
+      throw err;
     }
-    setProducts((prev) => prev.filter((p) => p.id !== id && p._id !== id));
-    showToast('محصول حذف گردید.', 'info');
-  }, [showToast]);
+  }, [showToast, showError]);
 
   return (
     <CartContext.Provider
       value={{
         isApiReady: true,
         isLoadingApi,
+        apiError,
         products,
         setProducts,
         refreshProductsFromApi,

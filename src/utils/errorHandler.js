@@ -65,14 +65,14 @@ export function parseApiError(err) {
     actionAdvice = 'لطفاً وضعیت اتصال اینترنت را چک کرده و مجدداً تلاش فرمایید.';
   } else if (status === 503) {
     errorType = 'SERVER_MAINTENANCE';
-    title = 'سرور در حال به‌روزرسانی';
-    message = rawMessage || 'سامانه در حال ارتقا و بهینه‌سازی است.';
-    actionAdvice = 'لطفاً چند لحظه شکیبا باشید و مجدداً امتحان کنید.';
+    title = 'سرویس در دسترس نیست';
+    message = rawMessage || 'سرور در حال حاضر قادر به پاسخگویی نیست (کد ۵۰۳).';
+    actionAdvice = 'لطفاً دقایقی دیگر مجدداً تلاش فرمایید.';
   } else if (isServerError) {
     errorType = 'SERVER_ERROR';
     title = 'خطای سرور';
     message = rawMessage || 'مشکلی در پردازش درخواست سمت سرور رخ داده است.';
-    actionAdvice = 'تیم فنی در حال بررسی است. لطفاً کمی بعد دوباره امتحان کنید.';
+    actionAdvice = 'لطفاً دقایقی بعد دوباره امتحان کنید.';
   } else if (isValidation) {
     errorType = 'VALIDATION_ERROR';
     title = 'خطا در اطلاعات ارسالی';

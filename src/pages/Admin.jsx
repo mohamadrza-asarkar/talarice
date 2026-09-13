@@ -19,7 +19,7 @@ import {
   RefreshCw,
   ExternalLink
 } from 'lucide-react';
-import { adminApi, ordersApi, productsApi } from '../services/api';
+import { adminApi, ordersApi, productsApi } from '../api';
 import styles from './pages.module.css';
 
 export default function Admin() {
@@ -71,7 +71,7 @@ export default function Admin() {
         setDashboardStats(res.data);
       }
     } catch (err) {
-      console.debug('Dashboard stats fallback note:', err.message);
+      showToast(`عدم دریافت آمار داشبورد از سرور: ${err.message}`, 'warning');
     } finally {
       setIsLoadingStats(false);
     }
@@ -102,28 +102,35 @@ export default function Admin() {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (!newProdName.trim() || !newProdPrice) return;
+    if (!newProdName.trim() || !newProdPrice) {
+      showToast('لطفاً عنوان و قیمت محصول را مشخص فرمایید.', 'error');
+      return;
+    }
 
-    await addProduct({
-      name: newProdName.trim(),
-      price: Number(newProdPrice),
-      originalPrice: Number(newProdOriginalPrice || newProdPrice),
-      discountPercent: Number(newProdDiscount || 0),
-      category: newProdCategory,
-      weight: newProdWeight,
-      stock: Number(newProdStock || 20),
-      description: newProdDesc.trim() || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
-      image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
-      imageBase64: newProdImageBase64
-    });
+    try {
+      await addProduct({
+        name: newProdName.trim(),
+        price: Number(newProdPrice),
+        originalPrice: Number(newProdOriginalPrice || newProdPrice),
+        discountPercent: Number(newProdDiscount || 0),
+        category: newProdCategory,
+        weight: newProdWeight,
+        stock: Number(newProdStock || 20),
+        description: newProdDesc.trim() || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
+        image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+        imageBase64: newProdImageBase64
+      });
 
-    setNewProdName('');
-    setNewProdPrice('');
-    setNewProdOriginalPrice('');
-    setNewProdDiscount('0');
-    setNewProdDesc('');
-    setNewProdImageBase64('');
-    setShowAddForm(false);
+      setNewProdName('');
+      setNewProdPrice('');
+      setNewProdOriginalPrice('');
+      setNewProdDiscount('0');
+      setNewProdDesc('');
+      setNewProdImageBase64('');
+      setShowAddForm(false);
+    } catch (err) {
+      // Error is surfaced by addProduct with showError
+    }
   };
 
   const handleUpdateShipping = async (orderId) => {
@@ -131,10 +138,14 @@ export default function Admin() {
       showToast('لطفاً کد رهگیری پستی را وارد کنید.', 'error');
       return;
     }
-    await updateOrderStatus(orderId, 'ارسال شده', trackingCodeInput.trim(), adminNoteInput.trim());
-    setEditingTrackingOrderId(null);
-    setTrackingCodeInput('');
-    setAdminNoteInput('');
+    try {
+      await updateOrderStatus(orderId, 'ارسال شده', trackingCodeInput.trim(), adminNoteInput.trim());
+      setEditingTrackingOrderId(null);
+      setTrackingCodeInput('');
+      setAdminNoteInput('');
+    } catch (err) {
+      // Error is surfaced by updateOrderStatus
+    }
   };
 
   const handleVerifyReceipt = async (orderId, isApproved) => {
@@ -170,9 +181,13 @@ export default function Admin() {
             <RefreshCw size={15} />
             بروزرسانی
           </button>
-          <button type="button" className={styles.backButton} onClick={() => navigate('/profile')}>
+          <button type="button" className={styles.backButton} onClick={() => navigate('/profile')} title="ورود به پنل کاربری">
+            <Users size={15} />
+            پنل کاربری
+          </button>
+          <button type="button" className={styles.backButton} onClick={() => navigate('/')} title="مشاهده فروشگاه">
             <ArrowRight size={15} />
-            پروفایل
+            فروشگاه
           </button>
         </div>
       </header>

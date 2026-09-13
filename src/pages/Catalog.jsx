@@ -1,11 +1,19 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context';
-import { Filter, SlidersHorizontal, ShieldCheck, Sparkles, Check } from 'lucide-react';
+import { Filter, SlidersHorizontal, ShieldCheck, Sparkles, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import { ProductCard } from '../components/productCard';
 import styles from './pages.module.css';
 
 export default function Catalog() {
-  const { products, categories, selectedCategory, setSelectedCategory } = useApp();
+  const {
+    products,
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    apiError,
+    isLoadingApi,
+    refreshProductsFromApi
+  } = useApp();
   const [sortBy, setSortBy] = useState('popular'); // popular, price-asc, price-desc, rating
   const [activeWeightFilter, setActiveWeightFilter] = useState('all'); // all, 10, 5
 
@@ -60,6 +68,48 @@ export default function Catalog() {
           </p>
         </div>
       </section>
+
+      {apiError && (
+        <div style={{
+          background: '#fff1f2',
+          border: '1px solid #fecdd3',
+          color: '#be123c',
+          padding: '0.85rem 1.25rem',
+          borderRadius: '12px',
+          margin: '1rem 0',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          fontSize: '0.9rem'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <span>{apiError}</span>
+          </div>
+          <button
+            type="button"
+            onClick={refreshProductsFromApi}
+            disabled={isLoadingApi}
+            style={{
+              background: '#be123c',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '0.4rem 0.85rem',
+              cursor: 'pointer',
+              fontSize: '0.85rem',
+              whiteSpace: 'nowrap',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
+          >
+            <RefreshCw size={14} className={isLoadingApi ? 'animate-spin' : ''} />
+            <span>{isLoadingApi ? 'در حال تلاش...' : 'تلاش مجدد'}</span>
+          </button>
+        </div>
+      )}
 
       {/* دسته‌بندی‌های کاتالوگ */}
       <div className={styles.filterSection}>

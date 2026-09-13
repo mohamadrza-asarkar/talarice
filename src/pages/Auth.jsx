@@ -25,7 +25,9 @@ export default function Auth() {
     }
   }, [isAuthenticated, navigate, redirectPath]);
 
-  const handleSubmit = (e) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -39,24 +41,30 @@ export default function Auth() {
       return;
     }
 
-    if (mode === 'register') {
-      if (password.trim().length < 4) {
-        setErrorMessage('رمز عبور باید حداقل ۴ رقم یا کاراکتر باشد.');
-        return;
-      }
-      const res = registerUser(name.trim(), phone.trim(), password.trim());
-      if (res.success) {
-        navigate(redirectPath, { replace: true });
+    setIsSubmitting(true);
+    try {
+      if (mode === 'register') {
+        if (password.trim().length < 4) {
+          setErrorMessage('رمز عبور باید حداقل ۴ رقم یا کاراکتر باشد.');
+          setIsSubmitting(false);
+          return;
+        }
+        const res = await registerUser(name.trim(), phone.trim(), password.trim());
+        if (res.success) {
+          navigate(redirectPath, { replace: true });
+        } else {
+          setErrorMessage(res.message || 'خطا در ثبت‌نام.');
+        }
       } else {
-        setErrorMessage(res.message || 'خطا در ثبت‌نام.');
+        const res = await loginUser(phone.trim(), password.trim());
+        if (res.success) {
+          navigate(redirectPath, { replace: true });
+        } else {
+          setErrorMessage(res.message || 'شماره موبایل یا رمز عبور اشتباه است.');
+        }
       }
-    } else {
-      const res = loginUser(phone.trim(), password.trim());
-      if (res.success) {
-        navigate(redirectPath, { replace: true });
-      } else {
-        setErrorMessage(res.message || 'شماره موبایل یا رمز عبور اشتباه است.');
-      }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -172,9 +180,9 @@ export default function Auth() {
             </div>
           </div>
 
-          <button type="submit" className={styles.submitBtn}>
-            <i className={mode === 'login' ? 'fa-solid fa-arrow-left-to-bracket' : 'fa-solid fa-check'} />
-            <span>{mode === 'login' ? 'ورود به حساب کاربری' : 'تکمیل و ایجاد حساب کاربری'}</span>
+          <button type="submit" className={styles.submitBtn} disabled={isSubmitting}>
+            <i className={isSubmitting ? 'fa-solid fa-spinner fa-spin' : (mode === 'login' ? 'fa-solid fa-arrow-left-to-bracket' : 'fa-solid fa-check')} />
+            <span>{isSubmitting ? 'در حال برقراری ارتباط...' : (mode === 'login' ? 'ورود به حساب کاربری' : 'تکمیل و ایجاد حساب کاربری')}</span>
           </button>
         </form>
 

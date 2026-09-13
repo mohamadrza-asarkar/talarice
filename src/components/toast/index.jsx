@@ -1,13 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   AlertTriangle,
-  CheckCircle2,
+  Check,
   Info,
-  XCircle,
   X,
-  ServerCrash,
-  Sparkles,
-  FileWarning,
   AlertCircle
 } from 'lucide-react';
 import styles from './style.module.css';
@@ -15,7 +11,7 @@ import styles from './style.module.css';
 function ToastItem({ toast, onDismiss }) {
   const [isExiting, setIsExiting] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
-  const duration = toast.duration || (toast.isServerError ? 8000 : 5000);
+  const duration = toast.duration || 4000;
   const startTimeRef = useRef(Date.now());
   const remainingRef = useRef(duration);
   const timerRef = useRef(null);
@@ -24,7 +20,7 @@ function ToastItem({ toast, onDismiss }) {
     setIsExiting(true);
     setTimeout(() => {
       onDismiss(toast.id);
-    }, 280);
+    }, 220);
   };
 
   useEffect(() => {
@@ -57,34 +53,20 @@ function ToastItem({ toast, onDismiss }) {
     }
   };
 
-  const type = toast.type || 'error';
-  const isServerError = toast.isServerError;
-  const isValidationError = toast.isValidationError || toast.errorType === 'VALIDATION_ERROR';
+  const type = toast.type || 'info';
 
-  let typeClass = styles.toastError;
-  let Icon = XCircle;
-  let badgeLabel = 'خطا';
+  let typeClass = styles.toastInfo;
+  let Icon = Info;
 
   if (type === 'success') {
     typeClass = styles.toastSuccess;
-    Icon = CheckCircle2;
-    badgeLabel = 'موفقیت';
+    Icon = Check;
+  } else if (type === 'error') {
+    typeClass = styles.toastError;
+    Icon = AlertCircle;
   } else if (type === 'warning') {
     typeClass = styles.toastWarning;
     Icon = AlertTriangle;
-    badgeLabel = 'هشدار';
-  } else if (type === 'info') {
-    typeClass = styles.toastInfo;
-    Icon = Info;
-    badgeLabel = 'اطلاع‌رسانی';
-  } else if (isServerError) {
-    typeClass = styles.toastServerError;
-    Icon = ServerCrash;
-    badgeLabel = 'به‌روزرسانی سرور';
-  } else if (isValidationError) {
-    typeClass = styles.toastValidationError;
-    Icon = FileWarning;
-    badgeLabel = 'فرمت اطلاعات';
   }
 
   return (
@@ -94,36 +76,13 @@ function ToastItem({ toast, onDismiss }) {
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      <div className={styles.iconWrapper}>
-        <Icon size={22} strokeWidth={2.2} />
+      <div className={styles.iconCircle}>
+        <Icon size={18} strokeWidth={2.4} />
       </div>
 
       <div className={styles.toastContent}>
-        <div className={styles.toastHeader}>
-          <span className={styles.toastTitle}>
-            {toast.title || (isServerError ? 'سرور در حال به‌روزرسانی است' : isValidationError ? 'خطا در فرمت اطلاعات' : type === 'success' ? 'عملیات موفق' : 'خطای سیستم')}
-          </span>
-          <span className={styles.typeBadge}>{badgeLabel}</span>
-          {toast.statusCode && (
-            <span className={styles.codeBadge}>
-              کد: {toast.statusCode}
-            </span>
-          )}
-        </div>
-
+        {toast.title && <span className={styles.toastTitle}>{toast.title}</span>}
         <p className={styles.toastMessage}>{toast.message}</p>
-
-        {toast.actionAdvice && (
-          <div className={styles.toastAdvice}>
-            💡 {toast.actionAdvice}
-          </div>
-        )}
-
-        {toast.details && (
-          <div className={styles.toastDetails}>
-            {toast.details}
-          </div>
-        )}
       </div>
 
       {onDismiss && (
@@ -131,10 +90,10 @@ function ToastItem({ toast, onDismiss }) {
           type="button"
           onClick={handleDismiss}
           className={styles.closeBtn}
-          aria-label="بستن پیام"
+          aria-label="بستن اعلان"
           title="بستن"
         >
-          <X size={16} />
+          <X size={15} />
         </button>
       )}
 

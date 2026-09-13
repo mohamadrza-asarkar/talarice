@@ -187,12 +187,14 @@
 
 /* پیام‌های خطا */
 .errorBox {
-  background: #fee2e2;
-  border: 1px solid #fecaca;
+  background: #fff1f2;
+  border: 1px solid #ffe4e6;
+  border-right: 3.5px solid #e11d48;
   border-radius: 10px;
   padding: 0.65rem 0.85rem;
-  color: #b91c1c;
-  font-size: 0.8rem;
+  color: #be123c;
+  font-size: 0.82rem;
+  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 0.5rem;
