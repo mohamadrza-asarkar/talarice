@@ -82,15 +82,13 @@ export const authApi = {
    * Register with name, email, phone, password (Section 1.1)
    * @param {{ name: string, phone: string, email?: string, password: string }} payload
    */
-  async register({ name, phone, email, password }) {
+  async register({ name, phone, password }) {
     const cleanPhone = (phone || '').trim();
     const cleanPassword = (password || '').trim();
     const cleanName = (name || '').trim();
-    const cleanEmail = (email || (cleanPhone ? `${cleanPhone}@talarice.ir` : 'user@example.com')).trim();
 
     const res = await client.post('/auth/register', {
       name: cleanName,
-      email: cleanEmail,
       phone: cleanPhone,
       password: cleanPassword
     });
@@ -103,19 +101,15 @@ export const authApi = {
   },
 
   /**
-   * Login with email/phone and password (Section 1.2)
-   * @param {{ email?: string, phone?: string, identifier?: string, password: string }} payload
+   * Login with phone and password (Section 1.2)
+   * @param {{ phone: string, password: string }} payload
    */
-  async login({ email, phone, identifier, password }) {
-    const rawIdentifier = (email || phone || identifier || '').trim();
+  async login({ phone, password }) {
+    const cleanPhone = (phone || '').trim();
     const cleanPassword = (password || '').trim();
-    const isEmail = rawIdentifier.includes('@');
-    const cleanEmail = isEmail ? rawIdentifier : `${rawIdentifier}@talarice.ir`;
-    const cleanPhone = !isEmail ? rawIdentifier : '';
 
     const res = await client.post('/auth/login', {
-      email: isEmail ? rawIdentifier : cleanEmail,
-      phone: cleanPhone || rawIdentifier,
+      phone: cleanPhone,
       password: cleanPassword
     });
 
