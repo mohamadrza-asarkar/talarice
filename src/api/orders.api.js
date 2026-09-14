@@ -186,23 +186,59 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Get all orders in store
+   * Admin: Get all orders in store with fallback
    */
   async getAllOrders(params = {}) {
-    const query = new URLSearchParams();
-    if (params.status) query.append('status', params.status);
-    if (params.page) query.append('page', params.page);
-    
-    const qs = query.toString();
-    const endpoint = `/orders${qs ? `?${qs}` : ''}`;
-    const res = await client.get(endpoint);
+    const candidateEndpoints = [
+      '/orders',
+      '/admin/orders',
+      '/orders/admin',
+      '/orders/all'
+    ];
 
-    let rawList = [];
-    if (Array.isArray(res)) rawList = res;
-    else if (Array.isArray(res?.data)) rawList = res.data;
-    else if (Array.isArray(res?.orders)) rawList = res.orders;
+    let rawList = null;
+    let lastError = null;
+
+    for (const ep of candidateEndpoints) {
+      try {
+        const query = new URLSearchParams();
+        if (params.status) query.append('status', params.status);
+        if (params.page) query.append('page', params.page);
+        const qs = query.toString();
+        const fullEp = `${ep}${qs ? `?${qs}` : ''}`;
+
+        const res = await client.get(fullEp);
+        if (Array.isArray(res)) {
+          rawList = res;
+          break;
+        } else if (Array.isArray(res?.data)) {
+          rawList = res.data;
+          break;
+        } else if (Array.isArray(res?.orders)) {
+          rawList = res.orders;
+          break;
+        }
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    if (!rawList) {
+      if (lastError && !lastError.isNetworkError && lastError.status !== 404) {
+        throw lastError;
+      }
+      return [];
+    }
 
     return rawList.map(normalizeOrder).filter(Boolean);
+  },
+
+  getAll(params = {}) {
+    return this.getAllOrders(params);
+  },
+
+  getAdminOrders(params = {}) {
+    return this.getAllOrders(params);
   },
 
   /**
@@ -211,14 +247,100 @@ export const ordersApi = {
   async updateStatus(id, { status, state, trackingCode, postTrackingCode, postalTrackingCode, adminNote }) {
     const targetStatus = status || state || 'processing';
     const targetTracking = trackingCode || postTrackingCode || postalTrackingCode || '';
-    const res = await client.put(`/orders/${id}/status`, {
+    
+    // Status translation for Persian and English backends
+    const statusMapEn = {
+      'در حال پردازش': 'processing',
+      'ارسال شده': 'shipped',
+      'تحویل شده': 'delivered',
+      'لغو شده': 'cancelled'
+    };
+    const statusMapFa = {
+      'processing': 'در حال پردازش',
+      'shipped': 'ارسال شده',
+      'delivered': 'تحویل شده',
+      'cancelled': 'لغو شده'
+    };
+    
+    const enStatus = statusMapEn[targetStatus] || targetStatus;
+    const faStatus = statusMapFa[targetStatus] || targetStatus;
+
+    const payload = {
       status: targetStatus,
       state: targetStatus,
+      orderStatus: targetStatus,
+      enStatus,
+      faStatus,
       trackingCode: targetTracking,
       postalTrackingCode: targetTracking,
       postTrackingCode: targetTracking,
-      adminNote
-    });
+      adminNote: adminNote || ''
+    };
+
+    const endpoints = [
+      `/orders/${id}/status`,
+      `/orders/${id}`,
+      `/admin/orders/${id}/status`,
+      `/admin/orders/${id}`
+    ];
+
+    let res = null;
+    let lastErr = null;
+    for (const ep of endpoints) {
+      try {
+        res = await client.put(ep, payload);
+        break;
+      } catch (err) {
+        lastErr = err;
+        try {
+          res = await client.patch(ep, payload);
+          break;
+        } catch (patchErr) {
+          lastErr = patchErr;
+        }
+      }
+    }
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
+  },
+
+  /**
+   * Admin: Verify bank receipt payment
+   */
+  async verifyPayment(id, payload = {}) {
+    const endpoints = [
+      `/orders/${id}/verify-payment`,
+      `/orders/${id}/payment`,
+      `/orders/${id}/status`,
+      `/orders/${id}`
+    ];
+
+    let res = null;
+    let lastErr = null;
+    for (const ep of endpoints) {
+      try {
+        res = await client.put(ep, payload);
+        break;
+      } catch (err) {
+        lastErr = err;
+        try {
+          res = await client.patch(ep, payload);
+          break;
+        } catch (patchErr) {
+          lastErr = patchErr;
+        }
+      }
+    }
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
@@ -227,7 +349,19 @@ export const ordersApi = {
    * Admin: Delete order
    */
   async delete(id) {
-    return await client.delete(`/orders/${id}`);
+    const endpoints = [
+      `/orders/${id}`,
+      `/admin/orders/${id}`
+    ];
+    let lastErr = null;
+    for (const ep of endpoints) {
+      try {
+        return await client.delete(ep);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+    throw lastErr;
   },
 
   deleteOrder(id) {

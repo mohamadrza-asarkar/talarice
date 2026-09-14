@@ -109,7 +109,40 @@ export const productsApi = {
    * Create a new product (Admin)
    */
   async create(productData) {
-    const res = await client.post('/products', productData);
+    const payload = {
+      name: productData.name || productData.title,
+      title: productData.name || productData.title,
+      description: productData.description || '',
+      price: Number(productData.price || productData.originalPrice || 0),
+      originalPrice: Number(productData.originalPrice || productData.price || 0),
+      oldPrice: Number(productData.originalPrice || productData.price || 0),
+      discountPercent: Number(productData.discountPercent || 0),
+      countInStock: Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20)),
+      stock: Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20)),
+      category: productData.category || 'kamfirouz',
+      weight: productData.weight || '۱۰ کیلوگرم',
+      image: productData.image || productData.imageUrl || productData.imageBase64 || '',
+      imageUrl: productData.image || productData.imageUrl || productData.imageBase64 || '',
+      imageBase64: productData.imageBase64 || productData.image || ''
+    };
+
+    const endpoints = ['/products', '/admin/products'];
+    let res = null;
+    let lastErr = null;
+
+    for (const ep of endpoints) {
+      try {
+        res = await client.post(ep, payload);
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
     const raw = res?.data || res?.product || res;
     return normalizeProduct(raw);
   },
@@ -122,7 +155,29 @@ export const productsApi = {
    * Update product (Admin)
    */
   async update(id, productData) {
-    const res = await client.put(`/products/${id}`, productData);
+    const endpoints = [`/products/${id}`, `/admin/products/${id}`];
+    let res = null;
+    let lastErr = null;
+
+    for (const ep of endpoints) {
+      try {
+        res = await client.put(ep, productData);
+        break;
+      } catch (err) {
+        lastErr = err;
+        try {
+          res = await client.patch(ep, productData);
+          break;
+        } catch (patchErr) {
+          lastErr = patchErr;
+        }
+      }
+    }
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
     const raw = res?.data || res?.product || res;
     return normalizeProduct(raw);
   },
@@ -135,7 +190,18 @@ export const productsApi = {
    * Delete product (Admin)
    */
   async delete(id) {
-    return await client.delete(`/products/${id}`);
+    const endpoints = [`/products/${id}`, `/admin/products/${id}`];
+    let lastErr = null;
+
+    for (const ep of endpoints) {
+      try {
+        return await client.delete(ep);
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+
+    throw lastErr;
   },
 
   deleteProduct(id) {

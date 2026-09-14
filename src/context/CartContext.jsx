@@ -5,7 +5,9 @@ import {
   productsApi,
   ordersApi,
   adminApi,
-  normalizeProduct
+  slidesApi,
+  normalizeProduct,
+  normalizeSlide
 } from '../api';
 
 const CartContext = createContext();
@@ -17,6 +19,29 @@ const STORAGE_KEYS = {
   REVIEWS: 'tala_rice_reviews',
   SLIDES: 'tala_rice_slides'
 };
+
+const DEFAULT_SLIDES = [
+  {
+    id: 'slide-kamfirouz-1',
+    _id: 'slide-kamfirouz-1',
+    image: '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    title: 'برنج معطر کامفیروز اصل فارس',
+    subtitle: 'برداشت تازه سال از بهترین شالیزارها',
+    description: 'عطر ماندگار، پخت بی‌نظیر و ری‌دهی فوق‌العاده برای مجالس و مصارف روزمره خانواده‌های ایرانی',
+    ctaText: 'مشاهده و خرید آنلاین',
+    category: 'kamfirouz'
+  },
+  {
+    id: 'slide-kamfirouz-2',
+    _id: 'slide-kamfirouz-2',
+    image: '/src/assets/images/white_rice_sack_2_1786553728612.jpg',
+    title: 'تضمین اصالت و پخت بدون اختلاط',
+    subtitle: 'ارسال مستقیم و سریع در سراسر کشور',
+    description: 'عرضه در کیسه‌های نخی ۱۰ کیلوگرمی بهداشتی با ضمانت مرجوعی بدون قید و شرط در صورت عدم رضایت',
+    ctaText: 'سفارش کیسه ۱۰ کیلویی',
+    category: 'all'
+  }
+];
 
 const STORE_INFO = {
   name: 'برنج طلا رایس',
@@ -95,9 +120,11 @@ export function CartProvider({ children }) {
   });
   const [sliders, setSliders] = useState(() => {
     const stored = getStorage(STORAGE_KEYS.SLIDES, []);
-    if (!Array.isArray(stored)) return [];
-    // Filter out dummy/test slides slide-1, slide-2
-    return stored.filter((s) => s && !['slide-1', 'slide-2'].includes(s.id) && !['slide-1', 'slide-2'].includes(s._id));
+    if (Array.isArray(stored) && stored.length > 0) {
+      const clean = stored.filter((s) => s && !['slide-1', 'slide-2'].includes(s.id) && !['slide-1', 'slide-2'].includes(s._id));
+      if (clean.length > 0) return clean;
+    }
+    return DEFAULT_SLIDES;
   });
   const [reviews, setReviews] = useState(() => {
     const stored = getStorage(STORAGE_KEYS.REVIEWS, []);
@@ -185,7 +212,14 @@ export function CartProvider({ children }) {
   }, []);
 
   const refreshSlidesFromApi = useCallback(async () => {
-    // Optional slide refresh
+    try {
+      const list = await slidesApi.getAll();
+      if (Array.isArray(list) && list.length > 0) {
+        setSliders(list);
+      }
+    } catch (err) {
+      console.debug('Slide sync notice:', err.message);
+    }
   }, []);
 
   const refreshOrdersFromApi = useCallback(async () => {
@@ -456,6 +490,47 @@ export function CartProvider({ children }) {
     }
   }, [showToast, showError]);
 
+  // 9. Slide Operations (Admin)
+  const addSlide = useCallback(async (slideData) => {
+    try {
+      const created = await slidesApi.createSlide(slideData);
+      if (created) {
+        setSliders((prev) => [created, ...prev]);
+        showSuccess('اسلایدر با موفقیت در سرور ذخیره شد.');
+        return created;
+      }
+    } catch (err) {
+      const localSlide = {
+        id: `slide-${Date.now()}`,
+        _id: `slide-${Date.now()}`,
+        ...slideData
+      };
+      setSliders((prev) => [localSlide, ...prev]);
+      showSuccess('اسلایدر ذخیره شد.');
+      return localSlide;
+    }
+  }, [showSuccess]);
+
+  const updateSlide = useCallback(async (id, updatedData) => {
+    try {
+      await slidesApi.updateSlide(id, updatedData);
+    } catch (err) {
+      console.debug('Update slide remote error:', err.message);
+    }
+    setSliders((prev) => prev.map((s) => ((s.id === id || s._id === id) ? { ...s, ...updatedData } : s)));
+    showSuccess('اسلایدر بروزرسانی شد.');
+  }, [showSuccess]);
+
+  const deleteSlide = useCallback(async (id) => {
+    try {
+      await slidesApi.deleteSlide(id);
+    } catch (err) {
+      console.debug('Delete slide remote error:', err.message);
+    }
+    setSliders((prev) => prev.filter((s) => s.id !== id && s._id !== id));
+    showToast('اسلاید حذف گردید.', 'info');
+  }, [showToast]);
+
   return (
     <CartContext.Provider
       value={{
@@ -466,7 +541,12 @@ export function CartProvider({ children }) {
         setProducts,
         refreshProductsFromApi,
         sliders,
+        setSliders,
         heroSlides: sliders,
+        refreshSlidesFromApi,
+        addSlide,
+        updateSlide,
+        deleteSlide,
         reviews,
         setReviews,
         categories,
