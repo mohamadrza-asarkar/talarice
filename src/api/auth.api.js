@@ -4,19 +4,32 @@
 // -------------------------------------------------------------
 import { client, setStoredToken } from './client';
 
+// Unwraps Mongoose documents (_doc) and API envelopes
+export function unwrapDoc(raw) {
+  if (!raw || typeof raw !== 'object') return raw;
+  let target = raw;
+  if (target._doc && typeof target._doc === 'object') {
+    target = { ...target, ...target._doc };
+  }
+  if (target.data && typeof target.data === 'object' && !Array.isArray(target.data)) {
+    target = target.data._doc ? { ...target.data, ...target.data._doc } : target.data;
+  }
+  if (target.user && typeof target.user === 'object' && !Array.isArray(target.user)) {
+    target = target.user._doc ? { ...target.user, ...target.user._doc } : target.user;
+  }
+  if (target._doc && typeof target._doc === 'object') {
+    target = { ...target, ...target._doc };
+  }
+  return target;
+}
+
 // Normalize user object from various server response formats
 export function normalizeUser(raw) {
   if (!raw) return null;
-  let u = raw;
-  if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
-    u = raw.data.user || raw.data;
-  } else if (raw.user && typeof raw.user === 'object') {
-    u = raw.user;
-  }
-
+  const u = unwrapDoc(raw);
   if (!u || typeof u !== 'object') return null;
 
-  const phone = u.phone || u.phoneNumber || u.mobile || '';
+  const phone = String(u.phone || u.phoneNumber || u.mobile || '').trim();
   const id = u._id || u.id || (phone ? `usr-${phone}` : `usr-${Date.now()}`);
   const roleStr = String(u.role || u.userRole || u.type || '').trim().toLowerCase();
   const isAdmin = Boolean(
@@ -30,8 +43,8 @@ export function normalizeUser(raw) {
 
   return {
     ...u,
-    id,
-    _id: id,
+    id: String(id),
+    _id: String(id),
     name: u.name || u.fullName || u.username || (phone ? `کاربر ${phone.slice(-4)}` : 'کاربر گرامی'),
     phone,
     mobile: phone,
@@ -46,7 +59,10 @@ export function normalizeUser(raw) {
 // Extract and save token from response
 function extractAndSaveToken(resData) {
   if (!resData || typeof resData !== 'object') return null;
+  const unwrapped = unwrapDoc(resData);
   const token =
+    unwrapped.token ||
+    unwrapped.accessToken ||
     resData.token ||
     resData.data?.token ||
     resData.accessToken ||

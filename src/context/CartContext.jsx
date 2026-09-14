@@ -170,14 +170,14 @@ export function CartProvider({ children }) {
     try {
       setIsLoadingApi(true);
       setApiError(null);
-      const res = await productsApi.getProducts({ limit: 50 });
-      if (res.data && Array.isArray(res.data)) {
-        const cleanList = res.data.filter((p) => p && !['prod-1', 'prod-2', 'prod-3', 'prod-4'].includes(p.id) && !['prod-1', 'prod-2', 'prod-3', 'prod-4'].includes(p._id));
+      const res = await productsApi.getAll({ limit: 50 });
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : (Array.isArray(res?.products) ? res.products : []));
+      if (rawList.length > 0) {
+        const cleanList = rawList.filter((p) => p && !['prod-1', 'prod-2', 'prod-3', 'prod-4'].includes(p.id) && !['prod-1', 'prod-2', 'prod-3', 'prod-4'].includes(p._id));
         setProducts(cleanList);
       }
     } catch (err) {
       setApiError(err.message || 'خطا در بارگذاری لیست محصولات از سرور.');
-      // Quiet background log without annoying popup on initial load
       console.debug('Product sync notice:', err.message);
     } finally {
       setIsLoadingApi(false);
@@ -185,42 +185,20 @@ export function CartProvider({ children }) {
   }, []);
 
   const refreshSlidesFromApi = useCallback(async () => {
-    try {
-      const res = await slidesApi.getSlides();
-      const list = Array.isArray(res.data) ? res.data : [];
-      const cleanList = list.filter((s) => s && !['slide-1', 'slide-2'].includes(s.id) && !['slide-1', 'slide-2'].includes(s._id));
-      if (cleanList.length > 0) {
-        const formatted = cleanList.map((s, idx) => ({
-          id: s._id || s.id || `slide-${idx}`,
-          _id: s._id,
-          image: s.image || s.imageUrl || '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
-          title: s.title || 'عرضه مستقیم برنج اصیل',
-          subtitle: s.subtitle || 'از شالیزارهای کامفیروز فارس',
-          description: s.description || 'تضمین صد در صدی کیفیت و ری‌دهی مجلسی',
-          ctaText: 'مشاهده ارقام برنج',
-          category: 'all'
-        }));
-        setSliders(formatted);
-      } else {
-        setSliders([]);
-      }
-    } catch (err) {
-      // Slides can fail quietly or show in admin
-    }
+    // Optional slide refresh
   }, []);
 
   const refreshOrdersFromApi = useCallback(async () => {
     if (!currentUser) return;
     try {
-      const res = await ordersApi.getMyOrders();
-      const list = Array.isArray(res.data) ? res.data : [];
-      if (list.length > 0) {
+      const list = await ordersApi.getMyOrders(currentUser);
+      if (Array.isArray(list) && list.length > 0) {
         setOrders(list.map((o) => ({
           ...o,
           id: o._id || o.id,
-          trackingCode: o.postTrackingCode || o.trackingCode || `TRK-${o._id?.slice(-6)}`,
-          customerName: o.name || o.customerName,
-          customerPhone: o.phone || o.customerPhone,
+          trackingCode: o.postTrackingCode || o.trackingCode || `TRK-${String(o._id || o.id).slice(-6)}`,
+          customerName: o.customerName || o.name,
+          customerPhone: o.customerPhone || o.phone,
           items: o.products || o.items || [],
           finalAmount: o.totalPrice || o.finalAmount,
           status: o.state || o.status || 'در حال پردازش',
@@ -228,7 +206,7 @@ export function CartProvider({ children }) {
         })));
       }
     } catch (err) {
-      // Order sync error
+      console.debug('Order sync notice:', err.message);
     }
   }, [currentUser]);
 

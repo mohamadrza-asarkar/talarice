@@ -73,7 +73,7 @@ export default function Profile() {
   useEffect(() => {
     let isMounted = true;
     setIsLoadingOrders(true);
-    ordersApi.getMyOrders()
+    ordersApi.getMyOrders(currentUser)
       .then((data) => {
         if (isMounted) {
           setUserOrders(Array.isArray(data) ? data : []);
@@ -92,7 +92,7 @@ export default function Profile() {
     return () => {
       isMounted = false;
     };
-  }, [contextOrders]);
+  }, [currentUser, contextOrders]);
 
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
