@@ -48,26 +48,34 @@ export const productsApi = {
    */
   async getAll(params = {}) {
     const query = new URLSearchParams();
-    if (params.category && params.category !== 'all') query.append('category', params.category);
-    if (params.search) query.append('search', params.search);
-    if (params.sort) query.append('sort', params.sort);
-    if (params.isAmazing) query.append('isAmazing', 'true');
+    if (params.page) query.append('page', params.page);
     if (params.limit) query.append('limit', params.limit);
+    if (params.search || params.q) query.append('search', params.search || params.q);
+    if (params.isAvailable !== undefined) query.append('isAvailable', params.isAvailable);
+    if (params.isAmazing !== undefined) query.append('isAmazing', params.isAmazing);
+    if (params.minPrice) query.append('minPrice', params.minPrice);
+    if (params.maxPrice) query.append('maxPrice', params.maxPrice);
+    if (params.sortBy || params.sort) query.append('sortBy', params.sortBy || params.sort);
     
     const qs = query.toString();
     const endpoint = `/products${qs ? `?${qs}` : ''}`;
     const res = await client.get(endpoint);
     
     let rawList = [];
-    if (Array.isArray(res)) rawList = res;
-    else if (Array.isArray(res?.data)) rawList = res.data;
-    else if (Array.isArray(res?.products)) rawList = res.products;
-    else if (Array.isArray(res?.items)) rawList = res.items;
+    let pagination = null;
+
+    if (res && res.data && Array.isArray(res.data)) {
+      rawList = res.data;
+      pagination = res.pagination || null;
+    } else if (Array.isArray(res)) {
+      rawList = res;
+    }
 
     const normalized = rawList.map(normalizeProduct).filter(Boolean);
     return {
       data: normalized,
       products: normalized,
+      pagination,
       length: normalized.length,
       [Symbol.iterator]: function* () {
         for (const item of normalized) yield item;
@@ -111,18 +119,10 @@ export const productsApi = {
   async create(productData) {
     const payload = {
       name: productData.name || productData.title,
-      title: productData.name || productData.title,
       description: productData.description || '',
-      price: Number(productData.price || productData.originalPrice || 0),
       originalPrice: Number(productData.originalPrice || productData.price || 0),
-      oldPrice: Number(productData.originalPrice || productData.price || 0),
       discountPercent: Number(productData.discountPercent || 0),
       countInStock: Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20)),
-      stock: Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20)),
-      category: productData.category || 'kamfirouz',
-      weight: productData.weight || '۱۰ کیلوگرم',
-      image: productData.image || productData.imageUrl || productData.imageBase64 || '',
-      imageUrl: productData.image || productData.imageUrl || productData.imageBase64 || '',
       imageBase64: productData.imageBase64 || productData.image || ''
     };
 

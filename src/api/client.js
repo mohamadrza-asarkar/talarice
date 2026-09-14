@@ -1,14 +1,17 @@
 // -------------------------------------------------------------
 // Native Fetch API Client (No Axios / No XHR)
-// Base URL: http://localhost:5000/api
+// Base URL from documentation:
+// https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api
 // -------------------------------------------------------------
 
-const DEFAULT_LOCAL_BASE_URL = 'http://localhost:5000/api';
+const DEFAULT_DOCS_BASE_URL = 'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api';
+
 export const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
   ? import.meta.env.VITE_API_BASE_URL
-  : DEFAULT_LOCAL_BASE_URL;
+  : DEFAULT_DOCS_BASE_URL;
 
 export const TOKEN_STORAGE_KEY = 'tala_rice_token';
+
 
 export function getStoredToken() {
   try {
@@ -49,6 +52,7 @@ export async function request(endpoint, options = {}) {
   const config = {
     method: options.method || 'GET',
     headers,
+    credentials: 'include',
     ...options
   };
 
@@ -83,7 +87,7 @@ export async function request(endpoint, options = {}) {
     return data;
   } catch (err) {
     if (err.name === 'TypeError' && err.message.includes('fetch')) {
-      const networkError = new Error('عدم برقراری ارتباط با سرور (لطفاً از فعال بودن پورت ۵۰۰۰ اطمینان حاصل کنید).');
+      const networkError = new Error('عدم برقراری ارتباط با وب‌سرویس بک‌اند (لطفاً اتصال اینترنت یا آدرس سرور را بررسی کنید).');
       networkError.isNetworkError = true;
       throw networkError;
     }

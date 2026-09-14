@@ -79,16 +79,18 @@ function extractAndSaveToken(resData) {
 
 export const authApi = {
   /**
-   * Register with phone and password
-   * @param {{ name: string, phone: string, password: string }} payload
+   * Register with name, email, phone, password (Section 1.1)
+   * @param {{ name: string, phone: string, email?: string, password: string }} payload
    */
-  async register({ name, phone, password }) {
+  async register({ name, phone, email, password }) {
     const cleanPhone = (phone || '').trim();
     const cleanPassword = (password || '').trim();
     const cleanName = (name || '').trim();
+    const cleanEmail = (email || (cleanPhone ? `${cleanPhone}@talarice.ir` : 'user@example.com')).trim();
 
     const res = await client.post('/auth/register', {
       name: cleanName,
+      email: cleanEmail,
       phone: cleanPhone,
       password: cleanPassword
     });
@@ -101,15 +103,19 @@ export const authApi = {
   },
 
   /**
-   * Login with phone and password
-   * @param {{ phone: string, password: string }} payload
+   * Login with email/phone and password (Section 1.2)
+   * @param {{ email?: string, phone?: string, identifier?: string, password: string }} payload
    */
-  async login({ phone, password }) {
-    const cleanPhone = (phone || '').trim();
+  async login({ email, phone, identifier, password }) {
+    const rawIdentifier = (email || phone || identifier || '').trim();
     const cleanPassword = (password || '').trim();
+    const isEmail = rawIdentifier.includes('@');
+    const cleanEmail = isEmail ? rawIdentifier : `${rawIdentifier}@talarice.ir`;
+    const cleanPhone = !isEmail ? rawIdentifier : '';
 
     const res = await client.post('/auth/login', {
-      phone: cleanPhone,
+      email: isEmail ? rawIdentifier : cleanEmail,
+      phone: cleanPhone || rawIdentifier,
       password: cleanPassword
     });
 
@@ -119,6 +125,7 @@ export const authApi = {
       user: normalizeUser(res)
     };
   },
+
 
   /**
    * Get current authenticated user details (/auth/me)

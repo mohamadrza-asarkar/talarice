@@ -123,9 +123,72 @@ export const adminApi = {
   },
 
   /**
+   * Update user role (Section 8.3)
+   * PUT /api/admin/users/:id/role
+   */
+  async updateUserRole(id, role) {
+    const res = await client.put(`/admin/users/${id}/role`, { role });
+    const raw = unwrapDoc(res?.data || res?.user || res);
+    return normalizeUser(raw);
+  },
+
+  /**
+   * Toggle user ban / active status (Section 8.4)
+   * PUT /api/admin/users/:id/toggle-status
+   */
+  async toggleUserStatus(id) {
+    const res = await client.put(`/admin/users/${id}/toggle-status`, {});
+    const raw = unwrapDoc(res?.data || res?.user || res);
+    return normalizeUser(raw);
+  },
+
+  /**
+   * Get all store orders for admin processing (Section 8.5)
+   * GET /api/admin/orders
+   */
+  async getAdminOrders(params = {}) {
+    const query = new URLSearchParams();
+    if (params.status) query.append('status', params.status);
+    if (params.page) query.append('page', params.page);
+    const qs = query.toString();
+    const endpoint = `/admin/orders${qs ? `?${qs}` : ''}`;
+
+    let rawList = null;
+    let lastError = null;
+
+    try {
+      const res = await client.get(endpoint);
+      if (Array.isArray(res)) {
+        rawList = res;
+      } else if (Array.isArray(res?.data)) {
+        rawList = res.data;
+      } else if (Array.isArray(res?.orders)) {
+        rawList = res.orders;
+      }
+    } catch (err) {
+      lastError = err;
+    }
+
+    if (!rawList) {
+      // Fallback to ordersApi.getAllOrders if /admin/orders returned error
+      try {
+        return await ordersApi.getAllOrders(params);
+      } catch {
+        if (lastError && !lastError.isNetworkError && lastError.status !== 404) {
+          throw lastError;
+        }
+        return [];
+      }
+    }
+
+    return rawList.map(normalizeOrder).filter(Boolean);
+  },
+
+  /**
    * Update user role / info / status (Admin)
    */
   async updateUser(id, payload) {
+
     const endpoints = [
       `/admin/users/${id}`,
       `/users/${id}`

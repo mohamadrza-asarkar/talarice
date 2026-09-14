@@ -70,13 +70,49 @@ export const ordersApi = {
    * Create a new order
    */
   async create(orderData) {
-    const res = await client.post('/orders', orderData);
+    const payload = {
+      name: orderData.name || orderData.customerName || '',
+      phone: orderData.phone || orderData.customerPhone || '',
+      address: orderData.address || orderData.customerAddress || '',
+      postalCode: orderData.postalCode || '',
+      products: orderData.products || orderData.items || [],
+      paymentReceipt: orderData.paymentReceipt || orderData.receiptImage || ''
+    };
+    const res = await client.post('/orders', payload);
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
 
   createOrder(orderData) {
     return this.create(orderData);
+  },
+  
+  /**
+   * Upload or set payment receipt
+   */
+  async uploadReceipt(id, receiptBase64) {
+    let res = null;
+    let lastErr = null;
+    const payload = {
+      receiptImage: receiptBase64,
+      paymentReceipt: receiptBase64
+    };
+    
+    try {
+      res = await client.put(`/orders/${id}/receipt`, payload);
+    } catch (err) {
+      lastErr = err;
+      try {
+        res = await client.post(`/orders/${id}/receipt`, payload);
+      } catch (err2) {
+        lastErr = err2;
+      }
+    }
+    
+    if (!res && lastErr) throw lastErr;
+    
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
   },
 
   /**
