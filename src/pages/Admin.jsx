@@ -8,6 +8,7 @@ import {
   Users,
   Plus,
   Trash2,
+  Edit,
   TrendingUp,
   ArrowRight,
   CheckCircle2,
@@ -21,8 +22,10 @@ import {
   Search,
   Filter,
   UserCheck,
+  UserPlus,
   ShieldAlert,
-  Layers
+  Layers,
+  X
 } from 'lucide-react';
 import { adminApi, ordersApi, productsApi, slidesApi } from '../api';
 import styles from './pages.module.css';
@@ -35,10 +38,12 @@ export default function Admin() {
     products,
     setProducts,
     addProduct,
+    updateProduct,
     deleteProduct,
     sliders,
     setSliders,
     addSlide,
+    updateSlide,
     deleteSlide,
     getOrderStatusInfo,
     showSuccess,
@@ -60,9 +65,12 @@ export default function Admin() {
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
   const [orderStatusFilter, setOrderStatusFilter] = useState('all');
   const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [productSearchQuery, setProductSearchQuery] = useState('');
 
-  // Form for new product
-  const [showAddForm, setShowAddForm] = useState(false);
+  // -------------------------------------------------------------
+  // Form states for NEW Product
+  // -------------------------------------------------------------
+  const [showAddProdForm, setShowAddProdForm] = useState(false);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdOriginalPrice, setNewProdOriginalPrice] = useState('');
@@ -74,7 +82,24 @@ export default function Admin() {
   const [newProdImageBase64, setNewProdImageBase64] = useState('');
   const [isSubmittingProd, setIsSubmittingProd] = useState(false);
 
-  // Form for new slide / banner
+  // -------------------------------------------------------------
+  // Form states for EDIT Product Modal
+  // -------------------------------------------------------------
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editProdName, setEditProdName] = useState('');
+  const [editProdPrice, setEditProdPrice] = useState('');
+  const [editProdOriginalPrice, setEditProdOriginalPrice] = useState('');
+  const [editProdDiscount, setEditProdDiscount] = useState('0');
+  const [editProdCategory, setEditProdCategory] = useState('kamfirouz');
+  const [editProdWeight, setEditProdWeight] = useState('۱۰ کیلوگرم');
+  const [editProdStock, setEditProdStock] = useState('30');
+  const [editProdDesc, setEditProdDesc] = useState('');
+  const [editProdImageBase64, setEditProdImageBase64] = useState('');
+  const [isUpdatingProd, setIsUpdatingProd] = useState(false);
+
+  // -------------------------------------------------------------
+  // Form states for NEW Slide
+  // -------------------------------------------------------------
   const [showAddSlideForm, setShowAddSlideForm] = useState(false);
   const [newSlideTitle, setNewSlideTitle] = useState('');
   const [newSlideSubtitle, setNewSlideSubtitle] = useState('');
@@ -84,7 +109,44 @@ export default function Admin() {
   const [newSlideImageBase64, setNewSlideImageBase64] = useState('');
   const [isSubmittingSlide, setIsSubmittingSlide] = useState(false);
 
+  // -------------------------------------------------------------
+  // Form states for EDIT Slide Modal
+  // -------------------------------------------------------------
+  const [editingSlide, setEditingSlide] = useState(null);
+  const [editSlideTitle, setEditSlideTitle] = useState('');
+  const [editSlideSubtitle, setEditSlideSubtitle] = useState('');
+  const [editSlideDesc, setEditSlideDesc] = useState('');
+  const [editSlideCta, setEditSlideCta] = useState('مشاهده و خرید آنلاین');
+  const [editSlideCategory, setEditSlideCategory] = useState('all');
+  const [editSlideImageBase64, setEditSlideImageBase64] = useState('');
+  const [isUpdatingSlide, setIsUpdatingSlide] = useState(false);
+
+  // -------------------------------------------------------------
+  // Form states for NEW User Modal
+  // -------------------------------------------------------------
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserPhone, setNewUserPhone] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('user');
+  const [newUserAddress, setNewUserAddress] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
+
+  // -------------------------------------------------------------
+  // Form states for EDIT User Modal
+  // -------------------------------------------------------------
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserPhone, setEditUserPhone] = useState('');
+  const [editUserRole, setEditUserRole] = useState('user');
+  const [editUserAddress, setEditUserAddress] = useState('');
+  const [editUserEmail, setEditUserEmail] = useState('');
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+
+  // -------------------------------------------------------------
   // Postal tracking modal / state
+  // -------------------------------------------------------------
   const [editingTrackingOrderId, setEditingTrackingOrderId] = useState(null);
   const [trackingCodeInput, setTrackingCodeInput] = useState('');
   const [adminNoteInput, setAdminNoteInput] = useState('');
@@ -193,34 +255,9 @@ export default function Admin() {
   const totalProductsCount = dashboardStats?.totalProducts ?? products.length;
   const totalUsersCount = dashboardStats?.totalUsers ?? adminUsers.length;
 
-  const handleImageFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 4 * 1024 * 1024) {
-      showToast('حجم تصویر نباید بیشتر از ۴ مگابایت باشد.', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      setNewProdImageBase64(uploadEvent.target?.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleSlideImageFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      showToast('حجم تصویر اسلایدر نباید بیشتر از ۵ مگابایت باشد.', 'error');
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (uploadEvent) => {
-      setNewSlideImageBase64(uploadEvent.target?.result);
-    };
-    reader.readAsDataURL(file);
-  };
-
+  // -------------------------------------------------------------
+  // PRODUCT HANDLERS
+  // -------------------------------------------------------------
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName.trim() || !newProdPrice) {
@@ -249,15 +286,61 @@ export default function Admin() {
       setNewProdDiscount('0');
       setNewProdDesc('');
       setNewProdImageBase64('');
-      setShowAddForm(false);
+      setShowAddProdForm(false);
       fetchAdminProducts();
     } catch (err) {
-      // Error is caught and surfaced
+      // Handled
     } finally {
       setIsSubmittingProd(false);
     }
   };
 
+  const openEditProductModal = (product) => {
+    setEditingProduct(product);
+    setEditProdName(product.name || product.title || '');
+    setEditProdPrice(String(product.price || ''));
+    setEditProdOriginalPrice(String(product.originalPrice || product.price || ''));
+    setEditProdDiscount(String(product.discountPercent || '0'));
+    setEditProdCategory(product.category || 'kamfirouz');
+    setEditProdWeight(product.weight || '۱۰ کیلوگرم');
+    setEditProdStock(String(product.stock ?? product.countInStock ?? 20));
+    setEditProdDesc(product.description || '');
+    setEditProdImageBase64(product.image || '');
+  };
+
+  const handleUpdateProductSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    const prodId = editingProduct._id || editingProduct.id;
+
+    setIsUpdatingProd(true);
+    try {
+      await updateProduct(prodId, {
+        name: editProdName.trim(),
+        title: editProdName.trim(),
+        price: Number(editProdPrice),
+        originalPrice: Number(editProdOriginalPrice || editProdPrice),
+        discountPercent: Number(editProdDiscount || 0),
+        category: editProdCategory,
+        weight: editProdWeight,
+        stock: Number(editProdStock || 20),
+        countInStock: Number(editProdStock || 20),
+        description: editProdDesc.trim(),
+        image: editProdImageBase64 || editingProduct.image
+      });
+
+      setEditingProduct(null);
+      fetchAdminProducts();
+    } catch (err) {
+      showToast('خطا در بروزرسانی محصول: ' + err.message, 'error');
+    } finally {
+      setIsUpdatingProd(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // SLIDE HANDLERS
+  // -------------------------------------------------------------
   const handleAddSlide = async (e) => {
     e.preventDefault();
     if (!newSlideTitle.trim()) {
@@ -291,6 +374,130 @@ export default function Admin() {
     }
   };
 
+  const openEditSlideModal = (slide) => {
+    setEditingSlide(slide);
+    setEditSlideTitle(slide.title || '');
+    setEditSlideSubtitle(slide.subtitle || '');
+    setEditSlideDesc(slide.description || '');
+    setEditSlideCta(slide.ctaText || 'مشاهده و خرید آنلاین');
+    setEditSlideCategory(slide.category || 'all');
+    setEditSlideImageBase64(slide.image || '');
+  };
+
+  const handleUpdateSlideSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingSlide) return;
+    const slideId = editingSlide._id || editingSlide.id;
+
+    setIsUpdatingSlide(true);
+    try {
+      await updateSlide(slideId, {
+        title: editSlideTitle.trim(),
+        subtitle: editSlideSubtitle.trim(),
+        description: editSlideDesc.trim(),
+        ctaText: editSlideCta.trim(),
+        category: editSlideCategory,
+        image: editSlideImageBase64 || editingSlide.image
+      });
+
+      setEditingSlide(null);
+      fetchAdminSlides();
+    } catch (err) {
+      showToast('خطا در ویرایش اسلاید: ' + err.message, 'error');
+    } finally {
+      setIsUpdatingSlide(false);
+    }
+  };
+
+  // -------------------------------------------------------------
+  // USER HANDLERS (Create, Update, Delete)
+  // -------------------------------------------------------------
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserPhone.trim()) {
+      showToast('لطفاً نام و شماره همراه کاربر را وارد نمایید.', 'error');
+      return;
+    }
+
+    setIsSubmittingUser(true);
+    try {
+      const created = await adminApi.createUser({
+        name: newUserName.trim(),
+        phone: newUserPhone.trim(),
+        password: newUserPassword || '123456',
+        role: newUserRole,
+        address: newUserAddress.trim(),
+        email: newUserEmail.trim()
+      });
+
+      setAdminUsers((prev) => [created, ...prev]);
+      showSuccess(`کاربر جدید «${created.name}» با موفقیت در سرور ثبت شد.`);
+      setNewUserName('');
+      setNewUserPhone('');
+      setNewUserPassword('');
+      setNewUserRole('user');
+      setNewUserAddress('');
+      setNewUserEmail('');
+      setShowAddUserModal(false);
+    } catch (err) {
+      showToast('خطا در ثبت کاربر جدید در سرور: ' + err.message, 'error');
+    } finally {
+      setIsSubmittingUser(false);
+    }
+  };
+
+  const openEditUserModal = (user) => {
+    setEditingUser(user);
+    setEditUserName(user.name || '');
+    setEditUserPhone(user.phone || user.mobile || '');
+    setEditUserRole(user.role || (user.isAdmin ? 'admin' : 'user'));
+    setEditUserAddress(user.address || user.fullAddress || '');
+    setEditUserEmail(user.email || '');
+  };
+
+  const handleUpdateUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    const userId = editingUser._id || editingUser.id;
+
+    setIsUpdatingUser(true);
+    try {
+      const updated = await adminApi.updateUser(userId, {
+        name: editUserName.trim(),
+        phone: editUserPhone.trim(),
+        mobile: editUserPhone.trim(),
+        role: editUserRole,
+        isAdmin: editUserRole === 'admin',
+        address: editUserAddress.trim(),
+        email: editUserEmail.trim()
+      });
+
+      setAdminUsers((prev) =>
+        prev.map((u) => ((u._id || u.id) === userId ? { ...u, ...updated } : u))
+      );
+      showSuccess('اطلاعات کاربر در وب‌سرویس بروزرسانی گردید.');
+      setEditingUser(null);
+    } catch (err) {
+      showToast('خطا در بروزرسانی کاربر: ' + err.message, 'error');
+    } finally {
+      setIsUpdatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('آیا از حذف این کاربر در سرور اطمینان دارید؟')) return;
+    try {
+      await adminApi.deleteUser(userId);
+      setAdminUsers((prev) => prev.filter((u) => (u._id || u.id) !== userId));
+      showToast('کاربر با موفقیت از سرور حذف شد.', 'info');
+    } catch (err) {
+      showToast('خطا در حذف کاربر: ' + err.message, 'error');
+    }
+  };
+
+  // -------------------------------------------------------------
+  // ORDER HANDLERS
+  // -------------------------------------------------------------
   const handleUpdateShipping = async (orderId) => {
     if (!trackingCodeInput.trim()) {
       showToast('لطفاً کد رهگیری پستی را وارد کنید.', 'error');
@@ -388,37 +595,6 @@ export default function Admin() {
     }
   };
 
-  const handleToggleUserRole = async (user) => {
-    const userId = user._id || user.id;
-    const newRole = user.role === 'admin' ? 'user' : 'admin';
-    const confirmMsg = user.role === 'admin'
-      ? `آیا می‌خواهید دسترسی مدیریت کاربر ${user.name} را لغو کنید؟`
-      : `آیا می‌خواهید کاربر ${user.name} را به سطح مدیر ارتقا دهید؟`;
-    
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      await adminApi.updateUser(userId, { role: newRole });
-      setAdminUsers((prev) =>
-        prev.map((u) => ((u._id || u.id) === userId ? { ...u, role: newRole, isAdmin: newRole === 'admin' } : u))
-      );
-      showSuccess(`نقش کاربری به ${newRole === 'admin' ? 'مدیر' : 'کاربر عادی'} تغییر یافت.`);
-    } catch (err) {
-      showToast('خطا در تغییر نقش کاربری: ' + err.message, 'error');
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('آیا از حذف این کاربر اطمینان دارید؟')) return;
-    try {
-      await adminApi.deleteUser(userId);
-      setAdminUsers((prev) => prev.filter((u) => (u._id || u.id) !== userId));
-      showToast('کاربر با موفقیت حذف شد.', 'info');
-    } catch (err) {
-      showToast('خطا در حذف کاربر: ' + err.message, 'error');
-    }
-  };
-
   // Filtered orders
   const filteredOrders = adminOrders.filter((o) => {
     const matchSearch =
@@ -446,8 +622,19 @@ export default function Admin() {
     const q = userSearchQuery.toLowerCase().trim();
     return (
       String(u.name || '').toLowerCase().includes(q) ||
-      String(u.phone || '').includes(q) ||
+      String(u.phone || u.mobile || '').includes(q) ||
       String(u.email || '').toLowerCase().includes(q)
+    );
+  });
+
+  // Filtered products
+  const filteredProducts = products.filter((p) => {
+    if (!productSearchQuery.trim()) return true;
+    const q = productSearchQuery.toLowerCase().trim();
+    return (
+      String(p.name || p.title || '').toLowerCase().includes(q) ||
+      String(p.category || '').toLowerCase().includes(q) ||
+      String(p.price || '').includes(q)
     );
   });
 
@@ -462,7 +649,7 @@ export default function Admin() {
               مدیر سیستم: {currentUser?.name || 'مدیر'}
             </span>
           </div>
-          <p className={styles.pageSubtitle}>مدیریت مستقیم سفارش‌ها، محصولات، اسلایدرها و کاربران در وب‌سرویس</p>
+          <p className={styles.pageSubtitle}>مدیریت کامل CRUD سفارش‌ها، محصولات، اسلایدرها و کاربران متصل به وب‌سرویس</p>
         </div>
         <div className={styles.flexRow}>
           <button
@@ -812,13 +999,13 @@ export default function Admin() {
         </section>
       )}
 
-      {/* تب ۲: مدیریت محصولات */}
+      {/* تب ۲: مدیریت محصولات (CRUD کامل) */}
       {activeTab === 'products' && (
         <section className={styles.card}>
           <div className={styles.pageHeader}>
             <div>
               <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت ارقام برنج در وب‌سرویس</h2>
-              <p className={styles.pageSubtitle}>افزودن محصولات جدید، ویرایش قیمت‌ها و مدیریت موجودی انبار</p>
+              <p className={styles.pageSubtitle}>افزودن محصولات جدید، ویرایش قیمت‌ها، تغییر مشخصات و حذف در سرور</p>
             </div>
             <div className={styles.flexRow}>
               <button
@@ -832,16 +1019,27 @@ export default function Admin() {
               <button
                 type="button"
                 className={styles.btnPrimary}
-                onClick={() => setShowAddForm(!showAddForm)}
+                onClick={() => setShowAddProdForm(!showAddProdForm)}
               >
                 <Plus size={16} />
-                {showAddForm ? 'بستن فرم' : 'افزودن برنج جدید'}
+                {showAddProdForm ? 'بستن فرم' : 'افزودن برنج جدید'}
               </button>
             </div>
           </div>
 
+          {/* نوار جستجوی محصولات */}
+          <div style={{ marginBottom: '1.25rem' }}>
+            <input
+              type="text"
+              className={styles.input}
+              placeholder="جستجوی محصول با نام یا دسته‌بندی..."
+              value={productSearchQuery}
+              onChange={(e) => setProductSearchQuery(e.target.value)}
+            />
+          </div>
+
           {/* فرم افزودن برنج جدید */}
-          {showAddForm && (
+          {showAddProdForm && (
             <form onSubmit={handleAddProduct} className={styles.cardHighlight} style={{ marginBottom: '1.5rem' }}>
               <h3 className={styles.pageTitle} style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
                 ثبت رقم برنج جدید در وب‌سرویس
@@ -934,11 +1132,18 @@ export default function Admin() {
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>تصویر گونی برنج (آپلود فایل):</label>
+                <label className={styles.label}>تصویر گونی برنج (آپلود فایل یا آدرس تصویر):</label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleImageFileChange}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setNewProdImageBase64(ev.target?.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                   className={styles.input}
                 />
                 {newProdImageBase64 && (
@@ -967,12 +1172,12 @@ export default function Admin() {
             </form>
           )}
 
-          {/* فهرست محصولات */}
+          {/* فهرست محصولات با دکمه ویرایش و حذف */}
           <div className={styles.flexCol}>
-            {products.length === 0 ? (
-              <p className={styles.label}>هیچ محصولی یافت نشد.</p>
+            {filteredProducts.length === 0 ? (
+              <p className={styles.label}>محصولی یافت نشد.</p>
             ) : (
-              products.map((product) => {
+              filteredProducts.map((product) => {
                 const prodId = product._id || product.id;
                 return (
                   <div key={prodId} className={styles.statBox} style={{ border: '1px solid #e7e5e4', background: '#fff' }}>
@@ -999,15 +1204,26 @@ export default function Admin() {
                           </small>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className={styles.btnDanger}
-                        title="حذف محصول از وب‌سرویس"
-                        onClick={() => deleteProduct(prodId)}
-                      >
-                        <Trash2 size={14} />
-                        حذف
-                      </button>
+                      <div className={styles.flexRow} style={{ gap: '0.4rem' }}>
+                        <button
+                          type="button"
+                          className={styles.backButton}
+                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                          title="ویرایش مشخصات محصول در وب‌سرویس"
+                          onClick={() => openEditProductModal(product)}
+                        >
+                          <Edit size={14} />
+                          ویرایش
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnDanger}
+                          title="حذف محصول از وب‌سرویس"
+                          onClick={() => deleteProduct(prodId)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1017,13 +1233,13 @@ export default function Admin() {
         </section>
       )}
 
-      {/* تب ۳: مدیریت اسلایدرها و بنرهای تبلیغاتی */}
+      {/* تب ۳: مدیریت اسلایدرها و بنرهای تبلیغاتی (CRUD کامل) */}
       {activeTab === 'slides' && (
         <section className={styles.card}>
           <div className={styles.pageHeader}>
             <div>
               <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت اسلایدرها و بنرهای صفحه نخست</h2>
-              <p className={styles.pageSubtitle}>افزودن و ویرایش تصاویر هدر، عناوین تبلیغاتی و لینک‌های فروش ویژه در وب‌سرویس</p>
+              <p className={styles.pageSubtitle}>افزودن، ویرایش، حذف و دریافت مستقیم بنرها و اسلایدها از وب‌سرویس</p>
             </div>
             <div className={styles.flexRow}>
               <button
@@ -1109,7 +1325,14 @@ export default function Admin() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleSlideImageFileChange}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setNewSlideImageBase64(ev.target?.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                   className={styles.input}
                 />
                 {newSlideImageBase64 && (
@@ -1138,7 +1361,7 @@ export default function Admin() {
             </form>
           )}
 
-          {/* لیست اسلایدها */}
+          {/* لیست اسلایدها با دکمه ویرایش و حذف */}
           <div className={styles.flexCol}>
             {!sliders || sliders.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#78716c', background: '#fafaf9', borderRadius: '12px' }}>
@@ -1172,15 +1395,26 @@ export default function Admin() {
                           </small>
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        className={styles.btnDanger}
-                        title="حذف اسلایدر"
-                        onClick={() => deleteSlide(slideId)}
-                      >
-                        <Trash2 size={14} />
-                        حذف
-                      </button>
+                      <div className={styles.flexRow} style={{ gap: '0.4rem' }}>
+                        <button
+                          type="button"
+                          className={styles.backButton}
+                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
+                          title="ویرایش اسلایدر"
+                          onClick={() => openEditSlideModal(slide)}
+                        >
+                          <Edit size={14} />
+                          ویرایش
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.btnDanger}
+                          title="حذف اسلایدر از سرور"
+                          onClick={() => deleteSlide(slideId)}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -1190,23 +1424,33 @@ export default function Admin() {
         </section>
       )}
 
-      {/* تب ۴: کاربران سامانه */}
+      {/* تب ۴: کاربران سامانه (CRUD کامل: ایجاد، خواندن، ویرایش، حذف) */}
       {activeTab === 'users' && (
         <section className={styles.card}>
           <div className={styles.pageHeader}>
             <div>
               <h2 className={styles.pageTitle} style={{ margin: 0 }}>کاربران ثبت‌نام شده در وب‌سرویس</h2>
-              <p className={styles.pageSubtitle}>مشاهده شماره تماس کاربران، نشانی‌ها و تعیین سطح دسترسی مدیریت</p>
+              <p className={styles.pageSubtitle}>مشاهده شماره تماس کاربران، ایجاد کاربر جدید، ویرایش نقش و حذف در وب‌سرویس</p>
             </div>
-            <button
-              type="button"
-              className={styles.backButton}
-              onClick={fetchAdminUsers}
-              disabled={isLoadingUsers}
-            >
-              <RefreshCw size={14} className={isLoadingUsers ? styles.spinner : ''} />
-              تازه‌سازی کاربران
-            </button>
+            <div className={styles.flexRow}>
+              <button
+                type="button"
+                className={styles.backButton}
+                onClick={fetchAdminUsers}
+                disabled={isLoadingUsers}
+              >
+                <RefreshCw size={14} className={isLoadingUsers ? styles.spinner : ''} />
+                تازه‌سازی
+              </button>
+              <button
+                type="button"
+                className={styles.btnPrimary}
+                onClick={() => setShowAddUserModal(true)}
+              >
+                <UserPlus size={16} />
+                افزودن کاربر جدید
+              </button>
+            </div>
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -1267,16 +1511,16 @@ export default function Admin() {
                           type="button"
                           className={styles.backButton}
                           style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                          title={isUserAdmin ? 'تبدیل به کاربر عادی' : 'ارتقا به مدیر'}
-                          onClick={() => handleToggleUserRole(user)}
+                          title="ویرایش اطلاعات کاربر"
+                          onClick={() => openEditUserModal(user)}
                         >
-                          <UserCheck size={14} />
-                          {isUserAdmin ? 'لغو مدیریت' : 'ارتقا به مدیر'}
+                          <Edit size={14} />
+                          ویرایش
                         </button>
                         <button
                           type="button"
                           className={styles.btnDanger}
-                          title="حذف کاربر"
+                          title="حذف کاربر از سرور"
                           onClick={() => handleDeleteUser(userId)}
                         >
                           <Trash2 size={14} />
@@ -1291,38 +1535,419 @@ export default function Admin() {
         </section>
       )}
 
+      {/* مودال ایجاد کاربر جدید */}
+      {showAddUserModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowAddUserModal(false)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
+              <h3 className={styles.pageTitle} style={{ margin: 0 }}>افزودن کاربر جدید به وب‌سرویس</h3>
+              <button type="button" className={styles.backButton} onClick={() => setShowAddUserModal(false)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateUser}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نام و نام خانوادگی:</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="مثال: علیرضا محمدی"
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>شماره همراه (موبایل):</label>
+                <input
+                  type="tel"
+                  dir="ltr"
+                  className={styles.input}
+                  value={newUserPhone}
+                  onChange={(e) => setNewUserPhone(e.target.value)}
+                  placeholder="09123456789"
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>رمز عبور:</label>
+                <input
+                  type="password"
+                  dir="ltr"
+                  className={styles.input}
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  placeholder="حداقل ۶ کاراکتر"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نقش و سطح دسترسی:</label>
+                <select
+                  className={styles.select}
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value)}
+                >
+                  <option value="user">مشتری عادی</option>
+                  <option value="admin">مدیر سیستم (Admin)</option>
+                </select>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>ایمیل (اختیاری):</label>
+                <input
+                  type="email"
+                  dir="ltr"
+                  className={styles.input}
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  placeholder="name@example.com"
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نشانی پستی (اختیاری):</label>
+                <textarea
+                  className={styles.textarea}
+                  value={newUserAddress}
+                  onChange={(e) => setNewUserAddress(e.target.value)}
+                  placeholder="استان، شهر، خیابان..."
+                  rows={2}
+                />
+              </div>
+              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
+                <button type="submit" className={styles.btnPrimary} disabled={isSubmittingUser}>
+                  {isSubmittingUser ? 'در حال ثبت در سرور...' : 'ثبت کاربر در سرور'}
+                </button>
+                <button type="button" className={styles.backButton} onClick={() => setShowAddUserModal(false)}>
+                  انصراف
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* مودال ویرایش کاربر */}
+      {editingUser && (
+        <div className={styles.modalOverlay} onClick={() => setEditingUser(null)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
+              <h3 className={styles.pageTitle} style={{ margin: 0 }}>ویرایش اطلاعات کاربر</h3>
+              <button type="button" className={styles.backButton} onClick={() => setEditingUser(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateUserSubmit}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نام و نام خانوادگی:</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={editUserName}
+                  onChange={(e) => setEditUserName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>شماره همراه:</label>
+                <input
+                  type="tel"
+                  dir="ltr"
+                  className={styles.input}
+                  value={editUserPhone}
+                  onChange={(e) => setEditUserPhone(e.target.value)}
+                  required
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نقش و سطح دسترسی:</label>
+                <select
+                  className={styles.select}
+                  value={editUserRole}
+                  onChange={(e) => setEditUserRole(e.target.value)}
+                >
+                  <option value="user">مشتری عادی</option>
+                  <option value="admin">مدیر سیستم (Admin)</option>
+                </select>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>ایمیل:</label>
+                <input
+                  type="email"
+                  dir="ltr"
+                  className={styles.input}
+                  value={editUserEmail}
+                  onChange={(e) => setEditUserEmail(e.target.value)}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نشانی پستی:</label>
+                <textarea
+                  className={styles.textarea}
+                  value={editUserAddress}
+                  onChange={(e) => setEditUserAddress(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
+                <button type="submit" className={styles.btnPrimary} disabled={isUpdatingUser}>
+                  {isUpdatingUser ? 'در حال ذخیره...' : 'ذخیره تغییرات در سرور'}
+                </button>
+                <button type="button" className={styles.backButton} onClick={() => setEditingUser(null)}>
+                  انصراف
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* مودال ویرایش محصول */}
+      {editingProduct && (
+        <div className={styles.modalOverlay} onClick={() => setEditingProduct(null)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
+            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
+              <h3 className={styles.pageTitle} style={{ margin: 0 }}>ویرایش مشخصات محصول در وب‌سرویس</h3>
+              <button type="button" className={styles.backButton} onClick={() => setEditingProduct(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateProductSubmit}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نام و عنوان محصول:</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={editProdName}
+                  onChange={(e) => setEditProdName(e.target.value)}
+                  required
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>قیمت نهایی فروش (تومان):</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={editProdPrice}
+                    onChange={(e) => setEditProdPrice(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>قیمت قبل تخفیف:</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={editProdOriginalPrice}
+                    onChange={(e) => setEditProdOriginalPrice(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>درصد تخفیف (%):</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={editProdDiscount}
+                    onChange={(e) => setEditProdDiscount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>دسته‌بندی:</label>
+                  <select
+                    className={styles.select}
+                    value={editProdCategory}
+                    onChange={(e) => setEditProdCategory(e.target.value)}
+                  >
+                    <option value="kamfirouz">برنج کامفیروز</option>
+                    <option value="hashemi">برنج هاشمی</option>
+                    <option value="tarom">برنج طارم</option>
+                    <option value="doudi">برنج دودی</option>
+                    <option value="brown">برنج قهوه‌ای</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>وزن بسته‌بندی:</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={editProdWeight}
+                    onChange={(e) => setEditProdWeight(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>موجودی انبار:</label>
+                  <input
+                    type="number"
+                    className={styles.input}
+                    value={editProdStock}
+                    onChange={(e) => setEditProdStock(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>تصویر گونی برنج (آپلود فایل جدید یا حفظ تصویر قبلی):</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setEditProdImageBase64(ev.target?.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className={styles.input}
+                />
+                {editProdImageBase64 && (
+                  <img
+                    src={editProdImageBase64}
+                    alt="پیش‌نمایش"
+                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.4rem', border: '1px solid #e7e5e4' }}
+                  />
+                )}
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>توضیحات و مشخصات:</label>
+                <textarea
+                  className={styles.textarea}
+                  value={editProdDesc}
+                  onChange={(e) => setEditProdDesc(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
+                <button type="submit" className={styles.btnPrimary} disabled={isUpdatingProd}>
+                  {isUpdatingProd ? 'در حال بروزرسانی...' : 'ذخیره تغییرات در وب‌سرویس'}
+                </button>
+                <button type="button" className={styles.backButton} onClick={() => setEditingProduct(null)}>
+                  انصراف
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* مودال ویرایش اسلاید */}
+      {editingSlide && (
+        <div className={styles.modalOverlay} onClick={() => setEditingSlide(null)}>
+          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
+            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
+              <h3 className={styles.pageTitle} style={{ margin: 0 }}>ویرایش اسلایدر صفحه نخست</h3>
+              <button type="button" className={styles.backButton} onClick={() => setEditingSlide(null)}>
+                <X size={16} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateSlideSubmit}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>عنوان اصلی اسلاید:</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  value={editSlideTitle}
+                  onChange={(e) => setEditSlideTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>عنوان فرعی / تگ:</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={editSlideSubtitle}
+                    onChange={(e) => setEditSlideSubtitle(e.target.value)}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>متن دکمه:</label>
+                  <input
+                    type="text"
+                    className={styles.input}
+                    value={editSlideCta}
+                    onChange={(e) => setEditSlideCta(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>دسته‌بندی:</label>
+                <select
+                  className={styles.select}
+                  value={editSlideCategory}
+                  onChange={(e) => setEditSlideCategory(e.target.value)}
+                >
+                  <option value="all">همه محصولات</option>
+                  <option value="kamfirouz">برنج کامفیروز</option>
+                  <option value="hashemi">برنج هاشمی</option>
+                  <option value="tarom">برنج طارم</option>
+                  <option value="doudi">برنج دودی</option>
+                </select>
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>تصویر اسلایدر:</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (ev) => setEditSlideImageBase64(ev.target?.result);
+                      reader.readAsDataURL(file);
+                    }
+                  }}
+                  className={styles.input}
+                />
+                {editSlideImageBase64 && (
+                  <img
+                    src={editSlideImageBase64}
+                    alt="پیش‌نمایش اسلاید"
+                    style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.4rem', border: '1px solid #e7e5e4' }}
+                  />
+                )}
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>توضیحات اسلایدر:</label>
+                <textarea
+                  className={styles.textarea}
+                  value={editSlideDesc}
+                  onChange={(e) => setEditSlideDesc(e.target.value)}
+                  rows={2}
+                />
+              </div>
+              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
+                <button type="submit" className={styles.btnPrimary} disabled={isUpdatingSlide}>
+                  {isUpdatingSlide ? 'در حال ذخیره...' : 'ذخیره تغییرات در وب‌سرویس'}
+                </button>
+                <button type="button" className={styles.backButton} onClick={() => setEditingSlide(null)}>
+                  انصراف
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* مودال مشاهده تصویر فیش */}
       {previewReceiptUrl && (
-        <div
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.7)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999,
-            padding: '1rem'
-          }}
-          onClick={() => setPreviewReceiptUrl(null)}
-        >
+        <div className={styles.modalOverlay} onClick={() => setPreviewReceiptUrl(null)}>
           <div
-            style={{
-              background: '#fff',
-              padding: '1.25rem',
-              borderRadius: '16px',
-              maxWidth: '90%',
-              maxHeight: '90%',
-              overflow: 'auto',
-              textAlign: 'center'
-            }}
+            className={styles.modalCard}
+            style={{ maxWidth: '90%', maxHeight: '90%', overflow: 'auto', textAlign: 'center' }}
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: '0 0 1rem 0', color: '#1c1917' }}>تصویر فیش بانکی ارسالی خریدار</h3>
+            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
+              <h3 className={styles.pageTitle} style={{ margin: 0 }}>تصویر فیش بانکی ارسالی خریدار</h3>
+              <button type="button" className={styles.backButton} onClick={() => setPreviewReceiptUrl(null)}>
+                <X size={16} />
+              </button>
+            </div>
             <img
               src={previewReceiptUrl}
               alt="فیش پرداخت"
-              style={{ maxWidth: '100%', maxHeight: '70vh', borderRadius: '8px', border: '1px solid #e7e5e4' }}
+              style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px', border: '1px solid #e7e5e4' }}
             />
             <div style={{ marginTop: '1.25rem' }}>
               <button

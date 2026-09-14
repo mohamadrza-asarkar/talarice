@@ -82,7 +82,48 @@ export const adminApi = {
   },
 
   /**
-   * Update user role / status (Admin)
+   * Create a new user (Admin)
+   */
+  async createUser(userData) {
+    const payload = {
+      name: userData.name || '',
+      phone: userData.phone || userData.mobile || '',
+      mobile: userData.phone || userData.mobile || '',
+      password: userData.password || '123456',
+      role: userData.role || 'user',
+      isAdmin: userData.role === 'admin',
+      address: userData.address || '',
+      email: userData.email || ''
+    };
+
+    const candidateEndpoints = [
+      '/admin/users',
+      '/users',
+      '/auth/register'
+    ];
+
+    let res = null;
+    let lastErr = null;
+
+    for (const ep of candidateEndpoints) {
+      try {
+        res = await client.post(ep, payload);
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
+    const raw = unwrapDoc(res?.data || res?.user || res);
+    return normalizeUser(raw);
+  },
+
+  /**
+   * Update user role / info / status (Admin)
    */
   async updateUser(id, payload) {
     const endpoints = [
@@ -90,20 +131,27 @@ export const adminApi = {
       `/users/${id}`
     ];
     let res = null;
+    let lastErr = null;
     for (const ep of endpoints) {
       try {
         res = await client.put(ep, payload);
         break;
-      } catch {
+      } catch (err) {
+        lastErr = err;
         try {
           res = await client.patch(ep, payload);
           break;
-        } catch {
-          // ignore
+        } catch (patchErr) {
+          lastErr = patchErr;
         }
       }
     }
-    const raw = unwrapDoc(res?.data || res);
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
+    const raw = unwrapDoc(res?.data || res?.user || res);
     return normalizeUser(raw);
   },
 
