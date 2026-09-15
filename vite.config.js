@@ -15,7 +15,7 @@ export default defineConfig(function () {
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {
         '/api': {
-          target: 'http://localhost:5000',
+          target: process.env.VITE_BACKEND_URL || 'https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app',
           changeOrigin: true,
           secure: false,
         },

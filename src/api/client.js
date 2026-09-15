@@ -4,7 +4,7 @@
 // https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api
 // -------------------------------------------------------------
 
-const DEFAULT_DOCS_BASE_URL = 'http://localhost:5000/api';
+const DEFAULT_DOCS_BASE_URL = '/api';
 
 export const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
   ? import.meta.env.VITE_API_BASE_URL
