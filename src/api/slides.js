@@ -23,15 +23,25 @@ export const normalizeSlide = (raw) => {
 
 export const slidesApi = {
   async getAll(params = {}) {
-    const res = await axios.get('/slides', { params });
-    const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
-    return rawList.map(normalizeSlide).filter(Boolean);
+    try {
+      const res = await axios.get('/slides', { params });
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      return rawList.map(normalizeSlide).filter(Boolean);
+    } catch (err) {
+      console.warn('Slides fetch notice:', err.message);
+      return [];
+    }
   },
 
   async getById(id) {
-    const res = await axios.get(`/slides/${id}`);
-    const raw = res?.data || res?.slide || res;
-    return normalizeSlide(raw);
+    try {
+      const res = await axios.get(`/slides/${id}`);
+      const raw = res?.data || res?.slide || res;
+      return normalizeSlide(raw);
+    } catch (err) {
+      console.warn(`Slide ${id} fetch notice:`, err.message);
+      return null;
+    }
   }
 };
 

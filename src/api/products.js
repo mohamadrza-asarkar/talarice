@@ -37,26 +37,41 @@ export const normalizeProduct = (raw) => {
 
 export const productsApi = {
   async getAll(params = {}) {
-    const res = await axios.get('/products', { params });
-    const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
-    const normalized = rawList.map(normalizeProduct).filter(Boolean);
-    return {
-      data: normalized,
-      products: normalized,
-      pagination: res?.pagination || null
-    };
+    try {
+      const res = await axios.get('/products', { params });
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      const normalized = rawList.map(normalizeProduct).filter(Boolean);
+      return {
+        data: normalized,
+        products: normalized,
+        pagination: res?.pagination || null
+      };
+    } catch (err) {
+      console.warn('Products fetch notice:', err.message);
+      return { data: [], products: [], pagination: null };
+    }
   },
 
   async getById(id) {
-    const res = await axios.get(`/products/${id}`);
-    const raw = res?.data || res?.product || res;
-    return normalizeProduct(raw);
+    try {
+      const res = await axios.get(`/products/${id}`);
+      const raw = res?.data || res?.product || res;
+      return normalizeProduct(raw);
+    } catch (err) {
+      console.warn(`Product ${id} fetch notice:`, err.message);
+      return null;
+    }
   },
 
   async getAmazingDeals() {
-    const res = await axios.get('/products', { params: { isAmazing: true } });
-    const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
-    return rawList.map(normalizeProduct).filter(Boolean);
+    try {
+      const res = await axios.get('/products', { params: { isAmazing: true } });
+      const rawList = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : []);
+      return rawList.map(normalizeProduct).filter(Boolean);
+    } catch (err) {
+      console.warn('Amazing deals fetch notice:', err.message);
+      return [];
+    }
   }
 };
 
