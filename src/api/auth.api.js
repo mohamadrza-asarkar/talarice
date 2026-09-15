@@ -1,8 +1,7 @@
 // -------------------------------------------------------------
-// Authentication API (/api/auth)
-// Strictly uses phone and password (no fake emails)
+// Authentication API (/api/auth) using Axios
 // -------------------------------------------------------------
-import { client, setStoredToken } from './client';
+import axiosInstance, { getStoredToken, setStoredToken } from './axios';
 
 // Unwraps Mongoose documents (_doc) and API envelopes
 export function unwrapDoc(raw) {
@@ -79,15 +78,14 @@ function extractAndSaveToken(resData) {
 
 export const authApi = {
   /**
-   * Register with name, email, phone, password (Section 1.1)
-   * @param {{ name: string, phone: string, email?: string, password: string }} payload
+   * Register with name, phone, password using axios.post
    */
   async register({ name, phone, password }) {
     const cleanPhone = (phone || '').trim();
     const cleanPassword = (password || '').trim();
     const cleanName = (name || '').trim();
 
-    const res = await client.post('/auth/register', {
+    const res = await axiosInstance.post('/auth/register', {
       name: cleanName,
       phone: cleanPhone,
       password: cleanPassword
@@ -101,14 +99,13 @@ export const authApi = {
   },
 
   /**
-   * Login with phone and password (Section 1.2)
-   * @param {{ phone: string, password: string }} payload
+   * Login with phone and password using axios.post
    */
   async login({ phone, password }) {
     const cleanPhone = (phone || '').trim();
     const cleanPassword = (password || '').trim();
 
-    const res = await client.post('/auth/login', {
+    const res = await axiosInstance.post('/auth/login', {
       phone: cleanPhone,
       password: cleanPassword
     });
@@ -120,12 +117,13 @@ export const authApi = {
     };
   },
 
-
   /**
-   * Get current authenticated user details (/auth/me)
+   * Get current authenticated user details (/auth/me) using axios.get with Token header
    */
   async getMe() {
-    const res = await client.get('/auth/me');
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.get('/auth/me', { headers });
     return {
       ...res,
       user: normalizeUser(res)
@@ -133,15 +131,17 @@ export const authApi = {
   },
 
   /**
-   * Update profile info (name, phone, address)
+   * Update profile info using axios.put with Token header
    */
   async updateProfile({ name, phone, address, postalCode }) {
-    const res = await client.put('/auth/profile', {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.put('/auth/profile', {
       name: name?.trim(),
       phone: phone?.trim(),
       address: address?.trim(),
       postalCode: postalCode?.trim()
-    });
+    }, { headers });
 
     return {
       ...res,
@@ -150,13 +150,15 @@ export const authApi = {
   },
 
   /**
-   * Change password
+   * Change password using axios.put with Token header
    */
   async changePassword({ oldPassword, newPassword }) {
-    const res = await client.put('/auth/change-password', {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.put('/auth/change-password', {
       oldPassword: (oldPassword || '').trim(),
       newPassword: (newPassword || '').trim()
-    });
+    }, { headers });
     return res;
   },
 

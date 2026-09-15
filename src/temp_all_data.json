@@ -1,0 +1,135 @@
+{
+  "storeInfo": {
+    "name": "برنج طلا رایس",
+    "phone": "۰۷۱-۳۸۳۰۱۵۶۰",
+    "mobile": "۰۹۱۷-۳۱۴-۷۸۵۲",
+    "address": "فارس، مرودشت، منطقه کامفیروز، دفتر مرکزی طلا رایس",
+    "email": "info@talarice.ir",
+    "instagram": "talarice"
+  },
+  "brandStory": {
+    "title": "اصالت و پیشینه برنج کامفیروز",
+    "description": "عرضه مستقیم اصیل‌ترین برنج معطر کامفیروز مرودشت از شالیزارهای حوزه سد درودزن استان فارس در گونی‌های نخی سفید و بهداشتی، بدون اختلاط و با خلوص ۱۰۰ درصدی."
+  },
+  "trustItems": [
+    {
+      "id": "trust-1",
+      "title": "ارسال مستقیم از شالیزار",
+      "iconClass": "fa-solid fa-seedling",
+      "description": "تمامی کیسه‌ها بدون واسطه و دلال، مستقیماً از مزارع حاصلخیز کامفیروز بسته‌بندی و ارسال می‌شوند."
+    },
+    {
+      "id": "trust-2",
+      "title": "ضمانت ۱۰۰٪ اصالت و عطر",
+      "iconClass": "fa-solid fa-circle-check",
+      "description": "در صورت عدم رضایت کامل از عطر، ری و کیفیت پخت، وجه پرداختی تا ۷ روز بدون قید و شرط عودت داده می‌شود."
+    },
+    {
+      "id": "trust-3",
+      "title": "کیسه نخی تنفس‌پذیر",
+      "iconClass": "fa-solid fa-box-open",
+      "description": "بسته‌بندی در گونی‌های پارچه‌ای سفید با دوخت صنعتی جهت حفظ عطر طبیعی و جلوگیری از آفت‌زدگی."
+    }
+  ],
+  "slides": [
+    {
+      "id": "slide-kamfirouz-1",
+      "title": "برنج معطر کامفیروز اصل فارس",
+      "subtitle": "برداشت تازه سال از بهترین شالیزارها",
+      "description": "عطر ماندگار، پخت بی‌نظیر و ری‌دهی فوق‌العاده برای مجالس و مصارف روزمره خانواده‌های ایرانی",
+      "ctaText": "مشاهده و خرید آنلاین",
+      "category": "kamfirouz",
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg"
+    },
+    {
+      "id": "slide-kamfirouz-2",
+      "title": "تضمین اصالت و پخت بدون اختلاط",
+      "subtitle": "ارسال مستقیم و سریع در سراسر کشور",
+      "description": "عرضه در کیسه‌های نخی ۱۰ کیلوگرمی بهداشتی با ضمانت مرجوعی بدون قید و شرط در صورت عدم رضایت",
+      "ctaText": "سفارش کیسه ۱۰ کیلویی",
+      "category": "all",
+      "image": "/src/assets/images/white_rice_sack_2_1786553728612.jpg"
+    }
+  ],
+  "products": [
+    {
+      "id": "prod-kamfirouz-1",
+      "name": "برنج معطر کامفیروز اصل فارس (کیسه ۱۰ کیلویی)",
+      "description": "برنج درجه یک کامفیروز برداشت تازه شالیزارهای مرودشت فارس، عطر و بوی بی‌نظیر، پخت عالی و قد کشیدن فوق‌العاده بدون کوچک‌ترین اختلاط.",
+      "price": 430000,
+      "originalPrice": 480000,
+      "dealPrice": 378000,
+      "discountPercent": 12,
+      "isAmazing": true,
+      "isDeal": true,
+      "isAvailable": true,
+      "stock": 45,
+      "weight": "۱۰ کیلوگرم",
+      "category": "kamfirouz",
+      "rating": 4.9,
+      "reviewsCount": 38,
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg"
+    },
+    {
+      "id": "prod-kamfirouz-2",
+      "name": "برنج ممتاز عنبربو جنوب (کیسه ۱۰ کیلویی)",
+      "description": "برنج عنبربو خوش‌پخت، دانه بلند طبیعی، عطر دلنشین و طعم اصیل جنوبی، مناسب برای پلوهای مجلسی و روزانه.",
+      "price": 395000,
+      "originalPrice": 440000,
+      "dealPrice": 349000,
+      "discountPercent": 10,
+      "isAmazing": true,
+      "isDeal": true,
+      "isAvailable": true,
+      "stock": 30,
+      "weight": "۱۰ کیلوگرم",
+      "category": "anbarbou",
+      "rating": 4.8,
+      "reviewsCount": 24,
+      "image": "/src/assets/images/white_rice_sack_2_1786553728612.jpg"
+    },
+    {
+      "id": "prod-kamfirouz-3",
+      "name": "برنج طارم هاشمی درجه یک گیلان (کیسه ۱۰ کیلو)",
+      "description": "برنج اعلای طارم هاشمی گیلان، عطر فوق‌العاده قوی، دانه‌های سفید و کشیده، کیفیت پخت بی‌نظیر.",
+      "price": 520000,
+      "originalPrice": 580000,
+      "dealPrice": 470000,
+      "discountPercent": 10,
+      "isAmazing": false,
+      "isDeal": false,
+      "isAvailable": true,
+      "stock": 20,
+      "weight": "۱۰ کیلوگرم",
+      "category": "tarom",
+      "rating": 4.95,
+      "reviewsCount": 51,
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg"
+    },
+    {
+      "id": "prod-kamfirouz-4",
+      "name": "برنج نیم‌دانه معطر کامفیروز (کیسه ۱۰ کیلو)",
+      "description": "برنج نیم‌دانه کامفیروز با همان عطر و طعم برنج کامل، بسیار مناسب برای پخت شله‌زرد، سوپ، شیربرنج و پلوهای مخلوط.",
+      "price": 280000,
+      "originalPrice": 320000,
+      "dealPrice": 250000,
+      "discountPercent": 12,
+      "isAmazing": false,
+      "isDeal": false,
+      "isAvailable": true,
+      "stock": 15,
+      "weight": "۱۰ کیلوگرم",
+      "category": "nimdaneh",
+      "rating": 4.7,
+      "reviewsCount": 19,
+      "image": "/src/assets/images/white_rice_sack_2_1786553728612.jpg"
+    }
+  ],
+  "themeStylesSummary": {
+    "primaryColor": "#1C3A27",
+    "secondaryColor": "#2A663C",
+    "accentColor": "#D4AF37",
+    "backgroundGradient": "radial-gradient(circle at top, #f0fdf4 0%, #F9FAFB 65%)",
+    "fontFamily": "Vazirmatn, system-ui, sans-serif"
+  }
+}

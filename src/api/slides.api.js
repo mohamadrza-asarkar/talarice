@@ -1,8 +1,7 @@
 // -------------------------------------------------------------
-// Slides & Banners API (/api/slides)
-// Native fetch implementation with resilient multi-route fallback
+// Slides & Banners API (/api/slides) using Axios
 // -------------------------------------------------------------
-import { client } from './client';
+import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 
 export function normalizeSlide(raw) {
@@ -30,7 +29,7 @@ export function normalizeSlide(raw) {
 
 export const slidesApi = {
   /**
-   * Get all active slides/banners
+   * Get all active slides/banners using axios.get
    */
   async getAll(params = {}) {
     const candidateEndpoints = [
@@ -50,7 +49,7 @@ export const slidesApi = {
         const qs = query.toString();
         const fullEp = `${ep}${qs ? `?${qs}` : ''}`;
 
-        const res = await client.get(fullEp);
+        const res = await axiosInstance.get(fullEp);
         if (Array.isArray(res)) {
           rawList = res;
           break;
@@ -84,16 +83,16 @@ export const slidesApi = {
   },
 
   /**
-   * Get single slide by ID
+   * Get single slide by ID using axios.get
    */
   async getById(id) {
-    const res = await client.get(`/slides/${id}`);
+    const res = await axiosInstance.get(`/slides/${id}`);
     const raw = res?.data || res?.slide || res;
     return normalizeSlide(raw);
   },
 
   /**
-   * Create a new slide / banner (Admin)
+   * Create a new slide / banner (Admin) using axios.post with Token header
    */
   async create(slideData) {
     const payload = {
@@ -109,13 +108,16 @@ export const slidesApi = {
       isActive: slideData.isActive !== false
     };
 
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = ['/slides', '/admin/slides', '/banners'];
     let res = null;
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        res = await client.post(ep, payload);
+        res = await axiosInstance.post(ep, payload, { headers });
         break;
       } catch (err) {
         lastErr = err;
@@ -135,21 +137,24 @@ export const slidesApi = {
   },
 
   /**
-   * Update slide (Admin)
+   * Update slide (Admin) using axios.put/patch with Token header
    */
   async update(id, slideData) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = [`/slides/${id}`, `/admin/slides/${id}`, `/banners/${id}`];
     let res = null;
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        res = await client.put(ep, slideData);
+        res = await axiosInstance.put(ep, slideData, { headers });
         break;
       } catch (err) {
         lastErr = err;
         try {
-          res = await client.patch(ep, slideData);
+          res = await axiosInstance.patch(ep, slideData, { headers });
           break;
         } catch (patchErr) {
           lastErr = patchErr;
@@ -170,15 +175,18 @@ export const slidesApi = {
   },
 
   /**
-   * Delete slide (Admin)
+   * Delete slide (Admin) using axios.delete with Token header
    */
   async delete(id) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = [`/slides/${id}`, `/admin/slides/${id}`, `/banners/${id}`];
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        return await client.delete(ep);
+        return await axiosInstance.delete(ep, { headers });
       } catch (err) {
         lastErr = err;
       }

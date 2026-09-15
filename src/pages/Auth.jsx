@@ -136,7 +136,6 @@ export default function Auth() {
           <div className={styles.formGroup}>
             <label className={styles.label}>
               <span>شماره موبایل</span>
-              <span className={styles.requiredAsterisk}>* (الزامی)</span>
             </label>
             <div className={styles.inputWrapper}>
               <i className={`fa-solid fa-phone ${styles.inputIcon}`} />
@@ -155,13 +154,12 @@ export default function Auth() {
           <div className={styles.formGroup}>
             <label className={styles.label}>
               <span>کلمه عبور</span>
-              <span className={styles.requiredAsterisk}>* (الزامی)</span>
             </label>
             <div className={styles.inputWrapper}>
               <i className={`fa-solid fa-lock ${styles.inputIcon}`} />
               <input
                 type={showPassword ? 'text' : 'password'}
-                className={styles.input}
+                className={styles.passwordInput}
                 placeholder={mode === 'register' ? 'حداقل ۴ کاراکتر وارد کنید' : 'رمز عبور خود را وارد کنید'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

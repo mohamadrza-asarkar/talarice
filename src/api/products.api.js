@@ -2,7 +2,7 @@
 // Products API (/api/products)
 // Native fetch implementation
 // -------------------------------------------------------------
-import { client } from './client';
+import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 
 export function normalizeProduct(raw) {
@@ -44,7 +44,7 @@ export function normalizeProduct(raw) {
 
 export const productsApi = {
   /**
-   * Get all products with optional filters
+   * Get all products with optional filters using axios.get
    */
   async getAll(params = {}) {
     const query = new URLSearchParams();
@@ -59,7 +59,7 @@ export const productsApi = {
     
     const qs = query.toString();
     const endpoint = `/products${qs ? `?${qs}` : ''}`;
-    const res = await client.get(endpoint);
+    const res = await axiosInstance.get(endpoint);
     
     let rawList = [];
     let pagination = null;
@@ -88,10 +88,10 @@ export const productsApi = {
   },
 
   /**
-   * Get single product by ID
+   * Get single product by ID using axios.get
    */
   async getById(id) {
-    const res = await client.get(`/products/${id}`);
+    const res = await axiosInstance.get(`/products/${id}`);
     const raw = res?.data || res?.product || res;
     return normalizeProduct(raw);
   },
@@ -101,11 +101,11 @@ export const productsApi = {
   },
 
   /**
-   * Get featured or amazing products
+   * Get featured or amazing products using axios.get
    */
   async getFeatured() {
     try {
-      const res = await client.get('/products?featured=true');
+      const res = await axiosInstance.get('/products?featured=true');
       const list = Array.isArray(res) ? res : (res?.data || []);
       return list.map(normalizeProduct);
     } catch {
@@ -114,7 +114,7 @@ export const productsApi = {
   },
 
   /**
-   * Create a new product (Admin)
+   * Create a new product (Admin) using axios.post with explicit Token header support
    */
   async create(productData) {
     const payload = {
@@ -126,13 +126,16 @@ export const productsApi = {
       imageBase64: productData.imageBase64 || productData.image || ''
     };
 
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = ['/products', '/admin/products'];
     let res = null;
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        res = await client.post(ep, payload);
+        res = await axiosInstance.post(ep, payload, { headers });
         break;
       } catch (err) {
         lastErr = err;
@@ -152,21 +155,24 @@ export const productsApi = {
   },
 
   /**
-   * Update product (Admin)
+   * Update product (Admin) using axios.put / axios.patch with Token header
    */
   async update(id, productData) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = [`/products/${id}`, `/admin/products/${id}`];
     let res = null;
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        res = await client.put(ep, productData);
+        res = await axiosInstance.put(ep, productData, { headers });
         break;
       } catch (err) {
         lastErr = err;
         try {
-          res = await client.patch(ep, productData);
+          res = await axiosInstance.patch(ep, productData, { headers });
           break;
         } catch (patchErr) {
           lastErr = patchErr;
@@ -187,15 +193,18 @@ export const productsApi = {
   },
 
   /**
-   * Delete product (Admin)
+   * Delete product (Admin) using axios.delete with Token header
    */
   async delete(id) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = [`/products/${id}`, `/admin/products/${id}`];
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        return await client.delete(ep);
+        return await axiosInstance.delete(ep, { headers });
       } catch (err) {
         lastErr = err;
       }
@@ -209,10 +218,12 @@ export const productsApi = {
   },
 
   /**
-   * Add a review to a product
+   * Add a review to a product using axios.post
    */
   async addReview(productId, reviewData) {
-    return await client.post(`/products/${productId}/reviews`, reviewData);
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    return await axiosInstance.post(`/products/${productId}/reviews`, reviewData, { headers });
   }
 };
 

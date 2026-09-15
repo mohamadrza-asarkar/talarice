@@ -1,17 +1,18 @@
 // -------------------------------------------------------------
-// Shopping Cart API (/api/cart)
-// Section 4 of backend API Documentation
+// Shopping Cart API (/api/cart) using Axios
 // -------------------------------------------------------------
-import { client } from './client';
+import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 
 export const cartApi = {
   /**
-   * Get entire cart from server
+   * Get entire cart from server using axios.get with Token header
    */
   async getCart() {
     try {
-      const res = await client.get('/cart');
+      const token = getStoredToken();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      const res = await axiosInstance.get('/cart', { headers });
       const data = unwrapDoc(res?.data || res);
       return {
         items: Array.isArray(data?.items) ? data.items : [],
@@ -24,39 +25,47 @@ export const cartApi = {
   },
 
   /**
-   * Add item to cart
+   * Add item to cart using axios.post with Token header
    */
   async addItem(productId, quantity = 1) {
-    const res = await client.post('/cart/items', {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.post('/cart/items', {
       productId,
       quantity: Number(quantity)
-    });
+    }, { headers });
     return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Update item quantity in cart
+   * Update item quantity in cart using axios.put with Token header
    */
   async updateQuantity(productId, quantity) {
-    const res = await client.put(`/cart/items/${productId}`, {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.put(`/cart/items/${productId}`, {
       quantity: Number(quantity)
-    });
+    }, { headers });
     return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Remove item from cart
+   * Remove item from cart using axios.delete with Token header
    */
   async removeItem(productId) {
-    const res = await client.delete(`/cart/items/${productId}`);
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.delete(`/cart/items/${productId}`, { headers });
     return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Clear entire cart
+   * Clear entire cart using axios.delete with Token header
    */
   async clearCart() {
-    const res = await client.delete('/cart');
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.delete('/cart', { headers });
     return unwrapDoc(res?.data || res);
   }
 };

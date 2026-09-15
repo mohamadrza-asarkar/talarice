@@ -1,8 +1,7 @@
 // -------------------------------------------------------------
-// Reviews API (/api/reviews)
-// Section 6 of backend API Documentation
+// Reviews API (/api/reviews) using Axios
 // -------------------------------------------------------------
-import { client } from './client';
+import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 
 export function normalizeReview(raw) {
@@ -25,11 +24,11 @@ export function normalizeReview(raw) {
 
 export const reviewsApi = {
   /**
-   * Get reviews for a product
+   * Get reviews for a product using axios.get
    */
   async getByProductId(productId) {
     try {
-      const res = await client.get(`/reviews?productId=${productId}`);
+      const res = await axiosInstance.get(`/reviews?productId=${productId}`);
       const list = Array.isArray(res) ? res : (res?.data || []);
       return list.map(normalizeReview).filter(Boolean);
     } catch {
@@ -38,32 +37,38 @@ export const reviewsApi = {
   },
 
   /**
-   * Post new review
+   * Post new review using axios.post with Token header
    */
   async create({ productId, comment, rating = 5 }) {
-    const res = await client.post('/reviews', {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.post('/reviews', {
       productId,
       comment: comment?.trim(),
       rating: Number(rating)
-    });
+    }, { headers });
     return normalizeReview(res?.data || res);
   },
 
   /**
-   * Admin: Reply to user review
+   * Admin: Reply to user review using axios.post with Token header
    */
   async reply(reviewId, comment) {
-    const res = await client.post(`/reviews/${reviewId}/reply`, {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.post(`/reviews/${reviewId}/reply`, {
       comment: comment?.trim()
-    });
+    }, { headers });
     return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Admin: Delete review
+   * Admin: Delete review using axios.delete with Token header
    */
   async delete(reviewId) {
-    return await client.delete(`/reviews/${reviewId}`);
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    return await axiosInstance.delete(`/reviews/${reviewId}`, { headers });
   }
 };
 

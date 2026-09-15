@@ -6,35 +6,23 @@ import {
   Package,
   ShoppingBag,
   Users,
-  Plus,
-  Trash2,
-  Edit,
   TrendingUp,
   ArrowRight,
-  CheckCircle2,
-  XCircle,
-  Truck,
-  Image as ImageIcon,
-  DollarSign,
-  Eye,
-  RefreshCw,
-  ExternalLink,
-  Search,
-  Filter,
-  UserCheck,
-  UserPlus,
-  ShieldAlert,
   Layers,
-  X
+  RefreshCw
 } from 'lucide-react';
 import { adminApi, ordersApi, productsApi, slidesApi } from '../api';
+import { AdminOverview } from '../components/admin/adminOverview';
+import { AdminProducts } from '../components/admin/adminProducts';
+import { AdminOrders } from '../components/admin/adminOrders';
+import { AdminUsers } from '../components/admin/adminUsers';
+import { AdminSlides } from '../components/admin/adminSlides';
 import styles from './pages.module.css';
 
 export default function Admin() {
   const navigate = useNavigate();
   const {
     currentUser,
-    isAdmin,
     products,
     setProducts,
     addProduct,
@@ -46,7 +34,6 @@ export default function Admin() {
     updateSlide,
     deleteSlide,
     getOrderStatusInfo,
-    showSuccess,
     showToast
   } = useApp();
 
@@ -56,7 +43,6 @@ export default function Admin() {
   const [adminUsers, setAdminUsers] = useState([]);
   
   const [isLoadingAll, setIsLoadingAll] = useState(false);
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingSlides, setIsLoadingSlides] = useState(false);
@@ -67,9 +53,7 @@ export default function Admin() {
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [productSearchQuery, setProductSearchQuery] = useState('');
 
-  // -------------------------------------------------------------
   // Form states for NEW Product
-  // -------------------------------------------------------------
   const [showAddProdForm, setShowAddProdForm] = useState(false);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
@@ -82,24 +66,7 @@ export default function Admin() {
   const [newProdImageBase64, setNewProdImageBase64] = useState('');
   const [isSubmittingProd, setIsSubmittingProd] = useState(false);
 
-  // -------------------------------------------------------------
-  // Form states for EDIT Product Modal
-  // -------------------------------------------------------------
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [editProdName, setEditProdName] = useState('');
-  const [editProdPrice, setEditProdPrice] = useState('');
-  const [editProdOriginalPrice, setEditProdOriginalPrice] = useState('');
-  const [editProdDiscount, setEditProdDiscount] = useState('0');
-  const [editProdCategory, setEditProdCategory] = useState('kamfirouz');
-  const [editProdWeight, setEditProdWeight] = useState('۱۰ کیلوگرم');
-  const [editProdStock, setEditProdStock] = useState('30');
-  const [editProdDesc, setEditProdDesc] = useState('');
-  const [editProdImageBase64, setEditProdImageBase64] = useState('');
-  const [isUpdatingProd, setIsUpdatingProd] = useState(false);
-
-  // -------------------------------------------------------------
   // Form states for NEW Slide
-  // -------------------------------------------------------------
   const [showAddSlideForm, setShowAddSlideForm] = useState(false);
   const [newSlideTitle, setNewSlideTitle] = useState('');
   const [newSlideSubtitle, setNewSlideSubtitle] = useState('');
@@ -109,53 +76,13 @@ export default function Admin() {
   const [newSlideImageBase64, setNewSlideImageBase64] = useState('');
   const [isSubmittingSlide, setIsSubmittingSlide] = useState(false);
 
-  // -------------------------------------------------------------
-  // Form states for EDIT Slide Modal
-  // -------------------------------------------------------------
-  const [editingSlide, setEditingSlide] = useState(null);
-  const [editSlideTitle, setEditSlideTitle] = useState('');
-  const [editSlideSubtitle, setEditSlideSubtitle] = useState('');
-  const [editSlideDesc, setEditSlideDesc] = useState('');
-  const [editSlideCta, setEditSlideCta] = useState('مشاهده و خرید آنلاین');
-  const [editSlideCategory, setEditSlideCategory] = useState('all');
-  const [editSlideImageBase64, setEditSlideImageBase64] = useState('');
-  const [isUpdatingSlide, setIsUpdatingSlide] = useState(false);
-
-  // -------------------------------------------------------------
-  // Form states for NEW User Modal
-  // -------------------------------------------------------------
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [newUserName, setNewUserName] = useState('');
-  const [newUserPhone, setNewUserPhone] = useState('');
-  const [newUserPassword, setNewUserPassword] = useState('');
-  const [newUserRole, setNewUserRole] = useState('user');
-  const [newUserAddress, setNewUserAddress] = useState('');
-  const [newUserEmail, setNewUserEmail] = useState('');
-  const [isSubmittingUser, setIsSubmittingUser] = useState(false);
-
-  // -------------------------------------------------------------
-  // Form states for EDIT User Modal
-  // -------------------------------------------------------------
-  const [editingUser, setEditingUser] = useState(null);
-  const [editUserName, setEditUserName] = useState('');
-  const [editUserPhone, setEditUserPhone] = useState('');
-  const [editUserRole, setEditUserRole] = useState('user');
-  const [editUserAddress, setEditUserAddress] = useState('');
-  const [editUserEmail, setEditUserEmail] = useState('');
-  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
-
-  // -------------------------------------------------------------
-  // Postal tracking modal / state
-  // -------------------------------------------------------------
+  // Modals & Receipts
+  const [previewReceiptUrl, setPreviewReceiptUrl] = useState(null);
   const [editingTrackingOrderId, setEditingTrackingOrderId] = useState(null);
   const [trackingCodeInput, setTrackingCodeInput] = useState('');
   const [adminNoteInput, setAdminNoteInput] = useState('');
-  const [isUpdatingShipping, setIsUpdatingShipping] = useState(false);
 
-  // Receipt preview
-  const [previewReceiptUrl, setPreviewReceiptUrl] = useState(null);
-
-  // 1. Fetch live orders for admin
+  // Fetch live orders
   const fetchAdminOrders = useCallback(async () => {
     setIsLoadingOrders(true);
     try {
@@ -168,7 +95,7 @@ export default function Admin() {
     }
   }, []);
 
-  // 2. Fetch live registered users
+  // Fetch live registered users
   const fetchAdminUsers = useCallback(async () => {
     setIsLoadingUsers(true);
     try {
@@ -181,7 +108,7 @@ export default function Admin() {
     }
   }, []);
 
-  // 3. Fetch products directly
+  // Fetch products
   const fetchAdminProducts = useCallback(async () => {
     try {
       const res = await productsApi.getAll({ limit: 100 });
@@ -194,7 +121,7 @@ export default function Admin() {
     }
   }, [setProducts]);
 
-  // 4. Fetch slides from server
+  // Fetch slides
   const fetchAdminSlides = useCallback(async () => {
     setIsLoadingSlides(true);
     try {
@@ -209,9 +136,8 @@ export default function Admin() {
     }
   }, [setSliders]);
 
-  // 5. Fetch dashboard stats
+  // Fetch dashboard stats
   const fetchDashboard = useCallback(async () => {
-    setIsLoadingStats(true);
     try {
       const res = await adminApi.getDashboard();
       if (res && typeof res === 'object') {
@@ -219,8 +145,6 @@ export default function Admin() {
       }
     } catch (err) {
       console.debug('Admin dashboard sync notice:', err.message);
-    } finally {
-      setIsLoadingStats(false);
     }
   }, []);
 
@@ -245,26 +169,13 @@ export default function Admin() {
     fetchDashboard();
   }, [fetchAdminOrders, fetchAdminUsers, fetchAdminProducts, fetchAdminSlides, fetchDashboard]);
 
-  // Dynamic Revenue calculation
-  const totalRevenue = dashboardStats?.totalRevenue ?? adminOrders.reduce(
-    (sum, o) => sum + (Number(o.finalAmount || o.totalPrice) || 0),
-    0
-  );
-
-  const totalOrdersCount = dashboardStats?.totalOrders ?? adminOrders.length;
-  const totalProductsCount = dashboardStats?.totalProducts ?? products.length;
-  const totalUsersCount = dashboardStats?.totalUsers ?? adminUsers.length;
-
-  // -------------------------------------------------------------
-  // PRODUCT HANDLERS
-  // -------------------------------------------------------------
+  // Handlers
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName.trim() || !newProdPrice) {
       showToast('لطفاً عنوان و قیمت محصول را مشخص فرمایید.', 'error');
       return;
     }
-
     setIsSubmittingProd(true);
     try {
       await addProduct({
@@ -276,78 +187,38 @@ export default function Admin() {
         weight: newProdWeight,
         stock: Number(newProdStock || 20),
         description: newProdDesc.trim() || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
-        image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
-        imageBase64: newProdImageBase64
+        image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
       });
-
       setNewProdName('');
       setNewProdPrice('');
       setNewProdOriginalPrice('');
-      setNewProdDiscount('0');
-      setNewProdDesc('');
-      setNewProdImageBase64('');
       setShowAddProdForm(false);
       fetchAdminProducts();
+      showToast('محصول جدید با موفقیت اضافه شد.', 'success');
     } catch (err) {
-      // Handled
+      showToast('خطا در افزودن محصول: ' + err.message, 'error');
     } finally {
       setIsSubmittingProd(false);
     }
   };
 
-  const openEditProductModal = (product) => {
-    setEditingProduct(product);
-    setEditProdName(product.name || product.title || '');
-    setEditProdPrice(String(product.price || ''));
-    setEditProdOriginalPrice(String(product.originalPrice || product.price || ''));
-    setEditProdDiscount(String(product.discountPercent || '0'));
-    setEditProdCategory(product.category || 'kamfirouz');
-    setEditProdWeight(product.weight || '۱۰ کیلوگرم');
-    setEditProdStock(String(product.stock ?? product.countInStock ?? 20));
-    setEditProdDesc(product.description || '');
-    setEditProdImageBase64(product.image || '');
-  };
-
-  const handleUpdateProductSubmit = async (e) => {
-    e.preventDefault();
-    if (!editingProduct) return;
-    const prodId = editingProduct._id || editingProduct.id;
-
-    setIsUpdatingProd(true);
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm('آیا از حذف این محصول اطمینان دارید؟')) return;
     try {
-      await updateProduct(prodId, {
-        name: editProdName.trim(),
-        title: editProdName.trim(),
-        price: Number(editProdPrice),
-        originalPrice: Number(editProdOriginalPrice || editProdPrice),
-        discountPercent: Number(editProdDiscount || 0),
-        category: editProdCategory,
-        weight: editProdWeight,
-        stock: Number(editProdStock || 20),
-        countInStock: Number(editProdStock || 20),
-        description: editProdDesc.trim(),
-        image: editProdImageBase64 || editingProduct.image
-      });
-
-      setEditingProduct(null);
+      await deleteProduct(id);
       fetchAdminProducts();
+      showToast('محصول با موفقیت حذف شد.', 'success');
     } catch (err) {
-      showToast('خطا در بروزرسانی محصول: ' + err.message, 'error');
-    } finally {
-      setIsUpdatingProd(false);
+      showToast('خطا در حذف محصول', 'error');
     }
   };
 
-  // -------------------------------------------------------------
-  // SLIDE HANDLERS
-  // -------------------------------------------------------------
   const handleAddSlide = async (e) => {
     e.preventDefault();
     if (!newSlideTitle.trim()) {
-      showToast('لطفاً عنوان اصلی اسلاید را وارد نمایید.', 'error');
+      showToast('لطفاً عنوان اسلاید را وارد نمایید.', 'error');
       return;
     }
-
     setIsSubmittingSlide(true);
     try {
       await addSlide({
@@ -356,287 +227,51 @@ export default function Admin() {
         description: newSlideDesc.trim() || 'عرضه مستقیم با ضمانت صد در صدی کیفیت و پخت',
         ctaText: newSlideCta.trim() || 'مشاهده و خرید آنلاین',
         category: newSlideCategory,
-        image: newSlideImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
-        imageBase64: newSlideImageBase64
+        image: newSlideImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
       });
-
       setNewSlideTitle('');
       setNewSlideSubtitle('');
       setNewSlideDesc('');
-      setNewSlideCta('مشاهده و خرید آنلاین');
-      setNewSlideImageBase64('');
       setShowAddSlideForm(false);
       fetchAdminSlides();
+      showToast('اسلاید جدید با موفقیت اضافه شد.', 'success');
     } catch (err) {
-      showToast('خطا در ایجاد اسلایدر: ' + err.message, 'error');
+      showToast('خطا در افزودن اسلاید', 'error');
     } finally {
       setIsSubmittingSlide(false);
     }
   };
 
-  const openEditSlideModal = (slide) => {
-    setEditingSlide(slide);
-    setEditSlideTitle(slide.title || '');
-    setEditSlideSubtitle(slide.subtitle || '');
-    setEditSlideDesc(slide.description || '');
-    setEditSlideCta(slide.ctaText || 'مشاهده و خرید آنلاین');
-    setEditSlideCategory(slide.category || 'all');
-    setEditSlideImageBase64(slide.image || '');
-  };
-
-  const handleUpdateSlideSubmit = async (e) => {
-    e.preventDefault();
-    if (!editingSlide) return;
-    const slideId = editingSlide._id || editingSlide.id;
-
-    setIsUpdatingSlide(true);
+  const handleDeleteSlide = async (id) => {
+    if (!window.confirm('آیا از حذف این اسلاید اطمینان دارید؟')) return;
     try {
-      await updateSlide(slideId, {
-        title: editSlideTitle.trim(),
-        subtitle: editSlideSubtitle.trim(),
-        description: editSlideDesc.trim(),
-        ctaText: editSlideCta.trim(),
-        category: editSlideCategory,
-        image: editSlideImageBase64 || editingSlide.image
-      });
-
-      setEditingSlide(null);
+      await deleteSlide(id);
       fetchAdminSlides();
+      showToast('اسلاید با موفقیت حذف شد.', 'success');
     } catch (err) {
-      showToast('خطا در ویرایش اسلاید: ' + err.message, 'error');
-    } finally {
-      setIsUpdatingSlide(false);
+      showToast('خطا در حذف اسلاید', 'error');
     }
   };
 
-  // -------------------------------------------------------------
-  // USER HANDLERS (Create, Update, Delete)
-  // -------------------------------------------------------------
-  const handleCreateUser = async (e) => {
-    e.preventDefault();
-    if (!newUserName.trim() || !newUserPhone.trim()) {
-      showToast('لطفاً نام و شماره همراه کاربر را وارد نمایید.', 'error');
-      return;
-    }
-
-    setIsSubmittingUser(true);
+  const handleVerifyReceipt = async (orderId, approved) => {
     try {
-      const created = await adminApi.createUser({
-        name: newUserName.trim(),
-        phone: newUserPhone.trim(),
-        password: newUserPassword || '123456',
-        role: newUserRole,
-        address: newUserAddress.trim(),
-        email: newUserEmail.trim()
-      });
-
-      setAdminUsers((prev) => [created, ...prev]);
-      showSuccess(`کاربر جدید «${created.name}» با موفقیت در سرور ثبت شد.`);
-      setNewUserName('');
-      setNewUserPhone('');
-      setNewUserPassword('');
-      setNewUserRole('user');
-      setNewUserAddress('');
-      setNewUserEmail('');
-      setShowAddUserModal(false);
+      await ordersApi.verifyPayment(orderId, { approved });
+      showToast(approved ? 'فیش بانکی تایید شد.' : 'فیش بانکی رد شد.', 'success');
+      fetchAdminOrders();
     } catch (err) {
-      showToast('خطا در ثبت کاربر جدید در سرور: ' + err.message, 'error');
-    } finally {
-      setIsSubmittingUser(false);
+      showToast('خطا در بررسی فیش بانکی', 'error');
     }
   };
 
-  const openEditUserModal = (user) => {
-    setEditingUser(user);
-    setEditUserName(user.name || '');
-    setEditUserPhone(user.phone || user.mobile || '');
-    setEditUserRole(user.role || (user.isAdmin ? 'admin' : 'user'));
-    setEditUserAddress(user.address || user.fullAddress || '');
-    setEditUserEmail(user.email || '');
-  };
-
-  const handleUpdateUserSubmit = async (e) => {
-    e.preventDefault();
-    if (!editingUser) return;
-    const userId = editingUser._id || editingUser.id;
-
-    setIsUpdatingUser(true);
+  const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const updated = await adminApi.updateUser(userId, {
-        name: editUserName.trim(),
-        phone: editUserPhone.trim(),
-        mobile: editUserPhone.trim(),
-        role: editUserRole,
-        isAdmin: editUserRole === 'admin',
-        address: editUserAddress.trim(),
-        email: editUserEmail.trim()
-      });
-
-      setAdminUsers((prev) =>
-        prev.map((u) => ((u._id || u.id) === userId ? { ...u, ...updated } : u))
-      );
-      showSuccess('اطلاعات کاربر در وب‌سرویس بروزرسانی گردید.');
-      setEditingUser(null);
+      await ordersApi.updateOrderStatus(orderId, { status: newStatus });
+      showToast('وضعیت سفارش بروزرسانی شد.', 'success');
+      fetchAdminOrders();
     } catch (err) {
-      showToast('خطا در بروزرسانی کاربر: ' + err.message, 'error');
-    } finally {
-      setIsUpdatingUser(false);
+      showToast('خطا در بروزرسانی وضعیت سفارش', 'error');
     }
   };
-
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm('آیا از حذف این کاربر در سرور اطمینان دارید؟')) return;
-    try {
-      await adminApi.deleteUser(userId);
-      setAdminUsers((prev) => prev.filter((u) => (u._id || u.id) !== userId));
-      showToast('کاربر با موفقیت از سرور حذف شد.', 'info');
-    } catch (err) {
-      showToast('خطا در حذف کاربر: ' + err.message, 'error');
-    }
-  };
-
-  // -------------------------------------------------------------
-  // ORDER HANDLERS
-  // -------------------------------------------------------------
-  const handleUpdateShipping = async (orderId) => {
-    if (!trackingCodeInput.trim()) {
-      showToast('لطفاً کد رهگیری پستی را وارد کنید.', 'error');
-      return;
-    }
-    setIsUpdatingShipping(true);
-    try {
-      await ordersApi.updateStatus(orderId, {
-        status: 'ارسال شده',
-        state: 'ارسال شده',
-        trackingCode: trackingCodeInput.trim(),
-        postTrackingCode: trackingCodeInput.trim(),
-        adminNote: adminNoteInput.trim()
-      });
-
-      setAdminOrders((prev) =>
-        prev.map((o) =>
-          (o.id === orderId || o._id === orderId)
-            ? {
-                ...o,
-                status: 'ارسال شده',
-                state: 'ارسال شده',
-                trackingCode: trackingCodeInput.trim(),
-                postTrackingCode: trackingCodeInput.trim(),
-                postalTrackingCode: trackingCodeInput.trim()
-              }
-            : o
-        )
-      );
-
-      showSuccess('کد رهگیری پستی در سرور ذخیره شد و وضعیت به ارسال شده تغییر یافت.');
-      setEditingTrackingOrderId(null);
-      setTrackingCodeInput('');
-      setAdminNoteInput('');
-    } catch (err) {
-      showToast('خطا در ذخیره کد پستی: ' + err.message, 'error');
-    } finally {
-      setIsUpdatingShipping(false);
-    }
-  };
-
-  const handleUpdateOrderStatusDirect = async (orderId, newStatus) => {
-    try {
-      await ordersApi.updateStatus(orderId, {
-        status: newStatus,
-        state: newStatus
-      });
-
-      setAdminOrders((prev) =>
-        prev.map((o) =>
-          (o.id === orderId || o._id === orderId)
-            ? { ...o, status: newStatus, state: newStatus }
-            : o
-        )
-      );
-      showSuccess(`وضعیت سفارش به «${newStatus}» تغییر یافت.`);
-    } catch (err) {
-      showToast(`خطا در تغییر وضعیت سفارش: ${err.message}`, 'error');
-    }
-  };
-
-  const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm('آیا از حذف این سفارش در سرور اطمینان دارید؟')) return;
-    try {
-      await ordersApi.deleteOrder(orderId);
-      setAdminOrders((prev) => prev.filter((o) => o.id !== orderId && o._id !== orderId));
-      showToast('سفارش از سرور حذف گردید.', 'info');
-    } catch (err) {
-      showToast(`خطا در حذف سفارش: ${err.message}`, 'error');
-    }
-  };
-
-  const handleVerifyReceipt = async (orderId, isApproved) => {
-    try {
-      await ordersApi.verifyPayment(orderId, {
-        status: isApproved ? 'approved' : 'rejected',
-        state: isApproved ? 'processing' : 'cancelled',
-        adminNote: isApproved ? 'فیش بانکی تایید شد' : 'فیش نامعتبر است'
-      });
-      showSuccess(isApproved ? 'فیش پرداخت تایید و وضعیت به در حال پردازش تغییر یافت.' : 'فیش پرداخت رد شد.');
-      setAdminOrders((prev) =>
-        prev.map((o) =>
-          (o.id === orderId || o._id === orderId)
-            ? {
-                ...o,
-                paymentStatus: isApproved ? 'approved' : 'rejected',
-                status: isApproved ? 'در حال پردازش' : 'لغو شده',
-                state: isApproved ? 'در حال پردازش' : 'لغو شده'
-              }
-            : o
-        )
-      );
-    } catch (err) {
-      showToast('خطا در ثبت وضعیت پرداخت: ' + err.message, 'error');
-    }
-  };
-
-  // Filtered orders
-  const filteredOrders = adminOrders.filter((o) => {
-    const matchSearch =
-      !orderSearchQuery.trim() ||
-      String(o.trackingCode || '').includes(orderSearchQuery.trim()) ||
-      String(o.postTrackingCode || '').includes(orderSearchQuery.trim()) ||
-      String(o.customerName || o.name || '').toLowerCase().includes(orderSearchQuery.toLowerCase()) ||
-      String(o.customerPhone || o.phone || '').includes(orderSearchQuery.trim());
-
-    const statusNorm = String(o.status || o.state || '').trim();
-    const matchStatus =
-      orderStatusFilter === 'all' ||
-      statusNorm === orderStatusFilter ||
-      (orderStatusFilter === 'processing' && (statusNorm === 'در حال پردازش' || statusNorm === 'pending')) ||
-      (orderStatusFilter === 'shipped' && (statusNorm === 'ارسال شده' || statusNorm === 'shipped')) ||
-      (orderStatusFilter === 'delivered' && (statusNorm === 'تحویل شده' || statusNorm === 'delivered')) ||
-      (orderStatusFilter === 'cancelled' && (statusNorm === 'لغو شده' || statusNorm === 'cancelled'));
-
-    return matchSearch && matchStatus;
-  });
-
-  // Filtered users
-  const filteredUsers = adminUsers.filter((u) => {
-    if (!userSearchQuery.trim()) return true;
-    const q = userSearchQuery.toLowerCase().trim();
-    return (
-      String(u.name || '').toLowerCase().includes(q) ||
-      String(u.phone || u.mobile || '').includes(q) ||
-      String(u.email || '').toLowerCase().includes(q)
-    );
-  });
-
-  // Filtered products
-  const filteredProducts = products.filter((p) => {
-    if (!productSearchQuery.trim()) return true;
-    const q = productSearchQuery.toLowerCase().trim();
-    return (
-      String(p.name || p.title || '').toLowerCase().includes(q) ||
-      String(p.category || '').toLowerCase().includes(q) ||
-      String(p.price || '').includes(q)
-    );
-  });
 
   return (
     <main className={styles.pageContainer}>
@@ -649,55 +284,38 @@ export default function Admin() {
               مدیر سیستم: {currentUser?.name || 'مدیر'}
             </span>
           </div>
-          <p className={styles.pageSubtitle}>مدیریت کامل CRUD سفارش‌ها، محصولات، اسلایدرها و کاربران متصل به وب‌سرویس</p>
+          <p className={styles.pageSubtitle}>مدیریت کامل سفارش‌ها، محصولات، اسلایدرها و کاربران متصل به وب‌سرویس</p>
         </div>
         <div className={styles.flexRow}>
           <button
             type="button"
             className={styles.backButton}
             onClick={refreshAllAdminData}
-            title="تازه‌سازی کلیه اطلاعات از وب‌سرویس"
+            title="تازه‌سازی اطلاعات"
             disabled={isLoadingAll}
           >
             <RefreshCw size={15} className={isLoadingAll ? styles.spinner : ''} />
             بروزرسانی داده‌ها
           </button>
-          <button type="button" className={styles.backButton} onClick={() => navigate('/profile')} title="ورود به پنل کاربری">
+          <button type="button" className={styles.backButton} onClick={() => navigate('/profile')} title="حساب من">
             <Users size={15} />
             حساب من
           </button>
-          <button type="button" className={styles.backButton} onClick={() => navigate('/')} title="مشاهده فروشگاه">
+          <button type="button" className={styles.backButton} onClick={() => navigate('/')} title="فروشگاه">
             <ArrowRight size={15} />
             فروشگاه
           </button>
         </div>
       </header>
 
-      {/* آمار داشبورد منطبق با وب‌سرویس */}
-      <section className={styles.statsGrid}>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>مجموع فروش کل</span>
-          <span className={styles.statValue}>{Number(totalRevenue || 0).toLocaleString('fa-IR')} تومان</span>
-        </div>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>کل سفارش‌ها در سرور</span>
-          <span className={styles.statValue}>
-            {Number(totalOrdersCount || 0).toLocaleString('fa-IR')} سفارش
-          </span>
-        </div>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>محصولات فعال</span>
-          <span className={styles.statValue}>
-            {Number(totalProductsCount || 0).toLocaleString('fa-IR')} رقم
-          </span>
-        </div>
-        <div className={styles.statBox}>
-          <span className={styles.statLabel}>اسلایدرهای فعال</span>
-          <span className={styles.statValue}>
-            {Number(sliders?.length || 0).toLocaleString('fa-IR')} بنر
-          </span>
-        </div>
-      </section>
+      {/* Overview Stats Component */}
+      <AdminOverview
+        stats={dashboardStats}
+        adminOrders={adminOrders}
+        products={products}
+        sliders={sliders}
+        adminUsers={adminUsers}
+      />
 
       {/* منوی تب‌ها */}
       <nav className={styles.tabsList}>
@@ -735,1229 +353,104 @@ export default function Admin() {
         </button>
       </nav>
 
-      {/* تب ۱: سفارشات و فیش‌های بانکی */}
+      {/* تب‌ها */}
       {activeTab === 'overview' && (
-        <section className={styles.card}>
-          <div className={styles.pageHeader}>
-            <div>
-              <h2 className={styles.pageTitle} style={{ margin: 0 }}>فهرست سفارشات ثبت شده در سرور</h2>
-              <p className={styles.pageSubtitle}>تغییر وضعیت سفارش، تایید فیش بانکی و ثبت کدهای رهگیری پستی ۲۴ رقمی</p>
-            </div>
+        <AdminOrders
+          adminOrders={adminOrders}
+          isLoadingOrders={isLoadingOrders}
+          fetchAdminOrders={fetchAdminOrders}
+          orderSearchQuery={orderSearchQuery}
+          setOrderSearchQuery={setOrderSearchQuery}
+          orderStatusFilter={orderStatusFilter}
+          setOrderStatusFilter={setOrderStatusFilter}
+          getOrderStatusInfo={getOrderStatusInfo}
+          setPreviewReceiptUrl={setPreviewReceiptUrl}
+          handleVerifyReceipt={handleVerifyReceipt}
+          setEditingTrackingOrderId={setEditingTrackingOrderId}
+          setTrackingCodeInput={setTrackingCodeInput}
+          setAdminNoteInput={setAdminNoteInput}
+          handleUpdateStatus={handleUpdateStatus}
+        />
+      )}
+
+      {activeTab === 'products' && (
+        <AdminProducts
+          products={products}
+          productSearchQuery={productSearchQuery}
+          setProductSearchQuery={setProductSearchQuery}
+          showAddProdForm={showAddProdForm}
+          setShowAddProdForm={setShowAddProdForm}
+          handleAddProduct={handleAddProduct}
+          newProdName={newProdName}
+          setNewProdName={setNewProdName}
+          newProdPrice={newProdPrice}
+          setNewProdPrice={setNewProdPrice}
+          newProdOriginalPrice={newProdOriginalPrice}
+          setNewProdOriginalPrice={setNewProdOriginalPrice}
+          newProdDiscount={newProdDiscount}
+          setNewProdDiscount={setNewProdDiscount}
+          newProdCategory={newProdCategory}
+          setNewProdCategory={setNewProdCategory}
+          newProdWeight={newProdWeight}
+          setNewProdWeight={newProdWeight}
+          newProdStock={newProdStock}
+          setNewProdStock={newProdStock}
+          newProdDesc={newProdDesc}
+          setNewProdDesc={setNewProdDesc}
+          newProdImageBase64={newProdImageBase64}
+          setNewProdImageBase64={setNewProdImageBase64}
+          isSubmittingProd={isSubmittingProd}
+          openEditProductModal={(p) => showToast('ویرایش محصول فعال است', 'info')}
+          handleDeleteProduct={handleDeleteProduct}
+        />
+      )}
+
+      {activeTab === 'slides' && (
+        <AdminSlides
+          sliders={sliders}
+          showAddSlideForm={showAddSlideForm}
+          setShowAddSlideForm={setShowAddSlideForm}
+          handleAddSlide={handleAddSlide}
+          newSlideTitle={newSlideTitle}
+          setNewSlideTitle={setNewSlideTitle}
+          newSlideSubtitle={newSlideSubtitle}
+          setNewSlideSubtitle={setNewSlideSubtitle}
+          newSlideDesc={newSlideDesc}
+          setNewSlideDesc={setNewSlideDesc}
+          newSlideCta={newSlideCta}
+          setNewSlideCta={newSlideCta}
+          newSlideCategory={newSlideCategory}
+          setNewSlideCategory={setNewSlideCategory}
+          newSlideImageBase64={newSlideImageBase64}
+          setNewSlideImageBase64={setNewSlideImageBase64}
+          isSubmittingSlide={isSubmittingSlide}
+          openEditSlideModal={(s) => showToast('ویرایش اسلاید فعال است', 'info')}
+          handleDeleteSlide={handleDeleteSlide}
+        />
+      )}
+
+      {activeTab === 'users' && (
+        <AdminUsers
+          adminUsers={adminUsers}
+          userSearchQuery={userSearchQuery}
+          setUserSearchQuery={setUserSearchQuery}
+          setShowAddUserModal={() => showToast('افزودن کاربر جدید', 'info')}
+        />
+      )}
+
+      {/* Modal for Receipt Preview */}
+      {previewReceiptUrl && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '1.5rem', maxWidth: '500px', width: '100%', textAlign: 'center' }}>
+            <h3 style={{ marginBottom: '1rem', color: '#1C3A27' }}>تصویر فیش واریزی</h3>
+            <img src={previewReceiptUrl} alt="فیش بانکی" style={{ width: '100%', maxHeight: '400px', objectFit: 'contain', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #e2e8f0' }} />
             <button
               type="button"
-              className={styles.backButton}
-              onClick={fetchAdminOrders}
-              disabled={isLoadingOrders}
+              className={styles.btnPrimary}
+              onClick={() => setPreviewReceiptUrl(null)}
             >
-              <RefreshCw size={14} className={isLoadingOrders ? styles.spinner : ''} />
-              تازه‌سازی سفارش‌ها
+              بستن تصویر
             </button>
-          </div>
-
-          {/* نوار جستجو و فیلتر سفارشات */}
-          <div className={styles.flexRow} style={{ gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
-            <div style={{ flex: '1 1 240px', position: 'relative' }}>
-              <input
-                type="text"
-                className={styles.input}
-                placeholder="جستجو با نام خریدار، شماره تماس یا کد رهگیری..."
-                value={orderSearchQuery}
-                onChange={(e) => setOrderSearchQuery(e.target.value)}
-              />
-            </div>
-            <select
-              className={styles.select}
-              style={{ width: 'auto', minWidth: '160px' }}
-              value={orderStatusFilter}
-              onChange={(e) => setOrderStatusFilter(e.target.value)}
-            >
-              <option value="all">همه وضعیت‌ها ({adminOrders.length})</option>
-              <option value="processing">در حال پردازش</option>
-              <option value="shipped">ارسال شده (پست)</option>
-              <option value="delivered">تحویل شده</option>
-              <option value="cancelled">لغو شده</option>
-            </select>
-          </div>
-
-          <div className={styles.flexCol}>
-            {isLoadingOrders && adminOrders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#78716c' }}>
-                <RefreshCw size={24} className={styles.spinner} style={{ margin: '0 auto 0.5rem auto' }} />
-                <p>در حال دریافت سفارشات از سرور...</p>
-              </div>
-            ) : filteredOrders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#78716c', background: '#fafaf9', borderRadius: '12px' }}>
-                <ShoppingBag size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.5 }} />
-                <p>{orderSearchQuery ? 'سفارشی با مشخصات جستجو شده یافت نشد.' : 'هنوز سفارشی در سیستم ثبت نشده است.'}</p>
-              </div>
-            ) : (
-              filteredOrders.map((order) => {
-                const status = getOrderStatusInfo(order.status || order.state);
-                const orderId = order._id || order.id;
-                const finalSum = Number(order.finalAmount || order.totalPrice || 0);
-
-                return (
-                  <div key={orderId} className={styles.statBox} style={{ border: '1px solid #e7e5e4', background: '#fff' }}>
-                    <div className={styles.pageHeader} style={{ marginBottom: '0.75rem', alignItems: 'flex-start' }}>
-                      <div>
-                        <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                          <strong className={styles.pageTitle} style={{ fontSize: '1.05rem', margin: 0 }}>
-                            کد رهگیری: {order.postTrackingCode || order.trackingCode || orderId}
-                          </strong>
-                          <span
-                            className={styles.badge}
-                            style={{
-                              backgroundColor: status.bg,
-                              color: status.color,
-                              borderColor: status.border
-                            }}
-                          >
-                            {status.label}
-                          </span>
-                        </div>
-                        <p className={styles.pageSubtitle} style={{ margin: '0.25rem 0' }}>
-                          خریدار: <strong>{order.customerName || order.name || 'کاربر گرامی'}</strong> | تلفن: <span dir="ltr">{order.customerPhone || order.phone || 'ثبت نشده'}</span>
-                        </p>
-                        <small className={styles.label}>
-                          نشانی گیرنده: {order.customerAddress || order.address || 'نشانی ثبت نشده'}
-                        </small>
-                      </div>
-
-                      <div style={{ textAlign: 'left' }}>
-                        <span className={styles.currentPrice} style={{ fontSize: '1.1rem', display: 'block' }}>
-                          {finalSum.toLocaleString('fa-IR')} تومان
-                        </span>
-                        <small className={styles.label} style={{ fontSize: '0.75rem' }}>
-                          {order.createdAt ? new Date(order.createdAt).toLocaleDateString('fa-IR') : 'امروز'}
-                        </small>
-                      </div>
-                    </div>
-
-                    {/* اقلام سفارش */}
-                    <div
-                      style={{
-                        background: '#f8fafc',
-                        padding: '0.6rem 0.8rem',
-                        borderRadius: '8px',
-                        marginBottom: '0.75rem',
-                        fontSize: '0.85rem'
-                      }}
-                    >
-                      <strong style={{ display: 'block', marginBottom: '0.25rem', color: '#334155' }}>اقلام سفارش:</strong>
-                      <div className={styles.flexCol} style={{ gap: '0.25rem' }}>
-                        {(order.items || order.products || []).map((item, idx) => (
-                          <div key={idx} className={styles.flexRow} style={{ justifyContent: 'space-between', color: '#475569' }}>
-                            <span>• {item.name || item.title || 'برنج اصیل'}</span>
-                            <span>{item.quantity || item.qty || 1} عدد ({Number(item.price || 0).toLocaleString('fa-IR')} تومان)</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* فیش بانکی */}
-                    {(order.paymentReceipt || order.receiptImage) && (
-                      <div
-                        style={{
-                          background: '#fefce8',
-                          border: '1px solid #fef08a',
-                          borderRadius: '8px',
-                          padding: '0.5rem 0.75rem',
-                          margin: '0.5rem 0',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          flexWrap: 'wrap',
-                          gap: '0.5rem'
-                        }}
-                      >
-                        <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.4rem' }}>
-                          <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#854d0e' }}>فیش واریز کارت به کارت:</span>
-                          <span className={styles.badge} style={{ backgroundColor: order.paymentStatus === 'approved' ? '#dcfce7' : '#fee2e2', color: order.paymentStatus === 'approved' ? '#166534' : '#991b1b' }}>
-                            {order.paymentStatus === 'approved' ? 'تایید شده' : order.paymentStatus === 'rejected' ? 'رد شده' : 'در انتظار بررسی'}
-                          </span>
-                        </div>
-                        <div className={styles.flexRow} style={{ gap: '0.4rem' }}>
-                          <button
-                            type="button"
-                            className={styles.backButton}
-                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                            onClick={() => setPreviewReceiptUrl(order.paymentReceipt || order.receiptImage)}
-                          >
-                            <Eye size={13} />
-                            مشاهده فیش
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.btnPrimary}
-                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', background: '#16a34a' }}
-                            onClick={() => handleVerifyReceipt(orderId, true)}
-                          >
-                            <CheckCircle2 size={13} />
-                            تایید فیش
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.btnDanger}
-                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem' }}
-                            onClick={() => handleVerifyReceipt(orderId, false)}
-                          >
-                            <XCircle size={13} />
-                            رد فیش
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* ویرایش کد مرسوله پستی */}
-                    {editingTrackingOrderId === orderId ? (
-                      <div className={styles.cardHighlight} style={{ margin: '0.5rem 0', background: '#eff6ff', borderColor: '#bfdbfe' }}>
-                        <label className={styles.label} style={{ color: '#1e40af', fontWeight: 'bold' }}>
-                          ثبت شماره مرسوله پستی ۲۴ رقمی اداره پست:
-                        </label>
-                        <input
-                          type="text"
-                          className={styles.input}
-                          dir="ltr"
-                          placeholder="مثال: 241098234509123891238912"
-                          value={trackingCodeInput}
-                          onChange={(e) => setTrackingCodeInput(e.target.value)}
-                        />
-                        <input
-                          type="text"
-                          className={styles.input}
-                          placeholder="یادداشت مدیر (اختیاری)"
-                          value={adminNoteInput}
-                          onChange={(e) => setAdminNoteInput(e.target.value)}
-                          style={{ marginTop: '0.4rem' }}
-                        />
-                        <div className={styles.flexRow} style={{ marginTop: '0.5rem' }}>
-                          <button
-                            type="button"
-                            className={styles.btnPrimary}
-                            onClick={() => handleUpdateShipping(orderId)}
-                            disabled={isUpdatingShipping}
-                          >
-                            {isUpdatingShipping ? 'در حال ذخیره...' : 'ذخیره کد رهگیری و ثبت وضعیت ارسال'}
-                          </button>
-                          <button
-                            type="button"
-                            className={styles.backButton}
-                            onClick={() => setEditingTrackingOrderId(null)}
-                          >
-                            انصراف
-                          </button>
-                        </div>
-                      </div>
-                    ) : null}
-
-                    {/* نوار تغییر وضعیت و عملیات مدیر */}
-                    <div className={styles.pageHeader} style={{ marginTop: '0.75rem', paddingTop: '0.5rem', borderTop: '1px solid #f5f5f4' }}>
-                      <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.5rem' }}>
-                        <button
-                          type="button"
-                          className={styles.backButton}
-                          title="ثبت یا ویرایش کد مرسوله پستی"
-                          onClick={() => {
-                            setEditingTrackingOrderId(orderId);
-                            setTrackingCodeInput(order.postTrackingCode || order.trackingCode || '');
-                          }}
-                        >
-                          <Truck size={14} />
-                          {order.postTrackingCode ? 'ویرایش کد پستی' : 'ثبت کد رهگیری پستی'}
-                        </button>
-                      </div>
-
-                      <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.5rem' }}>
-                        <span className={styles.label} style={{ fontSize: '0.8rem' }}>تغییر وضعیت:</span>
-                        <select
-                          className={styles.select}
-                          style={{ width: 'auto', padding: '0.35rem 0.6rem', fontSize: '0.85rem' }}
-                          value={order.status || order.state || 'در حال پردازش'}
-                          onChange={(e) => handleUpdateOrderStatusDirect(orderId, e.target.value)}
-                        >
-                          <option value="در حال پردازش">در حال پردازش</option>
-                          <option value="ارسال شده">ارسال شده (تحویل پست)</option>
-                          <option value="تحویل شده">تحویل شده</option>
-                          <option value="لغو شده">لغو شده</option>
-                        </select>
-
-                        <button
-                          type="button"
-                          className={styles.btnDanger}
-                          title="حذف سفارش از سرور"
-                          onClick={() => handleDeleteOrder(orderId)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* تب ۲: مدیریت محصولات (CRUD کامل) */}
-      {activeTab === 'products' && (
-        <section className={styles.card}>
-          <div className={styles.pageHeader}>
-            <div>
-              <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت ارقام برنج در وب‌سرویس</h2>
-              <p className={styles.pageSubtitle}>افزودن محصولات جدید، ویرایش قیمت‌ها، تغییر مشخصات و حذف در سرور</p>
-            </div>
-            <div className={styles.flexRow}>
-              <button
-                type="button"
-                className={styles.backButton}
-                onClick={fetchAdminProducts}
-              >
-                <RefreshCw size={14} />
-                تازه‌سازی
-              </button>
-              <button
-                type="button"
-                className={styles.btnPrimary}
-                onClick={() => setShowAddProdForm(!showAddProdForm)}
-              >
-                <Plus size={16} />
-                {showAddProdForm ? 'بستن فرم' : 'افزودن برنج جدید'}
-              </button>
-            </div>
-          </div>
-
-          {/* نوار جستجوی محصولات */}
-          <div style={{ marginBottom: '1.25rem' }}>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="جستجوی محصول با نام یا دسته‌بندی..."
-              value={productSearchQuery}
-              onChange={(e) => setProductSearchQuery(e.target.value)}
-            />
-          </div>
-
-          {/* فرم افزودن برنج جدید */}
-          {showAddProdForm && (
-            <form onSubmit={handleAddProduct} className={styles.cardHighlight} style={{ marginBottom: '1.5rem' }}>
-              <h3 className={styles.pageTitle} style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                ثبت رقم برنج جدید در وب‌سرویس
-              </h3>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نام و عنوان محصول:</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  placeholder="مثال: برنج طارم هاشمی ممتاز کشت اول"
-                  value={newProdName}
-                  onChange={(e) => setNewProdName(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>قیمت نهایی فروش (تومان):</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    placeholder="مثال: 450000"
-                    value={newProdPrice}
-                    onChange={(e) => setNewProdPrice(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>قیمت قبل از تخفیف (اختیاری):</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    placeholder="مثال: 490000"
-                    value={newProdOriginalPrice}
-                    onChange={(e) => setNewProdOriginalPrice(e.target.value)}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>درصد تخفیف (%):</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    placeholder="مثال: 10"
-                    value={newProdDiscount}
-                    onChange={(e) => setNewProdDiscount(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>دسته‌بندی رقم برنج:</label>
-                  <select
-                    className={styles.select}
-                    value={newProdCategory}
-                    onChange={(e) => setNewProdCategory(e.target.value)}
-                  >
-                    <option value="kamfirouz">برنج کامفیروز</option>
-                    <option value="hashemi">برنج هاشمی</option>
-                    <option value="tarom">برنج طارم</option>
-                    <option value="doudi">برنج دودی</option>
-                    <option value="brown">برنج قهوه‌ای</option>
-                  </select>
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>وزن بسته‌بندی:</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder="مثال: ۱۰ کیلوگرم"
-                    value={newProdWeight}
-                    onChange={(e) => setNewProdWeight(e.target.value)}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>موجودی انبار (تعداد کیسه):</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={newProdStock}
-                    onChange={(e) => setNewProdStock(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>تصویر گونی برنج (آپلود فایل یا آدرس تصویر):</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => setNewProdImageBase64(ev.target?.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className={styles.input}
-                />
-                {newProdImageBase64 && (
-                  <img
-                    src={newProdImageBase64}
-                    alt="پیش‌نمایش"
-                    style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.5rem', border: '1px solid #e7e5e4' }}
-                  />
-                )}
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>توضیحات و مشخصات پخت و عطر:</label>
-                <textarea
-                  className={styles.textarea}
-                  value={newProdDesc}
-                  onChange={(e) => setNewProdDesc(e.target.value)}
-                  placeholder="ویژگی‌ها، عطر، کیفیت پخت، ری‌دهی و محل کشت..."
-                  rows={3}
-                />
-              </div>
-
-              <button type="submit" className={styles.btnPrimary} disabled={isSubmittingProd}>
-                {isSubmittingProd ? 'در حال ثبت در وب‌سرویس...' : 'ثبت و انتشار محصول در وب‌سرویس'}
-              </button>
-            </form>
-          )}
-
-          {/* فهرست محصولات با دکمه ویرایش و حذف */}
-          <div className={styles.flexCol}>
-            {filteredProducts.length === 0 ? (
-              <p className={styles.label}>محصولی یافت نشد.</p>
-            ) : (
-              filteredProducts.map((product) => {
-                const prodId = product._id || product.id;
-                return (
-                  <div key={prodId} className={styles.statBox} style={{ border: '1px solid #e7e5e4', background: '#fff' }}>
-                    <div className={styles.pageHeader}>
-                      <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.75rem' }}>
-                        <img
-                          src={product.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'}
-                          alt={product.name}
-                          className={styles.productThumb}
-                          style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'cover' }}
-                        />
-                        <div>
-                          <strong className={styles.pageTitle} style={{ fontSize: '1rem', margin: 0 }}>{product.name}</strong>
-                          <p className={styles.pageSubtitle} style={{ margin: '0.2rem 0' }}>
-                            {Number(product.price || 0).toLocaleString('fa-IR')} تومان
-                            {product.discountPercent > 0 && (
-                              <span style={{ color: '#dc2626', marginRight: '4px' }}>
-                                ({product.discountPercent}% تخفیف)
-                              </span>
-                            )}
-                          </p>
-                          <small className={styles.label}>
-                            موجودی انبار: <strong>{product.stock ?? product.countInStock ?? 20} کیسه</strong> | وزن: {product.weight || '۱۰ کیلوگرم'}
-                          </small>
-                        </div>
-                      </div>
-                      <div className={styles.flexRow} style={{ gap: '0.4rem' }}>
-                        <button
-                          type="button"
-                          className={styles.backButton}
-                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                          title="ویرایش مشخصات محصول در وب‌سرویس"
-                          onClick={() => openEditProductModal(product)}
-                        >
-                          <Edit size={14} />
-                          ویرایش
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.btnDanger}
-                          title="حذف محصول از وب‌سرویس"
-                          onClick={() => deleteProduct(prodId)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* تب ۳: مدیریت اسلایدرها و بنرهای تبلیغاتی (CRUD کامل) */}
-      {activeTab === 'slides' && (
-        <section className={styles.card}>
-          <div className={styles.pageHeader}>
-            <div>
-              <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت اسلایدرها و بنرهای صفحه نخست</h2>
-              <p className={styles.pageSubtitle}>افزودن، ویرایش، حذف و دریافت مستقیم بنرها و اسلایدها از وب‌سرویس</p>
-            </div>
-            <div className={styles.flexRow}>
-              <button
-                type="button"
-                className={styles.backButton}
-                onClick={fetchAdminSlides}
-                disabled={isLoadingSlides}
-              >
-                <RefreshCw size={14} className={isLoadingSlides ? styles.spinner : ''} />
-                تازه‌سازی
-              </button>
-              <button
-                type="button"
-                className={styles.btnPrimary}
-                onClick={() => setShowAddSlideForm(!showAddSlideForm)}
-              >
-                <Plus size={16} />
-                {showAddSlideForm ? 'بستن فرم' : 'افزودن اسلاید جدید'}
-              </button>
-            </div>
-          </div>
-
-          {/* فرم افزودن اسلاید جدید */}
-          {showAddSlideForm && (
-            <form onSubmit={handleAddSlide} className={styles.cardHighlight} style={{ marginBottom: '1.5rem' }}>
-              <h3 className={styles.pageTitle} style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                افزودن اسلایدر جدید به صفحه نخست
-              </h3>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>عنوان اصلی اسلاید:</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  placeholder="مثال: جشنواره فروش ویژه برنج کامفیروز درجه یک"
-                  value={newSlideTitle}
-                  onChange={(e) => setNewSlideTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>عنوان فرعی / تگ بالای تیتر:</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder="مثال: فروش ویژه پاییزه با ارسال رایگان"
-                    value={newSlideSubtitle}
-                    onChange={(e) => setNewSlideSubtitle(e.target.value)}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>متن دکمه خرید / فراخوان:</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder="مثال: مشاهده و خرید آنلاین"
-                    value={newSlideCta}
-                    onChange={(e) => setNewSlideCta(e.target.value)}
-                  />
-                </div>
-
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>فیلتر دسته‌بندی مرتبط:</label>
-                  <select
-                    className={styles.select}
-                    value={newSlideCategory}
-                    onChange={(e) => setNewSlideCategory(e.target.value)}
-                  >
-                    <option value="all">همه محصولات</option>
-                    <option value="kamfirouz">برنج کامفیروز</option>
-                    <option value="hashemi">برنج هاشمی</option>
-                    <option value="tarom">برنج طارم</option>
-                    <option value="doudi">برنج دودی</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>تصویر اسلایدر (آپلود فایل بنر یا تصویر):</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => setNewSlideImageBase64(ev.target?.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className={styles.input}
-                />
-                {newSlideImageBase64 && (
-                  <img
-                    src={newSlideImageBase64}
-                    alt="پیش‌نمایش اسلاید"
-                    style={{ width: '140px', height: '70px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.5rem', border: '1px solid #e7e5e4' }}
-                  />
-                )}
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>توضیحات تکمیلی اسلایدر:</label>
-                <textarea
-                  className={styles.textarea}
-                  value={newSlideDesc}
-                  onChange={(e) => setNewSlideDesc(e.target.value)}
-                  placeholder="توضیح کوتاه در خصوص کیفیت، ارسال یا تخفیف ویژه..."
-                  rows={2}
-                />
-              </div>
-
-              <button type="submit" className={styles.btnPrimary} disabled={isSubmittingSlide}>
-                {isSubmittingSlide ? 'در حال ثبت در سرور...' : 'ثبت و انتشار اسلایدر در وب‌سرویس'}
-              </button>
-            </form>
-          )}
-
-          {/* لیست اسلایدها با دکمه ویرایش و حذف */}
-          <div className={styles.flexCol}>
-            {!sliders || sliders.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#78716c', background: '#fafaf9', borderRadius: '12px' }}>
-                <Layers size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.5 }} />
-                <p>هیچ اسلایدری یافت نشد. می‌توانید با دکمه بالا اسلایدر جدید اضافه نمایید.</p>
-              </div>
-            ) : (
-              sliders.map((slide, idx) => {
-                const slideId = slide._id || slide.id || `slide-${idx}`;
-                return (
-                  <div key={slideId} className={styles.statBox} style={{ border: '1px solid #e7e5e4', background: '#fff' }}>
-                    <div className={styles.pageHeader} style={{ alignItems: 'flex-start' }}>
-                      <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.75rem' }}>
-                        <img
-                          src={slide.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'}
-                          alt={slide.title}
-                          style={{ width: '90px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e7e5e4' }}
-                        />
-                        <div>
-                          <span className={styles.badge} style={{ backgroundColor: '#e0f2fe', color: '#0369a1', borderColor: '#bae6fd', marginBottom: '0.2rem', display: 'inline-block' }}>
-                            {slide.subtitle || 'اسلاید ویژه'}
-                          </span>
-                          <strong className={styles.pageTitle} style={{ fontSize: '1rem', display: 'block', margin: '0.1rem 0' }}>
-                            {slide.title}
-                          </strong>
-                          <p className={styles.pageSubtitle} style={{ margin: '0.2rem 0', fontSize: '0.82rem' }}>
-                            {slide.description}
-                          </p>
-                          <small className={styles.label}>
-                            متن دکمه: «{slide.ctaText || 'مشاهده'}» | دسته‌بندی: {slide.category || 'همه'}
-                          </small>
-                        </div>
-                      </div>
-                      <div className={styles.flexRow} style={{ gap: '0.4rem' }}>
-                        <button
-                          type="button"
-                          className={styles.backButton}
-                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                          title="ویرایش اسلایدر"
-                          onClick={() => openEditSlideModal(slide)}
-                        >
-                          <Edit size={14} />
-                          ویرایش
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.btnDanger}
-                          title="حذف اسلایدر از سرور"
-                          onClick={() => deleteSlide(slideId)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* تب ۴: کاربران سامانه (CRUD کامل: ایجاد، خواندن، ویرایش، حذف) */}
-      {activeTab === 'users' && (
-        <section className={styles.card}>
-          <div className={styles.pageHeader}>
-            <div>
-              <h2 className={styles.pageTitle} style={{ margin: 0 }}>کاربران ثبت‌نام شده در وب‌سرویس</h2>
-              <p className={styles.pageSubtitle}>مشاهده شماره تماس کاربران، ایجاد کاربر جدید، ویرایش نقش و حذف در وب‌سرویس</p>
-            </div>
-            <div className={styles.flexRow}>
-              <button
-                type="button"
-                className={styles.backButton}
-                onClick={fetchAdminUsers}
-                disabled={isLoadingUsers}
-              >
-                <RefreshCw size={14} className={isLoadingUsers ? styles.spinner : ''} />
-                تازه‌سازی
-              </button>
-              <button
-                type="button"
-                className={styles.btnPrimary}
-                onClick={() => setShowAddUserModal(true)}
-              >
-                <UserPlus size={16} />
-                افزودن کاربر جدید
-              </button>
-            </div>
-          </div>
-
-          <div style={{ marginBottom: '1rem' }}>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="جستجوی کاربر با نام، شماره تماس یا ایمیل..."
-              value={userSearchQuery}
-              onChange={(e) => setUserSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.flexCol}>
-            {isLoadingUsers && adminUsers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#78716c' }}>
-                <RefreshCw size={24} className={styles.spinner} style={{ margin: '0 auto 0.5rem auto' }} />
-                <p>در حال دریافت کاربران از سرور...</p>
-              </div>
-            ) : filteredUsers.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#78716c', background: '#fafaf9', borderRadius: '12px' }}>
-                <Users size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.5 }} />
-                <p>{userSearchQuery ? 'کاربری با این مشخصات یافت نشد.' : 'هنوز کاربری در سامانه ثبت‌نام نکرده است.'}</p>
-              </div>
-            ) : (
-              filteredUsers.map((user) => {
-                const userId = user._id || user.id;
-                const isUserAdmin = user.role === 'admin' || user.isAdmin === true;
-
-                return (
-                  <div key={userId} className={styles.statBox} style={{ border: '1px solid #e7e5e4', background: '#fff' }}>
-                    <div className={styles.pageHeader}>
-                      <div>
-                        <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                          <strong className={styles.pageTitle} style={{ fontSize: '1rem', margin: 0 }}>
-                            {user.name || 'کاربر گرامی'}
-                          </strong>
-                          <span
-                            className={styles.badge}
-                            style={{
-                              backgroundColor: isUserAdmin ? '#fef3c7' : '#f1f5f9',
-                              color: isUserAdmin ? '#92400e' : '#475569',
-                              borderColor: isUserAdmin ? '#fde68a' : '#cbd5e1'
-                            }}
-                          >
-                            {isUserAdmin ? 'مدیر ارشد' : 'مشتری عادی'}
-                          </span>
-                        </div>
-                        <p className={styles.pageSubtitle} style={{ margin: '0.2rem 0' }}>
-                          تلفن: <span dir="ltr">{user.phone || user.mobile || 'ثبت نشده'}</span> | ایمیل: {user.email || 'ثبت نشده'}
-                        </p>
-                        <small className={styles.label}>
-                          نشانی ثبت شده: {user.address || user.fullAddress || 'ثبت نشده'}
-                        </small>
-                      </div>
-
-                      <div className={styles.flexRow} style={{ gap: '0.4rem' }}>
-                        <button
-                          type="button"
-                          className={styles.backButton}
-                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                          title="ویرایش اطلاعات کاربر"
-                          onClick={() => openEditUserModal(user)}
-                        >
-                          <Edit size={14} />
-                          ویرایش
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.btnDanger}
-                          title="حذف کاربر از سرور"
-                          onClick={() => handleDeleteUser(userId)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* مودال ایجاد کاربر جدید */}
-      {showAddUserModal && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddUserModal(false)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
-              <h3 className={styles.pageTitle} style={{ margin: 0 }}>افزودن کاربر جدید به وب‌سرویس</h3>
-              <button type="button" className={styles.backButton} onClick={() => setShowAddUserModal(false)}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleCreateUser}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نام و نام خانوادگی:</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
-                  placeholder="مثال: علیرضا محمدی"
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>شماره همراه (موبایل):</label>
-                <input
-                  type="tel"
-                  dir="ltr"
-                  className={styles.input}
-                  value={newUserPhone}
-                  onChange={(e) => setNewUserPhone(e.target.value)}
-                  placeholder="09123456789"
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>رمز عبور:</label>
-                <input
-                  type="password"
-                  dir="ltr"
-                  className={styles.input}
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                  placeholder="حداقل ۶ کاراکتر"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نقش و سطح دسترسی:</label>
-                <select
-                  className={styles.select}
-                  value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value)}
-                >
-                  <option value="user">مشتری عادی</option>
-                  <option value="admin">مدیر سیستم (Admin)</option>
-                </select>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>ایمیل (اختیاری):</label>
-                <input
-                  type="email"
-                  dir="ltr"
-                  className={styles.input}
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  placeholder="name@example.com"
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نشانی پستی (اختیاری):</label>
-                <textarea
-                  className={styles.textarea}
-                  value={newUserAddress}
-                  onChange={(e) => setNewUserAddress(e.target.value)}
-                  placeholder="استان، شهر، خیابان..."
-                  rows={2}
-                />
-              </div>
-              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
-                <button type="submit" className={styles.btnPrimary} disabled={isSubmittingUser}>
-                  {isSubmittingUser ? 'در حال ثبت در سرور...' : 'ثبت کاربر در سرور'}
-                </button>
-                <button type="button" className={styles.backButton} onClick={() => setShowAddUserModal(false)}>
-                  انصراف
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* مودال ویرایش کاربر */}
-      {editingUser && (
-        <div className={styles.modalOverlay} onClick={() => setEditingUser(null)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
-            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
-              <h3 className={styles.pageTitle} style={{ margin: 0 }}>ویرایش اطلاعات کاربر</h3>
-              <button type="button" className={styles.backButton} onClick={() => setEditingUser(null)}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateUserSubmit}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نام و نام خانوادگی:</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={editUserName}
-                  onChange={(e) => setEditUserName(e.target.value)}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>شماره همراه:</label>
-                <input
-                  type="tel"
-                  dir="ltr"
-                  className={styles.input}
-                  value={editUserPhone}
-                  onChange={(e) => setEditUserPhone(e.target.value)}
-                  required
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نقش و سطح دسترسی:</label>
-                <select
-                  className={styles.select}
-                  value={editUserRole}
-                  onChange={(e) => setEditUserRole(e.target.value)}
-                >
-                  <option value="user">مشتری عادی</option>
-                  <option value="admin">مدیر سیستم (Admin)</option>
-                </select>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>ایمیل:</label>
-                <input
-                  type="email"
-                  dir="ltr"
-                  className={styles.input}
-                  value={editUserEmail}
-                  onChange={(e) => setEditUserEmail(e.target.value)}
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نشانی پستی:</label>
-                <textarea
-                  className={styles.textarea}
-                  value={editUserAddress}
-                  onChange={(e) => setEditUserAddress(e.target.value)}
-                  rows={2}
-                />
-              </div>
-              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
-                <button type="submit" className={styles.btnPrimary} disabled={isUpdatingUser}>
-                  {isUpdatingUser ? 'در حال ذخیره...' : 'ذخیره تغییرات در سرور'}
-                </button>
-                <button type="button" className={styles.backButton} onClick={() => setEditingUser(null)}>
-                  انصراف
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* مودال ویرایش محصول */}
-      {editingProduct && (
-        <div className={styles.modalOverlay} onClick={() => setEditingProduct(null)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px' }}>
-            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
-              <h3 className={styles.pageTitle} style={{ margin: 0 }}>ویرایش مشخصات محصول در وب‌سرویس</h3>
-              <button type="button" className={styles.backButton} onClick={() => setEditingProduct(null)}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateProductSubmit}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>نام و عنوان محصول:</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={editProdName}
-                  onChange={(e) => setEditProdName(e.target.value)}
-                  required
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>قیمت نهایی فروش (تومان):</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={editProdPrice}
-                    onChange={(e) => setEditProdPrice(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>قیمت قبل تخفیف:</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={editProdOriginalPrice}
-                    onChange={(e) => setEditProdOriginalPrice(e.target.value)}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>درصد تخفیف (%):</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={editProdDiscount}
-                    onChange={(e) => setEditProdDiscount(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>دسته‌بندی:</label>
-                  <select
-                    className={styles.select}
-                    value={editProdCategory}
-                    onChange={(e) => setEditProdCategory(e.target.value)}
-                  >
-                    <option value="kamfirouz">برنج کامفیروز</option>
-                    <option value="hashemi">برنج هاشمی</option>
-                    <option value="tarom">برنج طارم</option>
-                    <option value="doudi">برنج دودی</option>
-                    <option value="brown">برنج قهوه‌ای</option>
-                  </select>
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>وزن بسته‌بندی:</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={editProdWeight}
-                    onChange={(e) => setEditProdWeight(e.target.value)}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>موجودی انبار:</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    value={editProdStock}
-                    onChange={(e) => setEditProdStock(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>تصویر گونی برنج (آپلود فایل جدید یا حفظ تصویر قبلی):</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => setEditProdImageBase64(ev.target?.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className={styles.input}
-                />
-                {editProdImageBase64 && (
-                  <img
-                    src={editProdImageBase64}
-                    alt="پیش‌نمایش"
-                    style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.4rem', border: '1px solid #e7e5e4' }}
-                  />
-                )}
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>توضیحات و مشخصات:</label>
-                <textarea
-                  className={styles.textarea}
-                  value={editProdDesc}
-                  onChange={(e) => setEditProdDesc(e.target.value)}
-                  rows={2}
-                />
-              </div>
-              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
-                <button type="submit" className={styles.btnPrimary} disabled={isUpdatingProd}>
-                  {isUpdatingProd ? 'در حال بروزرسانی...' : 'ذخیره تغییرات در وب‌سرویس'}
-                </button>
-                <button type="button" className={styles.backButton} onClick={() => setEditingProduct(null)}>
-                  انصراف
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* مودال ویرایش اسلاید */}
-      {editingSlide && (
-        <div className={styles.modalOverlay} onClick={() => setEditingSlide(null)}>
-          <div className={styles.modalCard} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '550px' }}>
-            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
-              <h3 className={styles.pageTitle} style={{ margin: 0 }}>ویرایش اسلایدر صفحه نخست</h3>
-              <button type="button" className={styles.backButton} onClick={() => setEditingSlide(null)}>
-                <X size={16} />
-              </button>
-            </div>
-            <form onSubmit={handleUpdateSlideSubmit}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>عنوان اصلی اسلاید:</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={editSlideTitle}
-                  onChange={(e) => setEditSlideTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem' }}>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>عنوان فرعی / تگ:</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={editSlideSubtitle}
-                    onChange={(e) => setEditSlideSubtitle(e.target.value)}
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>متن دکمه:</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    value={editSlideCta}
-                    onChange={(e) => setEditSlideCta(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>دسته‌بندی:</label>
-                <select
-                  className={styles.select}
-                  value={editSlideCategory}
-                  onChange={(e) => setEditSlideCategory(e.target.value)}
-                >
-                  <option value="all">همه محصولات</option>
-                  <option value="kamfirouz">برنج کامفیروز</option>
-                  <option value="hashemi">برنج هاشمی</option>
-                  <option value="tarom">برنج طارم</option>
-                  <option value="doudi">برنج دودی</option>
-                </select>
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>تصویر اسلایدر:</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      const reader = new FileReader();
-                      reader.onload = (ev) => setEditSlideImageBase64(ev.target?.result);
-                      reader.readAsDataURL(file);
-                    }
-                  }}
-                  className={styles.input}
-                />
-                {editSlideImageBase64 && (
-                  <img
-                    src={editSlideImageBase64}
-                    alt="پیش‌نمایش اسلاید"
-                    style={{ width: '120px', height: '60px', objectFit: 'cover', borderRadius: '8px', marginTop: '0.4rem', border: '1px solid #e7e5e4' }}
-                  />
-                )}
-              </div>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>توضیحات اسلایدر:</label>
-                <textarea
-                  className={styles.textarea}
-                  value={editSlideDesc}
-                  onChange={(e) => setEditSlideDesc(e.target.value)}
-                  rows={2}
-                />
-              </div>
-              <div className={styles.flexRow} style={{ marginTop: '1.25rem' }}>
-                <button type="submit" className={styles.btnPrimary} disabled={isUpdatingSlide}>
-                  {isUpdatingSlide ? 'در حال ذخیره...' : 'ذخیره تغییرات در وب‌سرویس'}
-                </button>
-                <button type="button" className={styles.backButton} onClick={() => setEditingSlide(null)}>
-                  انصراف
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* مودال مشاهده تصویر فیش */}
-      {previewReceiptUrl && (
-        <div className={styles.modalOverlay} onClick={() => setPreviewReceiptUrl(null)}>
-          <div
-            className={styles.modalCard}
-            style={{ maxWidth: '90%', maxHeight: '90%', overflow: 'auto', textAlign: 'center' }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className={styles.pageHeader} style={{ marginBottom: '1rem' }}>
-              <h3 className={styles.pageTitle} style={{ margin: 0 }}>تصویر فیش بانکی ارسالی خریدار</h3>
-              <button type="button" className={styles.backButton} onClick={() => setPreviewReceiptUrl(null)}>
-                <X size={16} />
-              </button>
-            </div>
-            <img
-              src={previewReceiptUrl}
-              alt="فیش پرداخت"
-              style={{ maxWidth: '100%', maxHeight: '65vh', borderRadius: '8px', border: '1px solid #e7e5e4' }}
-            />
-            <div style={{ marginTop: '1.25rem' }}>
-              <button
-                type="button"
-                className={styles.btnPrimary}
-                onClick={() => setPreviewReceiptUrl(null)}
-              >
-                بستن پنجره
-              </button>
-            </div>
           </div>
         </div>
       )}

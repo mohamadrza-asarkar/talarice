@@ -1,8 +1,4 @@
-// -------------------------------------------------------------
-// Orders API (/api/orders)
-// Native fetch implementation with resilient multi-route fallback
-// -------------------------------------------------------------
-import { client } from './client';
+import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 
 export function normalizeOrder(raw) {
@@ -67,7 +63,7 @@ export function normalizeOrder(raw) {
 
 export const ordersApi = {
   /**
-   * Create a new order
+   * Create a new order using axios.post
    */
   async create(orderData) {
     const payload = {
@@ -78,7 +74,9 @@ export const ordersApi = {
       products: orderData.products || orderData.items || [],
       paymentReceipt: orderData.paymentReceipt || orderData.receiptImage || ''
     };
-    const res = await client.post('/orders', payload);
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const res = await axiosInstance.post('/orders', payload, { headers });
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
@@ -88,7 +86,7 @@ export const ordersApi = {
   },
   
   /**
-   * Upload or set payment receipt
+   * Upload or set payment receipt using axios.put/patch
    */
   async uploadReceipt(id, receiptBase64) {
     let res = null;
@@ -98,97 +96,73 @@ export const ordersApi = {
       paymentReceipt: receiptBase64
     };
     
-    try {
-      res = await client.put(`/orders/${id}/receipt`, payload);
-    } catch (err) {
-      lastErr = err;
-      try {
-        res = await client.post(`/orders/${id}/receipt`, payload);
-      } catch (err2) {
-        lastErr = err2;
-      }
-    }
-    
-    if (!res && lastErr) throw lastErr;
-    
-    const raw = res?.data || res?.order || res;
-    return normalizeOrder(raw);
-  },
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-  /**
-   * Get logged-in user's orders with intelligent multi-endpoint fallback
-   * Prevents 500 crashes caused by Express route collisions (e.g. CastError on /:id)
-   */
-  async getMyOrders(userFilter = null) {
-    const candidateEndpoints = [
-      '/orders/my-orders',
-      '/orders/my',
-      '/orders/mine',
-      '/orders/user',
-      '/orders/me',
-      '/orders'
+    const endpoints = [
+      `/orders/${id}/receipt`,
+      `/orders/${id}/payment-receipt`,
+      `/orders/${id}`
     ];
 
-    let lastError = null;
-    let rawList = null;
-
-    for (const endpoint of candidateEndpoints) {
+    for (const ep of endpoints) {
       try {
-        const res = await client.get(endpoint);
-        if (Array.isArray(res)) {
-          rawList = res;
-          break;
-        } else if (Array.isArray(res?.data)) {
-          rawList = res.data;
-          break;
-        } else if (Array.isArray(res?.orders)) {
-          rawList = res.orders;
-          break;
-        } else if (res && typeof res === 'object' && (res._id || res.id)) {
-          rawList = [res];
-          break;
-        }
+        res = await axiosInstance.put(ep, payload, { headers });
+        break;
       } catch (err) {
-        lastError = err;
-        // Continue trying next candidate endpoint
-      }
-    }
-
-    if (!rawList) {
-      if (lastError && !lastError.isNetworkError && lastError.status !== 404 && lastError.status !== 500) {
-        throw lastError;
-      }
-      return [];
-    }
-
-    let orders = rawList.map(normalizeOrder).filter(Boolean);
-
-    // If endpoint was general /orders, filter by logged-in user if not admin
-    if (userFilter && typeof userFilter === 'object' && !userFilter.isAdmin) {
-      const uId = String(userFilter._id || userFilter.id || '');
-      const uPhone = String(userFilter.phone || '').trim();
-      if (uId || uPhone) {
-        const filtered = orders.filter((o) => {
-          const ordUserId = String(o.user || o.userId || o.customer || '');
-          const ordPhone = String(o.customerPhone || o.phone || '').trim();
-          return (uId && ordUserId === uId) || (uPhone && ordPhone === uPhone);
-        });
-        if (filtered.length > 0 || orders.length > 0) {
-          orders = filtered;
+        lastErr = err;
+        try {
+          res = await axiosInstance.patch(ep, payload, { headers });
+          break;
+        } catch (patchErr) {
+          lastErr = patchErr;
         }
       }
     }
 
-    return orders;
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
   },
 
   /**
-   * Get single order by ID
+   * Get order by ID or tracking code using axios.get
    */
-  async getById(id) {
-    const res = await client.get(`/orders/${id}`);
-    const raw = res?.data || res?.order || res;
-    return normalizeOrder(raw);
+  async getById(idOrTracking) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const endpoints = [
+      `/orders/${idOrTracking}`,
+      `/orders/track/${idOrTracking}`,
+      `/orders?trackingCode=${idOrTracking}`
+    ];
+
+    let res = null;
+    let lastErr = null;
+    for (const ep of endpoints) {
+      try {
+        res = await axiosInstance.get(ep, { headers });
+        break;
+      } catch (err) {
+        lastErr = err;
+      }
+    }
+
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
+    const rawList = res?.data || res?.orders || res;
+    if (Array.isArray(rawList)) {
+      const found = rawList.find(o => String(o.id || o._id || o.trackingCode) === String(idOrTracking));
+      return normalizeOrder(found || rawList[0]);
+    }
+
+    return normalizeOrder(rawList);
   },
 
   getOrderById(id) {
@@ -196,105 +170,68 @@ export const ordersApi = {
   },
 
   /**
-   * Track order by tracking code or ID
+   * Get all orders (Admin or User) using axios.get with Token header
    */
-  async track(trackingCodeOrId) {
-    const clean = encodeURIComponent(String(trackingCodeOrId).trim());
-    try {
-      const res = await client.get(`/orders/track/${clean}`);
-      const raw = res?.data || res?.order || res;
-      return normalizeOrder(raw);
-    } catch {
-      // Fallback query
+  async getAll(params = {}) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const endpoints = ['/orders', '/admin/orders'];
+    let res = null;
+    let lastErr = null;
+
+    for (const ep of endpoints) {
       try {
-        const res = await client.get(`/orders?trackingCode=${clean}`);
-        const list = Array.isArray(res) ? res : (res?.data || []);
-        if (list.length > 0) return normalizeOrder(list[0]);
-      } catch {
-        // ignore
-      }
-      throw new Error('سفارشی با این کد رهگیری یافت نشد.');
-    }
-  },
-
-  trackOrder(query) {
-    return this.track(query);
-  },
-
-  /**
-   * Admin: Get all orders in store with fallback
-   */
-  async getAllOrders(params = {}) {
-    const candidateEndpoints = [
-      '/orders',
-      '/admin/orders',
-      '/orders/admin',
-      '/orders/all'
-    ];
-
-    let rawList = null;
-    let lastError = null;
-
-    for (const ep of candidateEndpoints) {
-      try {
-        const query = new URLSearchParams();
-        if (params.status) query.append('status', params.status);
-        if (params.page) query.append('page', params.page);
-        const qs = query.toString();
-        const fullEp = `${ep}${qs ? `?${qs}` : ''}`;
-
-        const res = await client.get(fullEp);
-        if (Array.isArray(res)) {
-          rawList = res;
-          break;
-        } else if (Array.isArray(res?.data)) {
-          rawList = res.data;
-          break;
-        } else if (Array.isArray(res?.orders)) {
-          rawList = res.orders;
-          break;
-        }
+        res = await axiosInstance.get(ep, { headers, params });
+        break;
       } catch (err) {
-        lastError = err;
+        lastErr = err;
       }
     }
 
-    if (!rawList) {
-      if (lastError && !lastError.isNetworkError && lastError.status !== 404) {
-        throw lastError;
-      }
-      return [];
+    if (!res && lastErr) {
+      throw lastErr;
+    }
+
+    let rawList = [];
+    if (res && res.data && Array.isArray(res.data)) {
+      rawList = res.data;
+    } else if (Array.isArray(res)) {
+      rawList = res;
+    } else if (res?.orders && Array.isArray(res.orders)) {
+      rawList = res.orders;
     }
 
     return rawList.map(normalizeOrder).filter(Boolean);
   },
 
-  getAll(params = {}) {
-    return this.getAllOrders(params);
-  },
-
-  getAdminOrders(params = {}) {
-    return this.getAllOrders(params);
+  getOrders(params = {}) {
+    return this.getAll(params);
   },
 
   /**
-   * Admin: Update order status & postal tracking code
+   * Admin: Update order status using axios.put/patch with Token header
    */
-  async updateStatus(id, { status, state, trackingCode, postTrackingCode, postalTrackingCode, adminNote }) {
-    const targetStatus = status || state || 'processing';
-    const targetTracking = trackingCode || postTrackingCode || postalTrackingCode || '';
-    
-    // Status translation for Persian and English backends
+  async updateStatus(id, status, trackingCode, adminNote) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
+    const targetStatus = typeof status === 'object' ? (status.status || status.state) : status;
+    const targetTracking = typeof status === 'object' ? (status.trackingCode || status.postalTrackingCode) : trackingCode;
+
     const statusMapEn = {
-      'در حال پردازش': 'processing',
+      'در حال بررسی': 'processing',
+      'تایید شده': 'confirmed',
       'ارسال شده': 'shipped',
-      'تحویل شده': 'delivered',
+      'تحویل داده شده': 'delivered',
       'لغو شده': 'cancelled'
     };
+
     const statusMapFa = {
-      'processing': 'در حال پردازش',
+      'processing': 'در حال بررسی',
+      'confirmed': 'تایید شده',
       'shipped': 'ارسال شده',
-      'delivered': 'تحویل شده',
+      'delivered': 'تحویل داده شده',
       'cancelled': 'لغو شده'
     };
     
@@ -324,12 +261,12 @@ export const ordersApi = {
     let lastErr = null;
     for (const ep of endpoints) {
       try {
-        res = await client.put(ep, payload);
+        res = await axiosInstance.put(ep, payload, { headers });
         break;
       } catch (err) {
         lastErr = err;
         try {
-          res = await client.patch(ep, payload);
+          res = await axiosInstance.patch(ep, payload, { headers });
           break;
         } catch (patchErr) {
           lastErr = patchErr;
@@ -346,9 +283,12 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Verify bank receipt payment
+   * Admin: Verify bank receipt payment using axios.put/patch with Token header
    */
   async verifyPayment(id, payload = {}) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = [
       `/orders/${id}/verify-payment`,
       `/orders/${id}/payment`,
@@ -360,12 +300,12 @@ export const ordersApi = {
     let lastErr = null;
     for (const ep of endpoints) {
       try {
-        res = await client.put(ep, payload);
+        res = await axiosInstance.put(ep, payload, { headers });
         break;
       } catch (err) {
         lastErr = err;
         try {
-          res = await client.patch(ep, payload);
+          res = await axiosInstance.patch(ep, payload, { headers });
           break;
         } catch (patchErr) {
           lastErr = patchErr;
@@ -382,9 +322,12 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Delete order
+   * Admin: Delete order using axios.delete with Token header
    */
   async delete(id) {
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const endpoints = [
       `/orders/${id}`,
       `/admin/orders/${id}`
@@ -392,7 +335,7 @@ export const ordersApi = {
     let lastErr = null;
     for (const ep of endpoints) {
       try {
-        return await client.delete(ep);
+        return await axiosInstance.delete(ep, { headers });
       } catch (err) {
         lastErr = err;
       }

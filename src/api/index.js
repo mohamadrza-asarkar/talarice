@@ -12,6 +12,7 @@ export { slidesApi, normalizeSlide } from './slides.api';
 export { cartApi } from './cart.api';
 export { reviewsApi, normalizeReview } from './reviews.api';
 export { docsApi } from './docs.api';
+export { storeApi } from './store.api';
 
 // Default aggregated export
 import { client } from './client';
@@ -24,6 +25,7 @@ import { slidesApi } from './slides.api';
 import { cartApi } from './cart.api';
 import { reviewsApi } from './reviews.api';
 import { docsApi } from './docs.api';
+import { storeApi } from './store.api';
 
 export default {
   client,
@@ -35,7 +37,8 @@ export default {
   slides: slidesApi,
   cart: cartApi,
   reviews: reviewsApi,
-  docs: docsApi
+  docs: docsApi,
+  store: storeApi
 };
 
 
