@@ -5,10 +5,14 @@ import { truncateAtWord, toFaDigits } from '../../utils/textUtils';
 import styles from './style.module.css';
 
 export function AmazingDeals() {
-  const { products, addToCart } = useApp();
-  const dealProducts = (products || []).filter(function (p) {
-    return p.isDeal || p.isSpecialDeal || p.isAmazing || (p.dealPrice && p.dealPrice < p.price);
-  });
+  const { products, amazingProducts, addToCart } = useApp();
+  
+  // Use real amazing products from API first, then fall back to products filtered with deal attributes
+  const dealProducts = (amazingProducts && amazingProducts.length > 0)
+    ? amazingProducts
+    : (products || []).filter(function (p) {
+        return p.isDeal || p.isSpecialDeal || p.isAmazing || (p.dealPrice && p.dealPrice < p.price);
+      });
   
   // Choose the single featured amazing product
   const product = dealProducts[0] || products?.[0];
@@ -28,10 +32,10 @@ export function AmazingDeals() {
   const m = toFaDigits(String(Math.floor((secondsLeft % 3600) / 60)).padStart(2, '0'));
   const s = toFaDigits(String(secondsLeft % 60).padStart(2, '0'));
 
-  // Deal price is 12% off normal catalog price: 430,000 -> 378,000
-  const regularCatalogPrice = product.price || 430000;
-  const dealPrice = product.dealPrice || Math.round(regularCatalogPrice * 0.88);
-  const discountPercent = product.dealDiscountPercent || 12;
+  // Compute robust prices matching normalized amazing product structure
+  const regularCatalogPrice = product.originalPrice || product.price || 430000;
+  const discountPercent = product.discountPercent || 12;
+  const dealPrice = product.dealPrice || (discountPercent > 0 ? Math.round(regularCatalogPrice * (1 - discountPercent / 100)) : product.price);
 
   const handleBuyDeal = (e) => {
     e.preventDefault();

@@ -15,7 +15,7 @@ import {
   Trash2,
   X
 } from 'lucide-react';
-import { adminApi, ordersApi, productsApi, slidesApi, reviewsApi } from '../api';
+import { adminApi, ordersApi, productsApi, slidesApi, reviewsApi, amazingProductsApi } from '../api';
 import { AdminOverview } from '../components/admin/adminOverview';
 import { AdminProducts } from '../components/admin/adminProducts';
 import { AdminOrders } from '../components/admin/adminOrders';
@@ -31,11 +31,13 @@ export default function Admin() {
     setProducts,
     sliders,
     setSliders,
+    amazingProducts,
+    setAmazingProducts,
     getOrderStatusInfo,
     showToast
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'products', 'slides', 'reviews', 'users'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview', 'products', 'slides', 'reviews', 'users', 'amazing'
   const [dashboardStats, setDashboardStats] = useState(null);
   const [adminOrders, setAdminOrders] = useState([]);
   const [adminUsers, setAdminUsers] = useState([]);
@@ -46,6 +48,7 @@ export default function Admin() {
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const [isLoadingSlides, setIsLoadingSlides] = useState(false);
   const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [isLoadingAmazing, setIsLoadingAmazing] = useState(false);
 
   // Search & Filter
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
@@ -199,6 +202,21 @@ export default function Admin() {
     }
   }, [setSliders]);
 
+  // Fetch amazing products
+  const fetchAdminAmazing = useCallback(async () => {
+    setIsLoadingAmazing(true);
+    try {
+      const list = await amazingProductsApi.getAll();
+      if (Array.isArray(list)) {
+        setAmazingProducts(list);
+      }
+    } catch (err) {
+      console.debug('Admin amazing sync notice:', err.message);
+    } finally {
+      setIsLoadingAmazing(false);
+    }
+  }, [setAmazingProducts]);
+
   // Fetch dashboard stats
   const fetchDashboard = useCallback(async () => {
     try {
@@ -248,18 +266,20 @@ export default function Admin() {
       fetchAdminUsers(),
       fetchAdminProducts(),
       fetchAdminSlides(),
+      fetchAdminAmazing(),
       fetchDashboard(),
       fetchAdminReviews()
     ]);
     setIsLoadingAll(false);
     showToast('اطلاعات پنل مدیریت از وب‌سرویس بروزرسانی شد.', 'info');
-  }, [fetchAdminOrders, fetchAdminUsers, fetchAdminProducts, fetchAdminSlides, fetchDashboard, fetchAdminReviews, showToast]);
+  }, [fetchAdminOrders, fetchAdminUsers, fetchAdminProducts, fetchAdminSlides, fetchAdminAmazing, fetchDashboard, fetchAdminReviews, showToast]);
 
   useEffect(() => {
     fetchAdminOrders();
     fetchAdminUsers();
     fetchAdminProducts();
     fetchAdminSlides();
+    fetchAdminAmazing();
     fetchDashboard();
     fetchAdminReviews();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -593,6 +613,14 @@ export default function Admin() {
           <Users size={16} />
           کاربران سامانه ({adminUsers.length})
         </button>
+        <button
+          type="button"
+          className={`${styles.tabBtn} ${activeTab === 'amazing' ? styles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('amazing')}
+        >
+          <ShieldCheck size={16} />
+          محصولات شگفت‌انگیز ({amazingProducts?.length || 0})
+        </button>
       </nav>
 
       {/* تب‌ها */}
@@ -772,6 +800,82 @@ export default function Admin() {
                     </div>
                   );
                 })
+            )}
+          </div>
+        </section>
+      )}
+
+      {activeTab === 'amazing' && (
+        <section className={styles.card}>
+          <div className={styles.pageHeader}>
+            <div>
+              <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت محصولات شگفت‌انگیز</h2>
+              <p className={styles.pageSubtitle}>مشاهده و مدیریت محصولات با پیشنهادهای تخفیف ویژه و شگفت‌انگیز</p>
+            </div>
+            <button
+              type="button"
+              className={styles.backButton}
+              onClick={fetchAdminAmazing}
+              disabled={isLoadingAmazing}
+            >
+              <RefreshCw size={14} className={isLoadingAmazing ? styles.spinner : ''} />
+              بروزرسانی
+            </button>
+          </div>
+
+          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem', color: '#166534', fontSize: '0.875rem' }}>
+            <p style={{ margin: 0 }}>
+              <strong>راهنما:</strong> هر محصولی که در بخش مدیریت محصولات برای آن «تخفیف ویژه» (بیشتر از صفر درصد) تنظیم نمایید، به عنوان محصول شگفت‌انگیز علامت‌گذاری شده و در کادرهای پیشنهادهای داغ صفحه نخست قرار می‌گیرد.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+            {isLoadingAmazing ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '2rem', color: '#15803d' }}>در حال بارگذاری اطلاعات محصولات شگفت‌انگیز...</div>
+            ) : amazingProducts.length === 0 ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem 2rem', border: '2px dashed #cbd5e1', borderRadius: '12px', color: '#64748b' }}>
+                <p style={{ margin: '0 0 1rem 0' }}>در حال حاضر محصول شگفت‌انگیزی با تخفیف فعال در سیستم ثبت نشده است.</p>
+                <button
+                  type="button"
+                  className={styles.btnPrimary}
+                  onClick={() => setActiveTab('products')}
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  افزودن تخفیف به محصولات
+                </button>
+              </div>
+            ) : (
+              amazingProducts.map((p) => {
+                const discount = p.discountPercent || p.dealDiscountPercent || 12;
+                const regPrice = p.price || 430000;
+                const dealPrice = p.dealPrice || Math.round(regPrice * (1 - discount / 100));
+                return (
+                  <div key={p.id || p._id} style={{ border: '1px solid #e2e8f0', borderRadius: '12px', padding: '1rem', display: 'flex', gap: '1rem', background: '#fff', boxShadow: '0 1px 3px rgba(0,0,0,0.05)', position: 'relative' }}>
+                    <img src={p.image} alt={p.name} style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #f1f5f9' }} />
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '0.95rem', color: '#1C3A27', fontWeight: 'bold' }}>{p.name}</h4>
+                        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                          <span style={{ background: '#fecdd3', color: '#be123c', padding: '2px 8px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                            {discount}٪ تخفیف
+                          </span>
+                          <span style={{ background: '#ecfdf5', color: '#047857', padding: '2px 8px', borderRadius: '20px', fontSize: '0.7rem', fontWeight: 'bold' }}>
+                            شگفت‌انگیز فعال
+                          </span>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '8px' }}>
+                        <div>
+                          <del style={{ color: '#94a3b8', fontSize: '0.75rem' }}>{Number(regPrice).toLocaleString('fa-IR')} تومان</del>
+                          <div style={{ fontWeight: 'bold', color: '#15803d', fontSize: '0.9rem' }}>
+                            {Number(dealPrice).toLocaleString('fa-IR')} <small style={{ fontSize: '0.7rem' }}>تومان</small>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             )}
           </div>
         </section>

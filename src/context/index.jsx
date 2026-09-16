@@ -1,9 +1,10 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ToastContainer from '../components/toast';
 import {
   authApi,
   productsApi,
+  amazingProductsApi,
   ordersApi,
   slidesApi,
   cartApi,
@@ -13,6 +14,7 @@ import {
   setStoredToken,
   normalizeUser,
   normalizeProduct,
+  normalizeAmazingProduct,
   normalizeOrder,
   normalizeSlide
 } from '../api';
@@ -59,10 +61,78 @@ export function AppProvider({ children }) {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [slides, setSlides] = useState([]);
+  const [amazingProducts, setAmazingProducts] = useState([]);
   const [storeInfo, setStoreInfo] = useState({});
   const [brandStory, setBrandStory] = useState({});
   const [trustItems, setTrustItems] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
+
+  // Catalog Filters & Categories
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [apiError, setApiError] = useState(null);
+
+  const categories = useMemo(() => {
+    const defaultCats = [
+      { id: 'tarom', name: 'برنج طارم' },
+      { id: 'hashemi', name: 'برنج هاشمی' },
+      { id: 'sadri', name: 'برنج صدری' },
+      { id: 'fajr', name: 'برنج فجر' },
+      { id: 'kamfirooz', name: 'برنج کامفیروز' },
+      { id: 'smoked', name: 'برنج دودی' }
+    ];
+    
+    const productCats = new Set();
+    products.forEach(p => {
+      if (p.category) {
+        productCats.add(p.category);
+      }
+    });
+    
+    const result = [...defaultCats];
+    productCats.forEach(catId => {
+      if (!result.some(c => c.id === catId)) {
+        let name = catId;
+        if (catId === 'hashemi') name = 'برنج هاشمی';
+        else if (catId === 'tarom') name = 'برنج طارم';
+        else if (catId === 'sadri') name = 'برنج صدری';
+        else if (catId === 'fajr') name = 'برنج فجر';
+        else if (catId === 'kamfirooz') name = 'برنج کامفیروز';
+        else if (catId === 'smoked') name = 'برنج دودی';
+        else if (catId === 'all') return;
+        
+        result.push({ id: catId, name });
+      }
+    });
+    
+    return result;
+  }, [products]);
+
+  const refreshProductsFromApi = useCallback(async () => {
+    setIsLoadingData(true);
+    setApiError(null);
+    try {
+      const [prodRes, slideRes, amazingRes] = await Promise.allSettled([
+        productsApi.getAll(),
+        slidesApi.getAll(),
+        amazingProductsApi.getAll()
+      ]);
+      if (prodRes.status === 'fulfilled' && prodRes.value) {
+        setProducts(Array.isArray(prodRes.value) ? prodRes.value : (prodRes.value.products || []));
+      } else if (prodRes.status === 'rejected') {
+        setApiError('خطا در بارگذاری محصولات');
+      }
+      if (slideRes.status === 'fulfilled' && slideRes.value) {
+        setSlides(Array.isArray(slideRes.value) ? slideRes.value : []);
+      }
+      if (amazingRes.status === 'fulfilled' && amazingRes.value) {
+        setAmazingProducts(Array.isArray(amazingRes.value) ? amazingRes.value : []);
+      }
+    } catch (err) {
+      setApiError(err.message || 'خطا در بارگذاری اطلاعات');
+    } finally {
+      setIsLoadingData(false);
+    }
+  }, []);
 
   // Notification trigger
   const triggerNotification = useCallback((message, type = 'info') => {
@@ -120,12 +190,13 @@ export function AppProvider({ children }) {
 
       // 2. Fetch Products, Slides, Store Info
       try {
-        const [prodRes, slideRes, infoRes, storyRes, trustRes] = await Promise.allSettled([
+        const [prodRes, slideRes, infoRes, storyRes, trustRes, amazingRes] = await Promise.allSettled([
           productsApi.getAll(),
           slidesApi.getAll(),
           storeApi.getStoreInfo(),
           storeApi.getBrandStory(),
-          storeApi.getTrustItems()
+          storeApi.getTrustItems(),
+          amazingProductsApi.getAll()
         ]);
 
         if (isMounted) {
@@ -143,6 +214,9 @@ export function AppProvider({ children }) {
           }
           if (trustRes.status === 'fulfilled' && trustRes.value) {
             setTrustItems(trustRes.value);
+          }
+          if (amazingRes.status === 'fulfilled' && amazingRes.value) {
+            setAmazingProducts(Array.isArray(amazingRes.value) ? amazingRes.value : []);
           }
         }
       } catch (fetchErr) {
@@ -356,10 +430,21 @@ export function AppProvider({ children }) {
     products,
     setProducts,
     slides,
+    heroSlides: slides,
+    amazingProducts,
+    setAmazingProducts,
     storeInfo,
     brandStory,
     trustItems,
     isLoadingData,
+    isLoadingApi: isLoadingData,
+    apiError,
+    refreshProductsFromApi,
+
+    // Catalog Categories & Filters
+    categories,
+    selectedCategory,
+    setSelectedCategory,
 
     // Helpers
     getOrderStatusInfo,

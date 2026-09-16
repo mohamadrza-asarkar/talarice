@@ -8,10 +8,6 @@ let DEFAULT_DOCS_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.e
   ? import.meta.env.VITE_API_BASE_URL
   : 'http://localhost:5000/api';
 
-if (typeof window !== 'undefined' && window.location && !window.location.hostname.includes('localhost') && DEFAULT_DOCS_BASE_URL.includes('localhost')) {
-  DEFAULT_DOCS_BASE_URL = window.location.origin + '/api';
-}
-
 export const API_BASE_URL = DEFAULT_DOCS_BASE_URL;
 
 export const TOKEN_STORAGE_KEY = 'tala_rice_token';
