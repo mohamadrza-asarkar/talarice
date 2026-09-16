@@ -1,12 +1,14 @@
 import React from 'react';
-import { Users, UserPlus, ShieldCheck } from 'lucide-react';
+import { Users, UserPlus, ShieldCheck, Trash2, Edit } from 'lucide-react';
 import styles from '../../../pages/pages.module.css';
 
 export function AdminUsers({
   adminUsers,
   userSearchQuery,
   setUserSearchQuery,
-  setShowAddUserModal
+  setShowAddUserModal,
+  handleDeleteUser,
+  handleUpdateUserRole
 }) {
   const filteredUsers = adminUsers.filter((u) => {
     if (!userSearchQuery.trim()) return true;
@@ -23,7 +25,7 @@ export function AdminUsers({
       <div className={styles.pageHeader}>
         <div>
           <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت کاربران سامانه</h2>
-          <p className={styles.pageSubtitle}>فهرست مشتریان، کشاورزان و مدیران ثبت‌نام شده در پایگاه داده</p>
+          <p className={styles.pageSubtitle}>فهرست مشتریان، کشاورزان و مدیران ثبت‌نام شده در پایگاه داده با قابلیت مدیریت نقش و حذف</p>
         </div>
         <button
           type="button"
@@ -71,6 +73,26 @@ export function AdminUsers({
                   <p className={styles.pageSubtitle} style={{ margin: 0 }}>
                     تلفن: <span dir="ltr">{u.phone || u.mobile || 'ثبت نشده'}</span> | ایمیل: {u.email || 'ثبت نشده'}
                   </p>
+                </div>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    className={styles.backButton}
+                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                    onClick={() => handleUpdateUserRole && handleUpdateUserRole(uid, u.role || (isAdminRole ? 'admin' : 'user'))}
+                  >
+                    {isAdminRole ? 'تنظیم به کاربر' : 'ارتقا به مدیر'}
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.btnDanger}
+                    style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    onClick={() => handleDeleteUser && handleDeleteUser(uid)}
+                  >
+                    <Trash2 size={14} />
+                    حذف
+                  </button>
                 </div>
               </div>
             );

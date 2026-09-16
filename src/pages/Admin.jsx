@@ -86,7 +86,7 @@ export default function Admin() {
   const fetchAdminOrders = useCallback(async () => {
     setIsLoadingOrders(true);
     try {
-      const list = await ordersApi.getAllOrders();
+      const list = await ordersApi.getAll();
       setAdminOrders(Array.isArray(list) ? list : []);
     } catch (err) {
       console.debug('Admin orders sync notice:', err.message);
@@ -273,6 +273,45 @@ export default function Admin() {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('آیا از حذف این سفارش اطمینان دارید؟')) return;
+    try {
+      await ordersApi.delete(orderId);
+      showToast('سفارش با موفقیت حذف شد.', 'success');
+      fetchAdminOrders();
+    } catch (err) {
+      showToast('خطا در حذف سفارش', 'error');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('آیا از حذف این کاربر اطمینان دارید؟')) return;
+    try {
+      await adminApi.deleteUser(userId);
+      showToast('کاربر با موفقیت حذف شد.', 'success');
+      fetchAdminUsers();
+    } catch (err) {
+      showToast('خطا در حذف کاربر', 'error');
+    }
+  };
+
+  const handleUpdateUserRole = async (userId, currentRole) => {
+    const nextRole = currentRole === 'admin' ? 'user' : 'admin';
+    try {
+      await adminApi.updateUserRole(userId, nextRole);
+      showToast('نقش کاربر بروزرسانی شد.', 'success');
+      fetchAdminUsers();
+    } catch (err) {
+      try {
+        await adminApi.updateUser(userId, { role: nextRole, isAdmin: nextRole === 'admin' });
+        showToast('نقش کاربر بروزرسانی شد.', 'success');
+        fetchAdminUsers();
+      } catch (subErr) {
+        showToast('خطا در تغییر نقش کاربر', 'error');
+      }
+    }
+  };
+
   return (
     <main className={styles.pageContainer}>
       <header className={styles.pageHeader}>
@@ -370,6 +409,7 @@ export default function Admin() {
           setTrackingCodeInput={setTrackingCodeInput}
           setAdminNoteInput={setAdminNoteInput}
           handleUpdateStatus={handleUpdateStatus}
+          handleDeleteOrder={handleDeleteOrder}
         />
       )}
 
@@ -435,6 +475,8 @@ export default function Admin() {
           userSearchQuery={userSearchQuery}
           setUserSearchQuery={setUserSearchQuery}
           setShowAddUserModal={() => showToast('افزودن کاربر جدید', 'info')}
+          handleDeleteUser={handleDeleteUser}
+          handleUpdateUserRole={handleUpdateUserRole}
         />
       )}
 

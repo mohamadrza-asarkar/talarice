@@ -1,5 +1,5 @@
 import React from 'react';
-import { ShoppingBag, RefreshCw, CheckCircle2, XCircle, Truck, Eye } from 'lucide-react';
+import { ShoppingBag, RefreshCw, CheckCircle2, XCircle, Truck, Eye, Trash2 } from 'lucide-react';
 import styles from '../../../pages/pages.module.css';
 
 export function AdminOrders({
@@ -16,7 +16,8 @@ export function AdminOrders({
   setEditingTrackingOrderId,
   setTrackingCodeInput,
   setAdminNoteInput,
-  handleUpdateStatus
+  handleUpdateStatus,
+  handleDeleteOrder
 }) {
   const filteredOrders = adminOrders.filter((o) => {
     const matchSearch =
@@ -196,6 +197,17 @@ export function AdminOrders({
                   >
                     تغییر به تحویل شده
                   </button>
+                  {handleDeleteOrder && (
+                    <button
+                      type="button"
+                      className={styles.btnDanger}
+                      style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
+                      onClick={() => handleDeleteOrder(orderId)}
+                    >
+                      <Trash2 size={13} />
+                      حذف
+                    </button>
+                  )}
                 </div>
               </div>
             );

@@ -1,59 +1,16 @@
-import axios from 'axios';
+// -------------------------------------------------------------
+// Axios compatibility wrapper over Native Fetch (No XHR)
+// -------------------------------------------------------------
+import client, { getStoredToken, setStoredToken, API_BASE_URL } from './client';
 
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
-  ? import.meta.env.VITE_API_BASE_URL
-  : 'http://localhost:5000/api';
+export { getStoredToken, setStoredToken, API_BASE_URL };
 
-export const TOKEN_STORAGE_KEY = 'tala_rice_token';
-
-export const getStoredToken = () => {
-  try {
-    return localStorage.getItem(TOKEN_STORAGE_KEY) || null;
-  } catch {
-    return null;
-  }
+const axiosInstance = {
+  get: (url, config = {}) => client.get(url, config),
+  post: (url, data, config = {}) => client.post(url, data, config),
+  put: (url, data, config = {}) => client.put(url, data, config),
+  patch: (url, data, config = {}) => client.patch(url, data, config),
+  delete: (url, config = {}) => client.delete(url, config)
 };
-
-export const setStoredToken = (token) => {
-  try {
-    if (token) {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-    } else {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-    }
-  } catch (err) {
-    console.warn('Could not store token:', err);
-  }
-};
-
-const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  }
-});
-
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = getStoredToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-axiosInstance.interceptors.response.use(
-  (response) => response.data,
-  (error) => {
-    const message = error.response?.data?.message || error.response?.data?.error || 'خطای سرور برقراری ارتباط';
-    const customError = new Error(message);
-    customError.status = error.response?.status;
-    customError.data = error.response?.data;
-    return Promise.reject(customError);
-  }
-);
 
 export default axiosInstance;

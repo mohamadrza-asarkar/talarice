@@ -47,28 +47,32 @@ export const productsApi = {
    * Get all products with optional filters using axios.get
    */
   async getAll(params = {}) {
-    const query = new URLSearchParams();
-    if (params.page) query.append('page', params.page);
-    if (params.limit) query.append('limit', params.limit);
-    if (params.search || params.q) query.append('search', params.search || params.q);
-    if (params.isAvailable !== undefined) query.append('isAvailable', params.isAvailable);
-    if (params.isAmazing !== undefined) query.append('isAmazing', params.isAmazing);
-    if (params.minPrice) query.append('minPrice', params.minPrice);
-    if (params.maxPrice) query.append('maxPrice', params.maxPrice);
-    if (params.sortBy || params.sort) query.append('sortBy', params.sortBy || params.sort);
-    
-    const qs = query.toString();
-    const endpoint = `/products${qs ? `?${qs}` : ''}`;
-    const res = await axiosInstance.get(endpoint);
-    
     let rawList = [];
     let pagination = null;
 
-    if (res && res.data && Array.isArray(res.data)) {
-      rawList = res.data;
-      pagination = res.pagination || null;
-    } else if (Array.isArray(res)) {
-      rawList = res;
+    try {
+      const query = new URLSearchParams();
+      if (params.page) query.append('page', params.page);
+      if (params.limit) query.append('limit', params.limit);
+      if (params.search || params.q) query.append('search', params.search || params.q);
+      if (params.isAvailable !== undefined) query.append('isAvailable', params.isAvailable);
+      if (params.isAmazing !== undefined) query.append('isAmazing', params.isAmazing);
+      if (params.minPrice) query.append('minPrice', params.minPrice);
+      if (params.maxPrice) query.append('maxPrice', params.maxPrice);
+      if (params.sortBy || params.sort) query.append('sortBy', params.sortBy || params.sort);
+      
+      const qs = query.toString();
+      const endpoint = `/products${qs ? `?${qs}` : ''}`;
+      const res = await axiosInstance.get(endpoint);
+      
+      if (res && res.data && Array.isArray(res.data)) {
+        rawList = res.data;
+        pagination = res.pagination || null;
+      } else if (Array.isArray(res)) {
+        rawList = res;
+      }
+    } catch (e) {
+      console.debug('Using local fallback products due to network/server response:', e);
     }
 
     const normalized = rawList.map(normalizeProduct).filter(Boolean);

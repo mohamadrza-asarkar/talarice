@@ -68,14 +68,7 @@ export const slidesApi = {
       }
     }
 
-    if (!rawList) {
-      if (lastError && !lastError.isNetworkError && lastError.status !== 404) {
-        throw lastError;
-      }
-      return [];
-    }
-
-    return rawList.map(normalizeSlide).filter(Boolean);
+    return (rawList || []).map(normalizeSlide).filter(Boolean);
   },
 
   getSlides(params = {}) {
