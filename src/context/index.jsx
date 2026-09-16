@@ -66,7 +66,6 @@ export function AppProvider({ children }) {
   const [brandStory, setBrandStory] = useState({});
   const [trustItems, setTrustItems] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
-  const hasInitializedRef = useRef(false);
 
   // Catalog Filters & Categories
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -151,9 +150,6 @@ export function AppProvider({ children }) {
 
   // Initial Load: Token, User Profile, Products, Slides, Store Info
   useEffect(() => {
-    if (hasInitializedRef.current) return;
-    hasInitializedRef.current = true;
-
     let isMounted = true;
     const token = getStoredToken();
     const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
