@@ -262,7 +262,8 @@ export default function Admin() {
     fetchAdminSlides();
     fetchDashboard();
     fetchAdminReviews();
-  }, [fetchAdminOrders, fetchAdminUsers, fetchAdminProducts, fetchAdminSlides, fetchDashboard, fetchAdminReviews]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Handlers
   const handleAddProduct = async (e) => {
