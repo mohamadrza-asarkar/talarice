@@ -62,20 +62,29 @@ export async function request(endpoint, options = {}) {
   try {
     const response = await fetch(url, config);
     let data = null;
-    const contentType = response.headers.get('content-type');
-    
-    if (contentType && contentType.includes('application/json')) {
-      data = await response.json();
-    } else {
-      const text = await response.text();
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { message: text };
+    const isNoBody = response.status === 304 || response.status === 204;
+
+    if (!isNoBody) {
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          data = await response.json();
+        } catch {
+          data = {};
+        }
+      } else {
+        const text = await response.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = { message: text };
+        }
       }
+    } else {
+      data = { status: response.status, success: true };
     }
 
-    if (!response.ok) {
+    if (!response.ok && response.status !== 304) {
       const errorMsg = data?.message || data?.error || `خطای سرور (کد ${response.status})`;
       const error = new Error(errorMsg);
       error.status = response.status;
