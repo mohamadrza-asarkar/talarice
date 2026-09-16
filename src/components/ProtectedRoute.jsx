@@ -18,7 +18,7 @@ export function ProtectedRoute({ children, requireAdmin = false }) {
   return !isAuthenticated ? (
     <Navigate to="/auth" state={{ from: location }} replace />
   ) : (requireAdmin && !isAdmin) ? (
-    <Navigate to="/profile" replace />
+    <Navigate to="/" replace />
   ) : (
     children
   );

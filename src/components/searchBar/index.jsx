@@ -6,6 +6,12 @@ export function SearchBar() {
   const [query, setQuery] = useState('');
   const navigate = useNavigate();
 
+  const handleInputClick = () => {
+    if (window.location.pathname !== '/search') {
+      navigate('/search');
+    }
+  };
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (query.trim()) {
@@ -17,13 +23,14 @@ export function SearchBar() {
 
   return (
     <form onSubmit={handleSearch} className={styles.searchForm}>
-      <div className={styles.searchContainer}>
+      <div className={styles.searchContainer} onClick={handleInputClick}>
         <i className={`fa-solid fa-magnifying-glass ${styles.searchIcon}`} />
         <input
           type="text"
           dir="rtl"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          onFocus={handleInputClick}
           placeholder="جستجوی ارقام برنج کامفیروز، طارم، دودی..."
           className={styles.searchInput}
           aria-label="جستجوی محصولات طلا رایس"

@@ -31,18 +31,21 @@ export default function Product() {
   const [newRating, setNewRating] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
+  const product = products.find((p) => p.id === id || p._id === id) || products[0];
+
   React.useEffect(() => {
     let isMounted = true;
     async function fetchReviews() {
-      if (!id) return;
+      const targetId = product?._id || product?.id || id;
+      if (!targetId) return;
       setIsLoadingReviews(true);
       try {
-        const list = await reviewsApi.getByProductId(id);
+        const list = await reviewsApi.getByProductId(targetId);
         if (isMounted) {
           setReviews(list || []);
         }
       } catch (err) {
-        console.debug('Failed to load reviews for product:', id, err);
+        console.debug('Failed to load reviews for product:', targetId, err);
       } finally {
         if (isMounted) {
           setIsLoadingReviews(false);
@@ -53,9 +56,7 @@ export default function Product() {
     return () => {
       isMounted = false;
     };
-  }, [id]);
-
-  const product = products.find((p) => p.id === id || p._id === id) || products[0];
+  }, [id, product?._id, product?.id]);
 
   if (!product) {
     return (

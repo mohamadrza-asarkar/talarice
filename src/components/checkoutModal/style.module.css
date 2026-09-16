@@ -810,3 +810,14 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 640px) {
+  .overlay {
+    padding: 0.25rem;
+    align-items: flex-end;
+  }
+  .modal {
+    max-height: 92vh;
+    border-radius: 1.25rem 1.25rem 0 0;
+  }
+}

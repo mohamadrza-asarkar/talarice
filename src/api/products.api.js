@@ -11,13 +11,28 @@ export function normalizeProduct(raw) {
   const p = unwrapDoc(raw);
   if (!p || typeof p !== 'object') return null;
 
-  const id = String(p._id || p.id || `prod-${Date.now()}`);
+  const backendId = p._id || p.id || '';
+  const id = String(backendId || `prod-${Date.now()}`);
+
   const rawImage = p.image || p.imageUrl || p.fullImageUrl || '';
   const image = rawImage ? getImageUrl(rawImage) : '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
-  const price = Number(p.price || p.originalPrice || 0);
-  const originalPrice = Number(p.originalPrice || p.oldPrice || p.price || 0);
-  const discountPercent = Number(p.discountPercent || p.dealDiscountPercent || 0);
   
+  const price = Number(p.price || p.originalPrice || 0);
+  const discountPercent = Number(p.discountPercent || p.dealDiscountPercent || p.discount || 0);
+  
+  let originalPrice = Number(p.originalPrice || p.oldPrice || p.old_price || 0);
+  if (!originalPrice || originalPrice <= price) {
+    if (discountPercent > 0) {
+      originalPrice = Math.round(price / (1 - discountPercent / 100));
+    } else if (p.isAmazing || p.dealPrice || p.isDeal) {
+      originalPrice = Math.round(price * 1.15); // 15% higher crossed-out price
+    } else {
+      originalPrice = price;
+    }
+  }
+
+  const computedDiscount = discountPercent > 0 ? discountPercent : (originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0);
+
   return {
     ...p,
     id,
@@ -27,9 +42,9 @@ export function normalizeProduct(raw) {
     price,
     originalPrice,
     oldPrice: originalPrice,
-    discountPercent,
-    dealPrice: p.dealPrice || (discountPercent > 0 ? Math.round(originalPrice * (1 - discountPercent / 100)) : price),
-    isAmazing: Boolean(p.isAmazing || discountPercent > 0),
+    discountPercent: computedDiscount,
+    dealPrice: p.dealPrice || price,
+    isAmazing: Boolean(p.isAmazing || computedDiscount > 0 || originalPrice > price),
     amazingExpiresAt: p.amazingExpiresAt || null,
     isAvailable: p.isAvailable !== false,
     stock: p.countInStock !== undefined ? p.countInStock : (p.stock !== undefined ? p.stock : 20),
