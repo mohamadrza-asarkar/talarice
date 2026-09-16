@@ -67,10 +67,16 @@ export const ordersApi = {
    */
   async create(orderData) {
     const payload = {
-      name: orderData.name || orderData.customerName || '',
-      phone: orderData.phone || orderData.customerPhone || '',
-      address: orderData.address || orderData.customerAddress || '',
+      // Documented fields (Section 6.الف)
+      shippingAddress: orderData.shippingAddress || orderData.address || orderData.customerAddress || '',
       postalCode: orderData.postalCode || '',
+      receiverName: orderData.receiverName || orderData.name || orderData.customerName || '',
+      receiverPhone: orderData.receiverPhone || orderData.phone || orderData.customerPhone || '',
+
+      // Legacy fallback fields for full compatibility
+      name: orderData.receiverName || orderData.name || orderData.customerName || '',
+      phone: orderData.receiverPhone || orderData.phone || orderData.customerPhone || '',
+      address: orderData.shippingAddress || orderData.address || orderData.customerAddress || '',
       products: orderData.products || orderData.items || [],
       paymentReceipt: orderData.paymentReceipt || orderData.receiptImage || ''
     };
@@ -220,16 +226,22 @@ export const ordersApi = {
     const targetTracking = typeof status === 'object' ? (status.trackingCode || status.postalTrackingCode) : trackingCode;
 
     const statusMapEn = {
-      'در حال بررسی': 'processing',
-      'تایید شده': 'confirmed',
+      'در حال بررسی': 'pending',
+      'تایید شده': 'pending',
       'ارسال شده': 'shipped',
       'تحویل داده شده': 'delivered',
-      'لغو شده': 'cancelled'
+      'لغو شده': 'cancelled',
+      'processing': 'pending',
+      'pending': 'pending',
+      'shipped': 'shipped',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
     };
 
     const statusMapFa = {
+      'pending': 'در حال بررسی',
       'processing': 'در حال بررسی',
-      'confirmed': 'تایید شده',
+      'confirmed': 'در حال بررسی',
       'shipped': 'ارسال شده',
       'delivered': 'تحویل داده شده',
       'cancelled': 'لغو شده'
@@ -239,9 +251,9 @@ export const ordersApi = {
     const faStatus = statusMapFa[targetStatus] || targetStatus;
 
     const payload = {
-      status: targetStatus,
-      state: targetStatus,
-      orderStatus: targetStatus,
+      status: enStatus,
+      state: enStatus,
+      orderStatus: enStatus,
       enStatus,
       faStatus,
       trackingCode: targetTracking,
@@ -251,9 +263,9 @@ export const ordersApi = {
     };
 
     const endpoints = [
+      `/admin/orders/${id}/status`,
       `/orders/${id}/status`,
       `/orders/${id}`,
-      `/admin/orders/${id}/status`,
       `/admin/orders/${id}`
     ];
 

@@ -133,7 +133,7 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = ['/products', '/admin/products'];
+    const endpoints = ['/admin/products', '/products'];
     let res = null;
     let lastErr = null;
 
@@ -165,7 +165,7 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [`/products/${id}`, `/admin/products/${id}`];
+    const endpoints = [`/admin/products/${id}`, `/products/${id}`];
     let res = null;
     let lastErr = null;
 
@@ -203,7 +203,7 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [`/products/${id}`, `/admin/products/${id}`];
+    const endpoints = [`/admin/products/${id}`, `/products/${id}`];
     let lastErr = null;
 
     for (const ep of endpoints) {

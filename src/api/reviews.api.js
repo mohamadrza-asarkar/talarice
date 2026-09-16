@@ -27,13 +27,27 @@ export const reviewsApi = {
    * Get reviews for a product using axios.get
    */
   async getByProductId(productId) {
-    try {
-      const res = await axiosInstance.get(`/reviews?productId=${productId}`);
-      const list = Array.isArray(res) ? res : (res?.data || []);
-      return list.map(normalizeReview).filter(Boolean);
-    } catch {
-      return [];
+    const endpoints = [
+      `/reviews/${productId}`,
+      `/reviews?productId=${productId}`
+    ];
+    let rawList = [];
+    for (const ep of endpoints) {
+      try {
+        const res = await axiosInstance.get(ep);
+        const list = Array.isArray(res) ? res : (res?.data || []);
+        if (Array.isArray(list) && list.length > 0) {
+          rawList = list;
+          break;
+        } else if (res && Array.isArray(res)) {
+          rawList = res;
+          break;
+        }
+      } catch {
+        // try next fallback
+      }
     }
+    return rawList.map(normalizeReview).filter(Boolean);
   },
 
   /**

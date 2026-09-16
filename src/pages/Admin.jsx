@@ -266,6 +266,23 @@ export default function Admin() {
   }, []);
 
   // Handlers
+  const handleFileChangeHelper = (file, callback) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('لطفاً فقط فایل تصویر انتخاب کنید.');
+      return;
+    }
+    if (file.size > 4 * 1024 * 1024) {
+      alert('حجم تصویر بسیار بالا است (حداکثر ۴ مگابایت مجاز است).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      callback(reader.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
     if (!newProdName.trim() || !newProdPrice) {
@@ -288,11 +305,13 @@ export default function Admin() {
       setNewProdName('');
       setNewProdPrice('');
       setNewProdOriginalPrice('');
+      setNewProdImageBase64('');
       setShowAddProdForm(false);
       fetchAdminProducts();
       showToast('محصول جدید با موفقیت اضافه شد.', 'success');
     } catch (err) {
-      showToast('خطا در افزودن محصول: ' + err.message, 'error');
+      const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'خطا در فرآیند ثبت محصول';
+      showToast('خطا در افزودن محصول: ' + errMsg, 'error');
     } finally {
       setIsSubmittingProd(false);
     }
@@ -329,7 +348,8 @@ export default function Admin() {
       fetchAdminProducts();
       showToast('محصول با موفقیت ویرایش شد.', 'success');
     } catch (err) {
-      showToast('خطا در ویرایش محصول: ' + err.message, 'error');
+      const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'خطا در بروزرسانی اطلاعات محصول';
+      showToast('خطا در ویرایش محصول: ' + errMsg, 'error');
     } finally {
       setIsUpdatingProd(false);
     }
@@ -341,6 +361,10 @@ export default function Admin() {
       showToast('لطفاً عنوان اسلاید را وارد نمایید.', 'error');
       return;
     }
+    if (!newSlideImageBase64) {
+      showToast('لطفاً تصویر اسلاید را بارگذاری نمایید.', 'error');
+      return;
+    }
     setIsSubmittingSlide(true);
     try {
       await slidesApi.create({
@@ -349,16 +373,18 @@ export default function Admin() {
         description: newSlideDesc.trim() || 'عرضه مستقیم با ضمانت صد در صدی کیفیت و پخت',
         ctaText: newSlideCta.trim() || 'مشاهده و خرید آنلاین',
         category: newSlideCategory,
-        image: newSlideImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
+        image: newSlideImageBase64
       });
       setNewSlideTitle('');
       setNewSlideSubtitle('');
       setNewSlideDesc('');
+      setNewSlideImageBase64('');
       setShowAddSlideForm(false);
       fetchAdminSlides();
       showToast('اسلاید جدید با موفقیت اضافه شد.', 'success');
     } catch (err) {
-      showToast('خطا در افزودن اسلاید', 'error');
+      const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'خطا در ثبت اسلاید جدید';
+      showToast('خطا در افزودن اسلاید: ' + errMsg, 'error');
     } finally {
       setIsSubmittingSlide(false);
     }
@@ -392,7 +418,8 @@ export default function Admin() {
       fetchAdminSlides();
       showToast('اسلاید با موفقیت ویرایش شد.', 'success');
     } catch (err) {
-      showToast('خطا در ویرایش اسلاید: ' + err.message, 'error');
+      const errMsg = err.response?.data?.error || err.response?.data?.message || err.message || 'خطا در بروزرسانی بنر';
+      showToast('خطا در ویرایش اسلاید: ' + errMsg, 'error');
     } finally {
       setIsUpdatingSlide(false);
     }
@@ -852,6 +879,25 @@ export default function Admin() {
                 />
               </div>
 
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>تصویر محصول <span style={{ color: '#cbd5e1' }}>(اختیاری برای تغییر)</span></label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  {editProdImageBase64 && (
+                    <img src={editProdImageBase64} alt="پیش‌نمایش" style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileChangeHelper(e.target.files[0], setEditProdImageBase64);
+                      }
+                    }}
+                    style={{ fontSize: '0.8rem', color: '#475569' }}
+                  />
+                </div>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
                 <button
                   type="button"
@@ -931,6 +977,25 @@ export default function Admin() {
                   value={editSlideCta}
                   onChange={(e) => setEditSlideCta(e.target.value)}
                 />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>تصویر اسلاید <span style={{ color: '#cbd5e1' }}>(اختیاری برای تغییر)</span></label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                  {editSlideImageBase64 && (
+                    <img src={editSlideImageBase64} alt="پیش‌نمایش" style={{ width: '84px', height: '56px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1' }} />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        handleFileChangeHelper(e.target.files[0], setEditSlideImageBase64);
+                      }
+                    }}
+                    style={{ fontSize: '0.8rem', color: '#475569' }}
+                  />
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>

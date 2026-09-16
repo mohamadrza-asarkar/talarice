@@ -363,7 +363,12 @@ export function AppProvider({ children }) {
 
     // Helpers
     getOrderStatusInfo,
-    goBack: () => navigate(-1)
+    goBack: () => navigate(-1),
+    showToast: triggerNotification,
+    showSuccess: (msg) => triggerNotification(msg, 'success'),
+    showError: (msg) => triggerNotification(msg, 'error'),
+    sliders: slides,
+    setSliders: setSlides
   };
 
   return (

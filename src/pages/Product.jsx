@@ -15,19 +15,45 @@ import {
   Sparkles,
   Share2
 } from 'lucide-react';
-import { productsApi } from '../api';
+import { productsApi, reviewsApi } from '../api';
 import styles from './pages.module.css';
 
 export default function Product() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { products, addToCart, reviews, setReviews, currentUser, showSuccess, showError, showToast } = useApp();
+  const { products, addToCart, currentUser, showSuccess, showError, showToast } = useApp();
+  const [reviews, setReviews] = useState([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('specs'); // 'specs', 'cooking', 'reviews'
   const [copied, setCopied] = useState(false);
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  React.useEffect(() => {
+    let isMounted = true;
+    async function fetchReviews() {
+      if (!id) return;
+      setIsLoadingReviews(true);
+      try {
+        const list = await reviewsApi.getByProductId(id);
+        if (isMounted) {
+          setReviews(list || []);
+        }
+      } catch (err) {
+        console.debug('Failed to load reviews for product:', id, err);
+      } finally {
+        if (isMounted) {
+          setIsLoadingReviews(false);
+        }
+      }
+    }
+    fetchReviews();
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const product = products.find((p) => p.id === id || p._id === id) || products[0];
 

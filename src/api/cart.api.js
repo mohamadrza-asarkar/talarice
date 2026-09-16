@@ -30,11 +30,19 @@ export const cartApi = {
   async addItem(productId, quantity = 1) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await axiosInstance.post('/cart/items', {
-      productId,
-      quantity: Number(quantity)
-    }, { headers });
-    return unwrapDoc(res?.data || res);
+    try {
+      const res = await axiosInstance.post('/cart', {
+        productId,
+        quantity: Number(quantity)
+      }, { headers });
+      return unwrapDoc(res?.data || res);
+    } catch (err) {
+      const res = await axiosInstance.post('/cart/items', {
+        productId,
+        quantity: Number(quantity)
+      }, { headers });
+      return unwrapDoc(res?.data || res);
+    }
   },
 
   /**
@@ -43,10 +51,18 @@ export const cartApi = {
   async updateQuantity(productId, quantity) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await axiosInstance.put(`/cart/items/${productId}`, {
-      quantity: Number(quantity)
-    }, { headers });
-    return unwrapDoc(res?.data || res);
+    try {
+      const res = await axiosInstance.post('/cart', {
+        productId,
+        quantity: Number(quantity)
+      }, { headers });
+      return unwrapDoc(res?.data || res);
+    } catch (err) {
+      const res = await axiosInstance.put(`/cart/items/${productId}`, {
+        quantity: Number(quantity)
+      }, { headers });
+      return unwrapDoc(res?.data || res);
+    }
   },
 
   /**
@@ -55,8 +71,16 @@ export const cartApi = {
   async removeItem(productId) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await axiosInstance.delete(`/cart/items/${productId}`, { headers });
-    return unwrapDoc(res?.data || res);
+    try {
+      const res = await axiosInstance.post('/cart', {
+        productId,
+        quantity: 0
+      }, { headers });
+      return unwrapDoc(res?.data || res);
+    } catch (err) {
+      const res = await axiosInstance.delete(`/cart/items/${productId}`, { headers });
+      return unwrapDoc(res?.data || res);
+    }
   },
 
   /**
