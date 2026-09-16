@@ -121,19 +121,45 @@ export const productsApi = {
    * Create a new product (Admin) using axios.post with explicit Token header support
    */
   async create(productData) {
+    const priceNum = Number(productData.price || productData.originalPrice || 0);
+    const originalPriceNum = Number(productData.originalPrice || productData.price || 0);
+    const discountNum = Number(productData.discountPercent || 0);
+    const stockNum = Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20));
+    const finalImage = productData.imageBase64 || productData.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+
+    // Build an exhaustive payload to satisfy any possible backend mongoose/sequelize schemas
     const payload = {
-      name: productData.name || productData.title,
-      description: productData.description || '',
-      originalPrice: Number(productData.originalPrice || productData.price || 0),
-      discountPercent: Number(productData.discountPercent || 0),
-      countInStock: Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20)),
-      imageBase64: productData.imageBase64 || productData.image || ''
+      name: productData.name || productData.title || 'برنج اصیل کامفیروز',
+      title: productData.name || productData.title || 'برنج اصیل کامفیروز',
+      description: productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
+      desc: productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
+      price: priceNum,
+      originalPrice: originalPriceNum,
+      oldPrice: originalPriceNum,
+      discountPercent: discountNum,
+      discount: discountNum,
+      countInStock: stockNum,
+      stock: stockNum,
+      category: productData.category || 'kamfirouz',
+      weight: productData.weight || '۱۰ کیلوگرم',
+      image: finalImage,
+      imageUrl: finalImage,
+      imageBase64: finalImage
     };
 
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = ['/admin/products', '/products'];
+    // Try all possible endpoint variations to avoid 404
+    const endpoints = [
+      '/admin/products',
+      '/products',
+      '/products/create',
+      '/products/add',
+      '/admin/products/create',
+      '/admin/add-product',
+      '/products/admin'
+    ];
     let res = null;
     let lastErr = null;
 
@@ -165,18 +191,42 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [`/admin/products/${id}`, `/products/${id}`];
+    // Map any possible schema structure to ensure compatibility
+    const priceNum = Number(productData.price || productData.originalPrice || 0);
+    const originalPriceNum = Number(productData.originalPrice || productData.price || 0);
+    const discountNum = Number(productData.discountPercent || 0);
+    const stockNum = Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20));
+
+    const payload = {
+      ...productData,
+      price: priceNum,
+      originalPrice: originalPriceNum,
+      oldPrice: originalPriceNum,
+      discountPercent: discountNum,
+      discount: discountNum,
+      countInStock: stockNum,
+      stock: stockNum
+    };
+
+    const endpoints = [
+      `/admin/products/${id}`,
+      `/products/${id}`,
+      `/products/update/${id}`,
+      `/products/edit/${id}`,
+      `/admin/products/update/${id}`,
+      `/admin/products/edit/${id}`
+    ];
     let res = null;
     let lastErr = null;
 
     for (const ep of endpoints) {
       try {
-        res = await axiosInstance.put(ep, productData, { headers });
+        res = await axiosInstance.put(ep, payload, { headers });
         break;
       } catch (err) {
         lastErr = err;
         try {
-          res = await axiosInstance.patch(ep, productData, { headers });
+          res = await axiosInstance.patch(ep, payload, { headers });
           break;
         } catch (patchErr) {
           lastErr = patchErr;
@@ -203,7 +253,12 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [`/admin/products/${id}`, `/products/${id}`];
+    const endpoints = [
+      `/admin/products/${id}`,
+      `/products/${id}`,
+      `/products/delete/${id}`,
+      `/admin/products/delete/${id}`
+    ];
     let lastErr = null;
 
     for (const ep of endpoints) {

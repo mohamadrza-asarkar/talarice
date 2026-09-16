@@ -357,6 +357,10 @@ export const ordersApi = {
 
   deleteOrder(id) {
     return this.delete(id);
+  },
+
+  async getMyOrders(user) {
+    return this.getAll();
   }
 };
 

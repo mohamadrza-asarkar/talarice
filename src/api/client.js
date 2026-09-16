@@ -4,9 +4,13 @@
 // https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api
 // -------------------------------------------------------------
 
-const DEFAULT_DOCS_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
+let DEFAULT_DOCS_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
   ? import.meta.env.VITE_API_BASE_URL
   : 'http://localhost:5000/api';
+
+if (typeof window !== 'undefined' && window.location && !window.location.hostname.includes('localhost') && DEFAULT_DOCS_BASE_URL.includes('localhost')) {
+  DEFAULT_DOCS_BASE_URL = window.location.origin + '/api';
+}
 
 export const API_BASE_URL = DEFAULT_DOCS_BASE_URL;
 
