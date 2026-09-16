@@ -1,12 +1,25 @@
 import React from 'react';
-import { Users, UserPlus, ShieldCheck, Trash2, Edit } from 'lucide-react';
+import { Users, UserPlus, ShieldCheck, Trash2, X } from 'lucide-react';
 import styles from '../../../pages/pages.module.css';
 
 export function AdminUsers({
-  adminUsers,
-  userSearchQuery,
+  adminUsers = [],
+  userSearchQuery = '',
   setUserSearchQuery,
+  showAddUserModal,
   setShowAddUserModal,
+  newUserName = '',
+  setNewUserName,
+  newUserPhone = '',
+  setNewUserPhone,
+  newUserEmail = '',
+  setNewUserEmail,
+  newUserPassword = '',
+  setNewUserPassword,
+  newUserRole = 'user',
+  setNewUserRole,
+  handleAddUser,
+  isSubmittingUser = false,
   handleDeleteUser,
   handleUpdateUserRole
 }) {
@@ -31,7 +44,7 @@ export function AdminUsers({
           type="button"
           className={styles.backButton}
           style={{ backgroundColor: '#1C3A27', color: '#fff', borderColor: '#1C3A27' }}
-          onClick={() => setShowAddUserModal(true)}
+          onClick={() => setShowAddUserModal && setShowAddUserModal(true)}
         >
           <UserPlus size={15} />
           افزودن کاربر جدید
@@ -99,6 +112,105 @@ export function AdminUsers({
           })
         )}
       </div>
+
+      {/* Add User Modal */}
+      {showAddUserModal && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+          <div style={{ background: '#fff', borderRadius: '16px', padding: '2rem', maxWidth: '500px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h3 style={{ margin: 0, color: '#1C3A27', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <UserPlus size={20} />
+                افزودن کاربر جدید به سامانه
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowAddUserModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>نام و نام خانوادگی *</label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  placeholder="مثال: رضا کریمی"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>شماره تماس (موبایل) *</label>
+                <input
+                  type="text"
+                  required
+                  className={styles.input}
+                  placeholder="09123456789"
+                  value={newUserPhone}
+                  onChange={(e) => setNewUserPhone(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>ایمیل (اختیاری)</label>
+                <input
+                  type="email"
+                  className={styles.input}
+                  placeholder="user@example.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>کلمه عبور اولیه *</label>
+                <input
+                  type="password"
+                  required
+                  className={styles.input}
+                  placeholder="حداقل ۶ کاراکتر"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>نقش کاربر در سامانه</label>
+                <select
+                  className={styles.input}
+                  value={newUserRole}
+                  onChange={(e) => setNewUserRole(e.target.value)}
+                >
+                  <option value="user">کاربر عادی / مشتری</option>
+                  <option value="admin">مدیر سیستم (Admin)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  className={styles.backButton}
+                  onClick={() => setShowAddUserModal(false)}
+                >
+                  انصراف
+                </button>
+                <button
+                  type="submit"
+                  className={styles.btnPrimary}
+                  disabled={isSubmittingUser}
+                >
+                  {isSubmittingUser ? 'در حال ثبت...' : 'ثبت و ایجاد کاربر'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </section>
   );
 }
