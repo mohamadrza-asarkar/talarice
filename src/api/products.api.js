@@ -3,6 +3,7 @@
 // Native fetch implementation
 // -------------------------------------------------------------
 import axiosInstance, { getStoredToken } from './axios';
+import { getImageUrl } from './client';
 import { unwrapDoc } from './auth.api';
 
 export function normalizeProduct(raw) {
@@ -11,7 +12,8 @@ export function normalizeProduct(raw) {
   if (!p || typeof p !== 'object') return null;
 
   const id = String(p._id || p.id || `prod-${Date.now()}`);
-  const image = p.image || p.imageUrl || p.fullImageUrl || '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+  const rawImage = p.image || p.imageUrl || p.fullImageUrl || '';
+  const image = rawImage ? getImageUrl(rawImage) : '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   const price = Number(p.price || p.originalPrice || 0);
   const originalPrice = Number(p.originalPrice || p.oldPrice || p.price || 0);
   const discountPercent = Number(p.discountPercent || p.dealDiscountPercent || 0);

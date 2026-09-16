@@ -2,6 +2,7 @@
 // Slides & Banners API (/api/slides) using Axios
 // -------------------------------------------------------------
 import axiosInstance, { getStoredToken } from './axios';
+import { getImageUrl } from './client';
 import { unwrapDoc } from './auth.api';
 import { imageToBlob } from './products.api';
 
@@ -11,6 +12,9 @@ export function normalizeSlide(raw) {
   if (!s || typeof s !== 'object') return null;
 
   const id = String(s._id || s.id || `slide-${Date.now()}`);
+  const rawImage = s.image || s.imageUrl || s.fullImageUrl || '';
+  const image = rawImage ? getImageUrl(rawImage) : '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+
   return {
     ...s,
     id,
@@ -18,7 +22,9 @@ export function normalizeSlide(raw) {
     title: s.title || s.name || 'عرضه مستقیم برنج اصیل',
     subtitle: s.subtitle || s.subTitle || 'از شالیزارهای کامفیروز فارس',
     description: s.description || s.desc || 'تضمین صد در صدی کیفیت، عطر و ری‌دهی مجلسی',
-    image: s.image || s.imageUrl || s.fullImageUrl || '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    image,
+    imageUrl: image,
+    fullImageUrl: image,
     ctaText: s.ctaText || s.buttonText || 'مشاهده و خرید محصولات',
     link: s.link || s.url || '/products',
     category: s.category || 'all',

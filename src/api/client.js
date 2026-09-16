@@ -10,6 +10,18 @@ let DEFAULT_DOCS_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.e
 
 export const API_BASE_URL = DEFAULT_DOCS_BASE_URL;
 
+export function getImageUrl(imgPath) {
+  if (!imgPath) return '';
+  if (imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('data:')) {
+    return imgPath;
+  }
+  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '');
+  if (imgPath.startsWith('/')) {
+    return `${baseUrl}${imgPath}`;
+  }
+  return `${baseUrl}/${imgPath}`;
+}
+
 export const TOKEN_STORAGE_KEY = 'tala_rice_token';
 
 
