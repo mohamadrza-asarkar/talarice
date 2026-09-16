@@ -101,7 +101,9 @@ export async function request(endpoint, options = {}) {
       const errorMsg = data?.message || data?.error || `خطای سرور (کد ${response.status})`;
       const error = new Error(errorMsg);
       error.status = response.status;
+      error.statusCode = response.status;
       error.data = data;
+      error.response = { status: response.status, data };
       throw error;
     }
 

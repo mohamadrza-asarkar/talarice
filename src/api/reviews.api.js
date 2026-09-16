@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Reviews API (/api/reviews) using Axios
+// Reviews API (/api/reviews) using Axios & native client
 // -------------------------------------------------------------
 import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
@@ -9,10 +9,10 @@ export function normalizeReview(raw) {
   const r = unwrapDoc(raw);
   if (!r || typeof r !== 'object') return null;
 
-  const revId = String(r._id || r.id || `rev-${Date.now()}`);
+  const revId = String(r._id || r.id || '');
   const prodId = typeof r.productId === 'object' && r.productId !== null
     ? String(r.productId._id || r.productId.id || '')
-    : String(r.productId || r.product || '');
+    : String(r.productId || r.product || r.product_id || '');
 
   const reply = r.reply || r.adminReply || r.replyText || null;
 
@@ -21,9 +21,9 @@ export function normalizeReview(raw) {
     id: revId,
     _id: revId,
     productId: prodId,
-    userName: r.userName || r.name || r.user?.name || (typeof r.user === 'string' ? r.user : 'کاربر خریدار'),
-    author: r.userName || r.name || r.user?.name || 'خریدار محترم',
-    comment: r.comment || r.text || '',
+    userName: r.userName || r.name || r.author || r.user?.name || (typeof r.user === 'string' ? r.user : 'کاربر خریدار'),
+    author: r.userName || r.name || r.author || r.user?.name || 'خریدار محترم',
+    comment: r.comment || r.text || r.body || '',
     rating: Number(r.rating || 5),
     createdAt: r.createdAt || new Date().toISOString(),
     reply: reply ? (typeof reply === 'object' ? (reply.replyText || reply.comment || reply.text) : reply) : null
@@ -32,7 +32,7 @@ export function normalizeReview(raw) {
 
 export const reviewsApi = {
   /**
-   * Get all reviews across products (Admin / Global) using GET /api/reviews (Section 6)
+   * Get all reviews across products (Admin / Global) using GET /api/reviews
    */
   async getAll() {
     try {
@@ -48,13 +48,13 @@ export const reviewsApi = {
       }
       return rawList.map(normalizeReview).filter(Boolean);
     } catch (err) {
-      console.warn('Error fetching all reviews:', err);
+      console.warn('Error fetching all reviews from /api/reviews:', err);
       return [];
     }
   },
 
   /**
-   * Get reviews for a product using GET /api/reviews?productId=... (Section 6)
+   * Get reviews for a product using GET /api/reviews?productId=...
    */
   async getByProductId(productId) {
     if (!productId) return [];
@@ -73,8 +73,22 @@ export const reviewsApi = {
         rawList = parsed.reviews;
       }
     } catch (err) {
-      console.warn('Error getting reviews for product:', cleanId, err);
+      // In case product reviews are mounted at /api/products/:id/reviews
+      try {
+        const res2 = await axiosInstance.get(`/products/${cleanId}/reviews`);
+        const parsed2 = res2?.data || res2;
+        if (Array.isArray(parsed2)) {
+          rawList = parsed2;
+        } else if (parsed2 && typeof parsed2 === 'object' && Array.isArray(parsed2.data)) {
+          rawList = parsed2.data;
+        } else if (parsed2 && typeof parsed2 === 'object' && Array.isArray(parsed2.reviews)) {
+          rawList = parsed2.reviews;
+        }
+      } catch (err2) {
+        console.warn('Could not fetch reviews for product:', cleanId, err2);
+      }
     }
+
     return rawList.map(normalizeReview).filter(Boolean);
   },
 
@@ -100,13 +114,30 @@ export const reviewsApi = {
       comment: String(comment || '').trim()
     };
 
-    const res = await axiosInstance.post('/reviews', payload, { headers });
-    const raw = res?.data || res?.review || res;
-    return normalizeReview(raw);
+    try {
+      const res = await axiosInstance.post('/reviews', payload, { headers });
+      const raw = res?.data || res?.review || res;
+      return normalizeReview(raw);
+    } catch (err) {
+      // If 404, check alternate backend routes
+      if (err.status === 404 || err.response?.status === 404) {
+        try {
+          const res2 = await axiosInstance.post(`/products/${cleanId}/reviews`, {
+            rating: Number(rating || 5),
+            comment: String(comment || '').trim()
+          }, { headers });
+          const raw2 = res2?.data || res2?.review || res2;
+          return normalizeReview(raw2);
+        } catch (subErr) {
+          throw subErr;
+        }
+      }
+      throw err;
+    }
   },
 
   /**
-   * Admin: Reply to user review using POST /api/reviews/:id/reply (Section 6)
+   * Admin: Reply to user review using POST /api/reviews/:id/reply
    * Request body: { replyText: string }
    */
   async reply(reviewId, text) {
@@ -117,17 +148,15 @@ export const reviewsApi = {
 
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    
     const cleanText = typeof text === 'object' ? (text.replyText || text.comment || text.text) : text;
-    
-    const res = await axiosInstance.post(`/reviews/${cleanId}/reply`, {
-      replyText: String(cleanText || '').trim()
-    }, { headers });
+    const replyBody = { replyText: String(cleanText || '').trim() };
+
+    const res = await axiosInstance.post(`/reviews/${cleanId}/reply`, replyBody, { headers });
     return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Admin: Delete review using DELETE /api/reviews/:id (Section 6)
+   * Admin: Delete review using DELETE /api/reviews/:id
    */
   async delete(reviewId) {
     const cleanId = typeof reviewId === 'object' ? (reviewId._id || reviewId.id) : reviewId;

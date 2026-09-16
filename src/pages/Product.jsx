@@ -357,18 +357,29 @@ export default function Product() {
                     setIsSubmittingReview(true);
                     const prodId = product._id || product.id || id;
                     try {
-                      await reviewsApi.create({
+                      const createdReview = await reviewsApi.create({
                         productId: prodId,
                         comment: newComment.trim(),
                         rating: Number(newRating)
                       });
-                      showSuccess('دیدگاه شما با موفقیت ثبت شد.');
+                      showSuccess('دیدگاه شما با موفقیت در سامانه ثبت شد.');
                       setNewComment('');
-                      // Refresh reviews from API
-                      const updatedList = await reviewsApi.getByProductId(prodId);
-                      setReviews(updatedList || []);
+                      // Refresh reviews list from server
+                      try {
+                        const updatedList = await reviewsApi.getByProductId(prodId);
+                        if (updatedList && updatedList.length > 0) {
+                          setReviews(updatedList);
+                        } else if (createdReview) {
+                          setReviews((prev) => [createdReview, ...prev]);
+                        }
+                      } catch {
+                        if (createdReview) {
+                          setReviews((prev) => [createdReview, ...prev]);
+                        }
+                      }
                     } catch (err) {
-                      showError(err.response?.data?.message || err.message || 'خطا در ثبت نظر');
+                      const msg = err.response?.data?.error || err.response?.data?.message || err.message || 'خطا در ثبت نظر در سرور';
+                      showError(msg);
                     } finally {
                       setIsSubmittingReview(false);
                     }
