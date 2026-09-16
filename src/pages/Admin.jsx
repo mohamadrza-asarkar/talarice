@@ -67,6 +67,7 @@ export default function Admin() {
   const [editProdWeight, setEditProdWeight] = useState('۱۰ کیلوگرم');
   const [editProdStock, setEditProdStock] = useState('30');
   const [editProdDesc, setEditProdDesc] = useState('');
+  const [editProdIsAmazing, setEditProdIsAmazing] = useState(false);
   const [editProdImageBase64, setEditProdImageBase64] = useState('');
   const [isUpdatingProd, setIsUpdatingProd] = useState(false);
 
@@ -90,6 +91,7 @@ export default function Admin() {
   const [newProdWeight, setNewProdWeight] = useState('۱۰ کیلوگرم');
   const [newProdStock, setNewProdStock] = useState('30');
   const [newProdDesc, setNewProdDesc] = useState('');
+  const [newProdIsAmazing, setNewProdIsAmazing] = useState(false);
   const [newProdImageBase64, setNewProdImageBase64] = useState('');
   const [isSubmittingProd, setIsSubmittingProd] = useState(false);
 
@@ -320,11 +322,28 @@ export default function Admin() {
         weight: newProdWeight,
         stock: Number(newProdStock || 20),
         description: newProdDesc.trim() || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
+        isAmazing: Boolean(newProdIsAmazing),
         image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
       });
+      if (newProdIsAmazing) {
+        try {
+          await amazingProductsApi.create({
+            name: newProdName.trim(),
+            originalPrice: Number(newProdOriginalPrice || newProdPrice),
+            discountPercent: Number(newProdDiscount || 15),
+            image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
+          });
+          fetchAdminAmazingProducts();
+        } catch (err) {
+          console.debug('Failed to sync new amazing product:', err);
+        }
+      }
       setNewProdName('');
       setNewProdPrice('');
       setNewProdOriginalPrice('');
+      setNewProdDiscount('0');
+      setNewProdDesc('');
+      setNewProdIsAmazing(false);
       setNewProdImageBase64('');
       setShowAddProdForm(false);
       fetchAdminProducts();
@@ -362,8 +381,39 @@ export default function Admin() {
         weight: editProdWeight,
         stock: Number(editProdStock),
         description: editProdDesc.trim(),
+        isAmazing: Boolean(editProdIsAmazing),
         image: editProdImageBase64 || editingProduct.image
       });
+
+      // Synchronize with amazing deals endpoint
+      const existingAmazing = amazingProducts.find(
+        (ap) =>
+          (ap.name && ap.name === editingProduct.name) ||
+          (ap._id && (ap._id === editingProduct._id || ap._id === editingProduct.id)) ||
+          (ap.id && (ap.id === editingProduct._id || ap.id === editingProduct.id))
+      );
+
+      if (editProdIsAmazing && !existingAmazing) {
+        try {
+          await amazingProductsApi.create({
+            name: editProdName.trim(),
+            originalPrice: Number(editProdOriginalPrice || editProdPrice),
+            discountPercent: Number(editProdDiscount || 15),
+            image: editProdImageBase64 || editingProduct.image
+          });
+          fetchAdminAmazingProducts();
+        } catch (syncErr) {
+          console.debug('Failed to sync amazing product creation:', syncErr);
+        }
+      } else if (!editProdIsAmazing && existingAmazing) {
+        try {
+          await amazingProductsApi.delete(existingAmazing._id || existingAmazing.id);
+          fetchAdminAmazingProducts();
+        } catch (syncErr) {
+          console.debug('Failed to remove amazing product:', syncErr);
+        }
+      }
+
       setEditingProduct(null);
       fetchAdminProducts();
       showToast('محصول با موفقیت ویرایش شد.', 'success');
@@ -455,6 +505,7 @@ export default function Admin() {
     setEditProdWeight(p.weight || '۱۰ کیلوگرم');
     setEditProdStock(p.stock !== undefined ? p.stock : (p.countInStock || '30'));
     setEditProdDesc(p.description || '');
+    setEditProdIsAmazing(Boolean(p.isAmazing || amazingProducts.some(ap => ap.name === p.name || ap._id === (p._id || p.id) || ap.id === (p._id || p.id))));
     setEditProdImageBase64(p.image || '');
   };
 
@@ -668,6 +719,8 @@ export default function Admin() {
           setNewProdStock={newProdStock}
           newProdDesc={newProdDesc}
           setNewProdDesc={setNewProdDesc}
+          newProdIsAmazing={newProdIsAmazing}
+          setNewProdIsAmazing={setNewProdIsAmazing}
           newProdImageBase64={newProdImageBase64}
           setNewProdImageBase64={setNewProdImageBase64}
           isSubmittingProd={isSubmittingProd}
@@ -981,6 +1034,28 @@ export default function Admin() {
                   value={editProdDesc}
                   onChange={(e) => setEditProdDesc(e.target.value)}
                 />
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                padding: '0.75rem 1rem',
+                background: editProdIsAmazing ? '#fef2f2' : '#f8fafc',
+                border: editProdIsAmazing ? '1.5px solid #f87171' : '1px solid #e2e8f0',
+                borderRadius: '10px',
+                transition: 'all 0.2s ease'
+              }}>
+                <input
+                  type="checkbox"
+                  id="editProdIsAmazing"
+                  checked={editProdIsAmazing}
+                  onChange={(e) => setEditProdIsAmazing(e.target.checked)}
+                  style={{ width: '18px', height: '18px', accentColor: '#dc2626', cursor: 'pointer' }}
+                />
+                <label htmlFor="editProdIsAmazing" style={{ fontSize: '0.875rem', fontWeight: 600, color: editProdIsAmazing ? '#991b1b' : '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  🔥 قرار گرفتن در بخش پیشنهادهای شگفت‌انگیز (فروش ویژه)
+                </label>
               </div>
 
               <div>

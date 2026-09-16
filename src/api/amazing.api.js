@@ -12,8 +12,16 @@ export function normalizeAmazingProduct(raw) {
   if (!p || typeof p !== 'object') return null;
 
   const base = normalizeProduct(p);
+  const originalPrice = Number(p.originalPrice || p.oldPrice || base.originalPrice || base.price || 480000);
+  const discountPercent = Number(p.discountPercent || p.discount || base.discountPercent || 15);
+  const price = Number(p.price || p.dealPrice || (originalPrice > 0 ? Math.round(originalPrice * (1 - discountPercent / 100)) : base.price));
+
   return {
     ...base,
+    originalPrice,
+    price,
+    dealPrice: price,
+    discountPercent,
     isAmazing: true,
     amazingExpiresAt: p.amazingExpiresAt || p.expiresAt || null
   };

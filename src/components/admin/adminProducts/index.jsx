@@ -26,6 +26,8 @@ export function AdminProducts({
   setNewProdStock,
   newProdDesc,
   setNewProdDesc,
+  newProdIsAmazing,
+  setNewProdIsAmazing,
   newProdImageBase64,
   setNewProdImageBase64,
   isSubmittingProd,
@@ -197,6 +199,28 @@ export function AdminProducts({
             />
           </div>
 
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            background: newProdIsAmazing ? '#fef2f2' : '#f8fafc',
+            border: newProdIsAmazing ? '1.5px solid #f87171' : '1px solid #e2e8f0',
+            borderRadius: '10px',
+            transition: 'all 0.2s ease'
+          }}>
+            <input
+              type="checkbox"
+              id="newProdIsAmazing"
+              checked={newProdIsAmazing}
+              onChange={(e) => setNewProdIsAmazing(e.target.checked)}
+              style={{ width: '18px', height: '18px', accentColor: '#dc2626', cursor: 'pointer' }}
+            />
+            <label htmlFor="newProdIsAmazing" style={{ fontSize: '0.875rem', fontWeight: 600, color: newProdIsAmazing ? '#991b1b' : '#374151', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              🔥 قرار گرفتن در بخش پیشنهادهای شگفت‌انگیز (فروش ویژه)
+            </label>
+          </div>
+
           {/* Drag & Drop File Upload Area */}
           <div>
             <label className={styles.label}>تصویر محصول <span style={{ color: '#b91c1c' }}>*</span></label>
@@ -300,7 +324,14 @@ export function AdminProducts({
                   <img src={p.image} alt={p.name} style={{ width: '56px', height: '56px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
                   <div>
                     <h4 style={{ fontSize: '0.95rem', fontWeight: 700, margin: '0 0 0.2rem 0', color: '#111827' }}>{p.name}</h4>
-                    <span className={styles.badge} style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>{p.category}</span>
+                    <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                      <span className={styles.badge} style={{ backgroundColor: '#f1f5f9', color: '#475569' }}>{p.category}</span>
+                      {p.isAmazing && (
+                        <span className={styles.badge} style={{ backgroundColor: '#fee2e2', color: '#b91c1c', fontWeight: 700 }}>
+                          🔥 شگفت‌انگیز
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 <div style={{ fontSize: '0.9rem', color: '#1C3A27', fontWeight: 700, marginBottom: '0.5rem' }}>

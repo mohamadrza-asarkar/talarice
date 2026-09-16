@@ -69,7 +69,7 @@ export function AmazingDeals() {
         </time>
       </header>
 
-      <Link to={`/product/${product.id}`} className={styles.horizontalCard}>
+      <Link to={`/product/${product.id || product._id}`} className={styles.horizontalCard}>
         <div className={styles.imageCol}>
           <img src={product.image} alt={product.name} className={styles.productImage} />
           <span className={styles.discountBadge}>

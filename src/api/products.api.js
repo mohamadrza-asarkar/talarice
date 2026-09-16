@@ -33,6 +33,8 @@ export function normalizeProduct(raw) {
 
   const computedDiscount = discountPercent > 0 ? discountPercent : (originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0);
 
+  const isAmazing = p.isAmazing !== undefined ? Boolean(p.isAmazing) : false;
+
   return {
     ...p,
     id,
@@ -44,7 +46,7 @@ export function normalizeProduct(raw) {
     oldPrice: originalPrice,
     discountPercent: computedDiscount,
     dealPrice: p.dealPrice || price,
-    isAmazing: Boolean(p.isAmazing || computedDiscount > 0 || originalPrice > price),
+    isAmazing,
     amazingExpiresAt: p.amazingExpiresAt || null,
     isAvailable: p.isAvailable !== false,
     stock: p.countInStock !== undefined ? p.countInStock : (p.stock !== undefined ? p.stock : 20),
@@ -194,6 +196,9 @@ export const productsApi = {
     formData.append('name', (productData.name || '').trim());
     formData.append('description', (productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز').trim());
     formData.append('price', String(productData.price || 0));
+    if (productData.originalPrice !== undefined) formData.append('originalPrice', String(productData.originalPrice));
+    if (productData.discountPercent !== undefined) formData.append('discountPercent', String(productData.discountPercent));
+    if (productData.isAmazing !== undefined) formData.append('isAmazing', productData.isAmazing ? 'true' : 'false');
     formData.append('stock', String(productData.stock !== undefined ? productData.stock : 20));
     formData.append('category', (productData.category || 'kamfirouz').trim());
     formData.append('isAvailable', productData.isAvailable !== false ? 'true' : 'false');
@@ -227,6 +232,9 @@ export const productsApi = {
     if (productData.name !== undefined) formData.append('name', (productData.name || '').trim());
     if (productData.description !== undefined) formData.append('description', (productData.description || '').trim());
     if (productData.price !== undefined) formData.append('price', String(productData.price || 0));
+    if (productData.originalPrice !== undefined) formData.append('originalPrice', String(productData.originalPrice));
+    if (productData.discountPercent !== undefined) formData.append('discountPercent', String(productData.discountPercent));
+    if (productData.isAmazing !== undefined) formData.append('isAmazing', productData.isAmazing ? 'true' : 'false');
     if (productData.stock !== undefined) formData.append('stock', String(productData.stock || 20));
     if (productData.category !== undefined) formData.append('category', (productData.category || '').trim());
     if (productData.isAvailable !== undefined) formData.append('isAvailable', productData.isAvailable ? 'true' : 'false');
