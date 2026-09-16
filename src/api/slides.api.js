@@ -3,6 +3,7 @@
 // -------------------------------------------------------------
 import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
+import { imageToBlob } from './products.api';
 
 export function normalizeSlide(raw) {
   if (!raw) return null;
@@ -29,46 +30,30 @@ export function normalizeSlide(raw) {
 
 export const slidesApi = {
   /**
-   * Get all active slides/banners using axios.get
+   * Get all active slides/banners using GET /api/slides (Section 7)
    */
   async getAll(params = {}) {
-    const candidateEndpoints = [
-      '/slides',
-      '/banners',
-      '/sliders',
-      '/admin/slides'
-    ];
+    let rawList = [];
+    try {
+      const query = new URLSearchParams();
+      if (params.category) query.append('category', params.category);
+      const qs = query.toString();
+      const endpoint = `/slides${qs ? `?${qs}` : ''}`;
 
-    let rawList = null;
-    let lastError = null;
-
-    for (const ep of candidateEndpoints) {
-      try {
-        const query = new URLSearchParams();
-        if (params.category) query.append('category', params.category);
-        const qs = query.toString();
-        const fullEp = `${ep}${qs ? `?${qs}` : ''}`;
-
-        const res = await axiosInstance.get(fullEp);
-        if (Array.isArray(res)) {
-          rawList = res;
-          break;
-        } else if (Array.isArray(res?.data)) {
-          rawList = res.data;
-          break;
-        } else if (Array.isArray(res?.slides)) {
-          rawList = res.slides;
-          break;
-        } else if (Array.isArray(res?.banners)) {
-          rawList = res.banners;
-          break;
-        }
-      } catch (err) {
-        lastError = err;
+      const res = await axiosInstance.get(endpoint);
+      const parsed = res?.data || res;
+      if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.slides)) {
+        rawList = parsed.slides;
       }
+    } catch (err) {
+      console.warn('Error fetching slides:', err);
     }
 
-    return (rawList || []).map(normalizeSlide).filter(Boolean);
+    return rawList.map(normalizeSlide).filter(Boolean);
   },
 
   getSlides(params = {}) {
@@ -85,42 +70,28 @@ export const slidesApi = {
   },
 
   /**
-   * Create a new slide / banner (Admin) using axios.post with Token header
+   * Create a new slide / banner (Admin) using Multipart Form-Data (Section 7)
    */
   async create(slideData) {
-    const payload = {
-      title: slideData.title || '',
-      subtitle: slideData.subtitle || '',
-      description: slideData.description || '',
-      image: slideData.image || slideData.imageUrl || slideData.imageBase64 || '',
-      imageUrl: slideData.image || slideData.imageUrl || slideData.imageBase64 || '',
-      imageBase64: slideData.imageBase64 || slideData.image || '',
-      ctaText: slideData.ctaText || 'مشاهده و خرید محصولات',
-      link: slideData.link || '/products',
-      category: slideData.category || 'all',
-      isActive: slideData.isActive !== false
-    };
+    const formData = new FormData();
+    formData.append('title', (slideData.title || '').trim());
+    formData.append('link', (slideData.link || '/products').trim());
+    
+    // Optional additional text fields for UI compatibility
+    if (slideData.subtitle) formData.append('subtitle', slideData.subtitle.trim());
+    if (slideData.description) formData.append('description', slideData.description.trim());
+    if (slideData.ctaText) formData.append('ctaText', slideData.ctaText.trim());
+    if (slideData.category) formData.append('category', slideData.category.trim());
+
+    const imageBlob = await imageToBlob(slideData.image || slideData.imageUrl || slideData.imageBase64);
+    if (imageBlob) {
+      formData.append('image', imageBlob, 'slide_image.jpg');
+    }
 
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = ['/slides', '/admin/slides', '/banners'];
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.post(ep, payload, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
+    const res = await axiosInstance.post('/slides', formData, { headers });
     const raw = res?.data || res?.slide || res;
     return normalizeSlide(raw);
   },
@@ -130,35 +101,28 @@ export const slidesApi = {
   },
 
   /**
-   * Update slide (Admin) using axios.put/patch with Token header
+   * Update slide (Admin) using Multipart Form-Data (Section 7)
    */
   async update(id, slideData) {
-    const token = getStoredToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const formData = new FormData();
+    if (slideData.title !== undefined) formData.append('title', (slideData.title || '').trim());
+    if (slideData.link !== undefined) formData.append('link', (slideData.link || '').trim());
+    if (slideData.subtitle !== undefined) formData.append('subtitle', (slideData.subtitle || '').trim());
+    if (slideData.description !== undefined) formData.append('description', (slideData.description || '').trim());
+    if (slideData.ctaText !== undefined) formData.append('ctaText', (slideData.ctaText || '').trim());
+    if (slideData.category !== undefined) formData.append('category', (slideData.category || '').trim());
 
-    const endpoints = [`/slides/${id}`, `/admin/slides/${id}`, `/banners/${id}`];
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.put(ep, slideData, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await axiosInstance.patch(ep, slideData, { headers });
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
+    if (slideData.image || slideData.imageUrl || slideData.imageBase64) {
+      const imageBlob = await imageToBlob(slideData.image || slideData.imageUrl || slideData.imageBase64);
+      if (imageBlob) {
+        formData.append('image', imageBlob, 'slide_image.jpg');
       }
     }
 
-    if (!res && lastErr) {
-      throw lastErr;
-    }
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+    const res = await axiosInstance.put(`/slides/${id}`, formData, { headers });
     const raw = res?.data || res?.slide || res;
     return normalizeSlide(raw);
   },
@@ -168,24 +132,12 @@ export const slidesApi = {
   },
 
   /**
-   * Delete slide (Admin) using axios.delete with Token header
+   * Delete slide (Admin) (Section 7)
    */
   async delete(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    const endpoints = [`/slides/${id}`, `/admin/slides/${id}`, `/banners/${id}`];
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        return await axiosInstance.delete(ep, { headers });
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    throw lastErr;
+    return await axiosInstance.delete(`/slides/${id}`, { headers });
   },
 
   deleteSlide(id) {

@@ -24,34 +24,26 @@ export function normalizeReview(raw) {
 
 export const reviewsApi = {
   /**
-   * Get reviews for a product using axios.get
+   * Get reviews for a product using GET /api/reviews?productId=... (Section 6)
    */
   async getByProductId(productId) {
-    const endpoints = [
-      `/reviews/${productId}`,
-      `/reviews?productId=${productId}`
-    ];
     let rawList = [];
-    for (const ep of endpoints) {
-      try {
-        const res = await axiosInstance.get(ep);
-        const list = Array.isArray(res) ? res : (res?.data || []);
-        if (Array.isArray(list) && list.length > 0) {
-          rawList = list;
-          break;
-        } else if (res && Array.isArray(res)) {
-          rawList = res;
-          break;
-        }
-      } catch {
-        // try next fallback
+    try {
+      const res = await axiosInstance.get(`/reviews?productId=${productId}`);
+      const parsed = res?.data || res;
+      if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
       }
+    } catch (err) {
+      console.warn('Error getting reviews:', err);
     }
     return rawList.map(normalizeReview).filter(Boolean);
   },
 
   /**
-   * Post new review using axios.post with Token header
+   * Post new review using POST /api/reviews (Section 6)
    */
   async create({ productId, comment, rating = 5 }) {
     const token = getStoredToken();
@@ -65,19 +57,24 @@ export const reviewsApi = {
   },
 
   /**
-   * Admin: Reply to user review using axios.post with Token header
+   * Admin: Reply to user review using POST /api/reviews/:id/reply (Section 6)
    */
-  async reply(reviewId, comment) {
+  async reply(reviewId, text) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    
+    // Support both direct string or object containing replyText/comment
+    const cleanText = typeof text === 'object' ? (text.replyText || text.comment) : text;
+    
     const res = await axiosInstance.post(`/reviews/${reviewId}/reply`, {
-      comment: comment?.trim()
+      replyText: cleanText?.trim(),
+      comment: cleanText?.trim() // Safe fallback
     }, { headers });
     return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Admin: Delete review using axios.delete with Token header
+   * Admin: Delete review using DELETE /api/reviews/:id (Section 6)
    */
   async delete(reviewId) {
     const token = getStoredToken();

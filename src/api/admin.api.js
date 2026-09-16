@@ -8,122 +8,52 @@ import { normalizeOrder } from './orders.api';
 
 export const adminApi = {
   /**
-   * Get store dashboard summary statistics with smart fallback
+   * Get store dashboard summary statistics (Section 8)
+   * GET /api/admin/dashboard
    */
   async getDashboard() {
-    const candidateEndpoints = [
-      '/admin/dashboard',
-      '/admin/stats',
-      '/admin/analytics',
-      '/dashboard'
-    ];
-
-    for (const ep of candidateEndpoints) {
-      try {
-        const res = await client.get(ep);
-        const data = unwrapDoc(res?.data || res);
-        if (data && typeof data === 'object') {
-          return {
-            totalRevenue: Number(data.totalRevenue || data.revenue || data.totalSales || 0),
-            totalOrders: Number(data.totalOrders || data.ordersCount || data.orders || 0),
-            totalProducts: Number(data.totalProducts || data.productsCount || data.products || 0),
-            totalUsers: Number(data.totalUsers || data.usersCount || data.users || 0),
-            ...data
-          };
-        }
-      } catch {
-        // Try next endpoint
+    try {
+      const res = await client.get('/admin/dashboard');
+      const data = unwrapDoc(res?.data || res);
+      if (data && typeof data === 'object') {
+        return {
+          totalRevenue: Number(data.totalRevenue || data.revenue || data.totalSales || 0),
+          totalOrders: Number(data.totalOrders || data.ordersCount || data.orders || 0),
+          totalProducts: Number(data.totalProducts || data.productsCount || data.products || 0),
+          totalUsers: Number(data.totalUsers || data.usersCount || data.users || 0),
+          ...data
+        };
       }
+    } catch (err) {
+      console.warn('Error fetching admin dashboard statistics:', err);
     }
-
     return null;
   },
 
   /**
-   * Get all registered users (Admin)
+   * Get all registered users (Section 8)
+   * GET /api/admin/users
    */
   async getUsers() {
-    const candidateEndpoints = [
-      '/admin/users',
-      '/users',
-      '/admin/all-users',
-      '/users/all'
-    ];
-
-    let rawList = null;
-    let lastError = null;
-
-    for (const ep of candidateEndpoints) {
-      try {
-        const res = await client.get(ep);
-        if (Array.isArray(res)) {
-          rawList = res;
-          break;
-        } else if (Array.isArray(res?.data)) {
-          rawList = res.data;
-          break;
-        } else if (Array.isArray(res?.users)) {
-          rawList = res.users;
-          break;
-        }
-      } catch (err) {
-        lastError = err;
+    let rawList = [];
+    try {
+      const res = await client.get('/admin/users');
+      const parsed = res?.data || res;
+      if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.users)) {
+        rawList = parsed.users;
       }
+    } catch (err) {
+      console.warn('Error fetching admin users:', err);
     }
-
-    if (!rawList) {
-      if (lastError && !lastError.isNetworkError && lastError.status !== 404) {
-        throw lastError;
-      }
-      return [];
-    }
-
     return rawList.map(normalizeUser).filter(Boolean);
   },
 
   /**
-   * Create a new user (Admin)
-   */
-  async createUser(userData) {
-    const payload = {
-      name: userData.name || '',
-      phone: userData.phone || userData.mobile || '',
-      mobile: userData.phone || userData.mobile || '',
-      password: userData.password || '123456',
-      role: userData.role || 'user',
-      isAdmin: userData.role === 'admin',
-      address: userData.address || '',
-      email: userData.email || ''
-    };
-
-    const candidateEndpoints = [
-      '/admin/users',
-      '/users',
-      '/auth/register'
-    ];
-
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of candidateEndpoints) {
-      try {
-        res = await client.post(ep, payload);
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
-    const raw = unwrapDoc(res?.data || res?.user || res);
-    return normalizeUser(raw);
-  },
-
-  /**
-   * Update user role (Section 8.3)
+   * Update user role (Section 8)
    * PUT /api/admin/users/:id/role
    */
   async updateUserRole(id, role) {
@@ -133,7 +63,7 @@ export const adminApi = {
   },
 
   /**
-   * Toggle user ban / active status (Section 8.4)
+   * Toggle user active status (Section 8)
    * PUT /api/admin/users/:id/toggle-status
    */
   async toggleUserStatus(id) {
@@ -143,7 +73,7 @@ export const adminApi = {
   },
 
   /**
-   * Get all store orders for admin processing (Section 8.5)
+   * Get all store orders for admin processing (Section 8)
    * GET /api/admin/orders
    */
   async getAdminOrders(params = {}) {
@@ -153,87 +83,22 @@ export const adminApi = {
     const qs = query.toString();
     const endpoint = `/admin/orders${qs ? `?${qs}` : ''}`;
 
-    let rawList = null;
-    let lastError = null;
-
+    let rawList = [];
     try {
       const res = await client.get(endpoint);
-      if (Array.isArray(res)) {
-        rawList = res;
-      } else if (Array.isArray(res?.data)) {
-        rawList = res.data;
-      } else if (Array.isArray(res?.orders)) {
-        rawList = res.orders;
+      const parsed = res?.data || res;
+      if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
+        rawList = parsed.orders;
       }
     } catch (err) {
-      lastError = err;
-    }
-
-    if (!rawList) {
-      // Fallback to ordersApi.getAllOrders if /admin/orders returned error
-      try {
-        return await ordersApi.getAllOrders(params);
-      } catch {
-        if (lastError && !lastError.isNetworkError && lastError.status !== 404) {
-          throw lastError;
-        }
-        return [];
-      }
+      console.warn('Error getting admin orders:', err);
     }
 
     return rawList.map(normalizeOrder).filter(Boolean);
-  },
-
-  /**
-   * Update user role / info / status (Admin)
-   */
-  async updateUser(id, payload) {
-
-    const endpoints = [
-      `/admin/users/${id}`,
-      `/users/${id}`
-    ];
-    let res = null;
-    let lastErr = null;
-    for (const ep of endpoints) {
-      try {
-        res = await client.put(ep, payload);
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await client.patch(ep, payload);
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
-    const raw = unwrapDoc(res?.data || res?.user || res);
-    return normalizeUser(raw);
-  },
-
-  /**
-   * Delete user (Admin)
-   */
-  async deleteUser(id) {
-    const endpoints = [
-      `/admin/users/${id}`,
-      `/users/${id}`
-    ];
-    for (const ep of endpoints) {
-      try {
-        return await client.delete(ep);
-      } catch {
-        // ignore
-      }
-    }
-    return null;
   }
 };
 

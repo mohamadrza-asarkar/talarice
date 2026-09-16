@@ -1,5 +1,6 @@
 import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
+import { imageToBlob } from './products.api';
 
 export function normalizeOrder(raw) {
   if (!raw) return null;
@@ -22,11 +23,11 @@ export function normalizeOrder(raw) {
       })
     : [];
 
-  const rawStatus = String(o.status || o.state || 'processing').trim();
+  const rawStatus = String(o.status || o.state || 'pending').trim();
   const trackingCode = String(
-    o.trackingCode ||
-    o.postalTrackingCode ||
     o.postTrackingCode ||
+    o.postalTrackingCode ||
+    o.trackingCode ||
     o.tracking_code ||
     ''
   ).trim();
@@ -53,36 +54,38 @@ export function normalizeOrder(raw) {
     items,
     products: items,
     orderItems: items,
-    customerName: o.customerName || o.name || o.recipientName || '',
-    customerPhone: o.customerPhone || o.phone || o.mobile || '',
-    customerAddress: o.customerAddress || o.address || '',
-    paymentStatus: o.paymentStatus || 'pending',
+    customerName: o.receiverName || o.customerName || o.name || o.recipientName || '',
+    customerPhone: o.receiverPhone || o.customerPhone || o.phone || o.mobile || '',
+    customerAddress: o.shippingAddress || o.customerAddress || o.address || '',
+    paymentStatus: o.isVerified ? 'verified' : (o.paymentStatus || 'pending'),
+    isVerified: o.isVerified || false,
     createdAt: o.createdAt || o.date || new Date().toISOString()
   };
 }
 
 export const ordersApi = {
   /**
-   * Create a new order using axios.post
+   * Create a new order using POST /api/orders (Section 5.الف)
    */
   async create(orderData) {
-    const payload = {
-      // Documented fields (Section 6.الف)
-      shippingAddress: orderData.shippingAddress || orderData.address || orderData.customerAddress || '',
-      postalCode: orderData.postalCode || '',
-      receiverName: orderData.receiverName || orderData.name || orderData.customerName || '',
-      receiverPhone: orderData.receiverPhone || orderData.phone || orderData.customerPhone || '',
+    const formData = new FormData();
+    formData.append('shippingAddress', orderData.shippingAddress || orderData.address || '');
+    formData.append('postalCode', orderData.postalCode || '');
+    formData.append('receiverName', orderData.receiverName || orderData.name || '');
+    formData.append('receiverPhone', orderData.receiverPhone || orderData.phone || '');
 
-      // Legacy fallback fields for full compatibility
-      name: orderData.receiverName || orderData.name || orderData.customerName || '',
-      phone: orderData.receiverPhone || orderData.phone || orderData.customerPhone || '',
-      address: orderData.shippingAddress || orderData.address || orderData.customerAddress || '',
-      products: orderData.products || orderData.items || [],
-      paymentReceipt: orderData.paymentReceipt || orderData.receiptImage || ''
-    };
+    const receiptImg = orderData.receipt || orderData.paymentReceipt || orderData.receiptImage;
+    if (receiptImg) {
+      const receiptBlob = await imageToBlob(receiptImg);
+      if (receiptBlob) {
+        formData.append('receipt', receiptBlob, 'receipt.jpg');
+      }
+    }
+
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const res = await axiosInstance.post('/orders', payload, { headers });
+
+    const res = await axiosInstance.post('/orders', formData, { headers });
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
@@ -92,83 +95,33 @@ export const ordersApi = {
   },
   
   /**
-   * Upload or set payment receipt using axios.put/patch
+   * Upload or set payment receipt using POST /api/orders/:id/receipt (Section 5.د)
    */
-  async uploadReceipt(id, receiptBase64) {
-    let res = null;
-    let lastErr = null;
-    const payload = {
-      receiptImage: receiptBase64,
-      paymentReceipt: receiptBase64
-    };
+  async uploadReceipt(id, receiptImage) {
+    const formData = new FormData();
+    const receiptBlob = await imageToBlob(receiptImage);
+    if (receiptBlob) {
+      formData.append('receipt', receiptBlob, 'receipt.jpg');
+    }
     
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [
-      `/orders/${id}/receipt`,
-      `/orders/${id}/payment-receipt`,
-      `/orders/${id}`
-    ];
-
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.put(ep, payload, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await axiosInstance.patch(ep, payload, { headers });
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
+    const res = await axiosInstance.post(`/orders/${id}/receipt`, formData, { headers });
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
 
   /**
-   * Get order by ID or tracking code using axios.get
+   * Get order by ID using GET /api/orders/:id (Section 5.ج)
    */
-  async getById(idOrTracking) {
+  async getById(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [
-      `/orders/${idOrTracking}`,
-      `/orders/track/${idOrTracking}`,
-      `/orders?trackingCode=${idOrTracking}`
-    ];
-
-    let res = null;
-    let lastErr = null;
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.get(ep, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
-    const rawList = res?.data || res?.orders || res;
-    if (Array.isArray(rawList)) {
-      const found = rawList.find(o => String(o.id || o._id || o.trackingCode) === String(idOrTracking));
-      return normalizeOrder(found || rawList[0]);
-    }
-
-    return normalizeOrder(rawList);
+    const res = await axiosInstance.get(`/orders/${id}`, { headers });
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
   },
 
   getOrderById(id) {
@@ -176,36 +129,22 @@ export const ordersApi = {
   },
 
   /**
-   * Get all orders (Admin or User) using axios.get with Token header
+   * Get all orders of logged in user (Section 5.ب)
    */
   async getAll(params = {}) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = ['/orders', '/admin/orders'];
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.get(ep, { headers, params });
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
+    const res = await axiosInstance.get('/orders', { headers, params });
+    
     let rawList = [];
-    if (res && res.data && Array.isArray(res.data)) {
-      rawList = res.data;
-    } else if (Array.isArray(res)) {
-      rawList = res;
-    } else if (res?.orders && Array.isArray(res.orders)) {
-      rawList = res.orders;
+    const parsed = res?.data || res;
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      rawList = parsed.data;
+    } else if (Array.isArray(parsed)) {
+      rawList = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
+      rawList = parsed.orders;
     }
 
     return rawList.map(normalizeOrder).filter(Boolean);
@@ -216,16 +155,26 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Update order status using axios.put/patch with Token header
+   * Track order by code without login (Section 5.هـ)
    */
-  async updateStatus(id, status, trackingCode, adminNote) {
+  async trackOrder(code) {
+    const res = await axiosInstance.get(`/orders/track/${code}`);
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
+  },
+
+  /**
+   * Admin: Update order overall shipment status (Section 5.و)
+   * PUT /api/orders/:id/status with body { status, postTrackingCode }
+   */
+  async updateStatus(id, status, postTrackingCode) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     const targetStatus = typeof status === 'object' ? (status.status || status.state) : status;
-    const targetTracking = typeof status === 'object' ? (status.trackingCode || status.postalTrackingCode) : trackingCode;
+    const targetTracking = typeof status === 'object' ? (status.postTrackingCode || status.trackingCode) : postTrackingCode;
 
-    const statusMapEn = {
+    const statusMap = {
       'در حال بررسی': 'pending',
       'تایید شده': 'pending',
       'ارسال شده': 'shipped',
@@ -237,122 +186,43 @@ export const ordersApi = {
       'delivered': 'delivered',
       'cancelled': 'cancelled'
     };
-
-    const statusMapFa = {
-      'pending': 'در حال بررسی',
-      'processing': 'در حال بررسی',
-      'confirmed': 'در حال بررسی',
-      'shipped': 'ارسال شده',
-      'delivered': 'تحویل داده شده',
-      'cancelled': 'لغو شده'
-    };
     
-    const enStatus = statusMapEn[targetStatus] || targetStatus;
-    const faStatus = statusMapFa[targetStatus] || targetStatus;
+    const cleanStatus = statusMap[targetStatus] || targetStatus || 'pending';
 
-    const payload = {
-      status: enStatus,
-      state: enStatus,
-      orderStatus: enStatus,
-      enStatus,
-      faStatus,
-      trackingCode: targetTracking,
-      postalTrackingCode: targetTracking,
-      postTrackingCode: targetTracking,
-      adminNote: adminNote || ''
-    };
-
-    const endpoints = [
-      `/admin/orders/${id}/status`,
-      `/orders/${id}/status`,
-      `/orders/${id}`,
-      `/admin/orders/${id}`
-    ];
-
-    let res = null;
-    let lastErr = null;
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.put(ep, payload, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await axiosInstance.patch(ep, payload, { headers });
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
+    const res = await axiosInstance.put(`/orders/${id}/status`, {
+      status: cleanStatus,
+      postTrackingCode: targetTracking || ''
+    }, { headers });
 
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
 
   /**
-   * Admin: Verify bank receipt payment using axios.put/patch with Token header
+   * Admin: Verify bank receipt payment (Section 5.و)
+   * PUT /api/orders/:id/verify-payment with body { isVerified }
    */
   async verifyPayment(id, payload = {}) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [
-      `/orders/${id}/verify-payment`,
-      `/orders/${id}/payment`,
-      `/orders/${id}/status`,
-      `/orders/${id}`
-    ];
+    const isVerified = payload.isVerified !== undefined ? payload.isVerified : true;
 
-    let res = null;
-    let lastErr = null;
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.put(ep, payload, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await axiosInstance.patch(ep, payload, { headers });
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
+    const res = await axiosInstance.put(`/orders/${id}/verify-payment`, {
+      isVerified: isVerified === true || isVerified === 'true'
+    }, { headers });
 
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);
   },
 
   /**
-   * Admin: Delete order using axios.delete with Token header
+   * Delete order (Admin)
    */
   async delete(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    const endpoints = [
-      `/orders/${id}`,
-      `/admin/orders/${id}`
-    ];
-    let lastErr = null;
-    for (const ep of endpoints) {
-      try {
-        return await axiosInstance.delete(ep, { headers });
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-    throw lastErr;
+    return await axiosInstance.delete(`/orders/${id}`, { headers });
   },
 
   deleteOrder(id) {

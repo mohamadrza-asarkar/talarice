@@ -14,10 +14,20 @@ export const cartApi = {
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await axiosInstance.get('/cart', { headers });
       const data = unwrapDoc(res?.data || res);
+      
+      // Handle the data shape returned by GET /api/cart:
+      // { userId, products: [{ productId, name, price, quantity, image }], totalPrice }
+      const products = Array.isArray(data?.products) ? data.products : (Array.isArray(data?.items) ? data.items : []);
+      const items = products.map(p => ({
+        ...p,
+        productId: p.productId || p.product?._id || p.product?.id,
+        quantity: Number(p.quantity || p.qty || 1)
+      }));
+
       return {
-        items: Array.isArray(data?.items) ? data.items : [],
+        items,
         totalPrice: Number(data?.totalPrice || 0),
-        totalItems: Number(data?.totalItems || 0)
+        totalItems: items.reduce((sum, item) => sum + item.quantity, 0)
       };
     } catch {
       return { items: [], totalPrice: 0, totalItems: 0 };
@@ -25,66 +35,42 @@ export const cartApi = {
   },
 
   /**
-   * Add item to cart using axios.post with Token header
+   * Add item to cart using POST /cart/items
    */
   async addItem(productId, quantity = 1) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    try {
-      const res = await axiosInstance.post('/cart', {
-        productId,
-        quantity: Number(quantity)
-      }, { headers });
-      return unwrapDoc(res?.data || res);
-    } catch (err) {
-      const res = await axiosInstance.post('/cart/items', {
-        productId,
-        quantity: Number(quantity)
-      }, { headers });
-      return unwrapDoc(res?.data || res);
-    }
+    const res = await axiosInstance.post('/cart/items', {
+      productId,
+      quantity: Number(quantity)
+    }, { headers });
+    return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Update item quantity in cart using axios.put with Token header
+   * Update item quantity in cart using PUT /cart/items/:productId
    */
   async updateQuantity(productId, quantity) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    try {
-      const res = await axiosInstance.post('/cart', {
-        productId,
-        quantity: Number(quantity)
-      }, { headers });
-      return unwrapDoc(res?.data || res);
-    } catch (err) {
-      const res = await axiosInstance.put(`/cart/items/${productId}`, {
-        quantity: Number(quantity)
-      }, { headers });
-      return unwrapDoc(res?.data || res);
-    }
+    const res = await axiosInstance.put(`/cart/items/${productId}`, {
+      quantity: Number(quantity)
+    }, { headers });
+    return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Remove item from cart using axios.delete with Token header
+   * Remove item from cart using DELETE /cart/items/:productId
    */
   async removeItem(productId) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    try {
-      const res = await axiosInstance.post('/cart', {
-        productId,
-        quantity: 0
-      }, { headers });
-      return unwrapDoc(res?.data || res);
-    } catch (err) {
-      const res = await axiosInstance.delete(`/cart/items/${productId}`, { headers });
-      return unwrapDoc(res?.data || res);
-    }
+    const res = await axiosInstance.delete(`/cart/items/${productId}`, { headers });
+    return unwrapDoc(res?.data || res);
   },
 
   /**
-   * Clear entire cart using axios.delete with Token header
+   * Clear entire cart using DELETE /cart
    */
   async clearCart() {
     const token = getStoredToken();

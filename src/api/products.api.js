@@ -42,6 +42,54 @@ export function normalizeProduct(raw) {
   };
 }
 
+// Helper to convert base64 to Blob
+export function dataURLtoBlob(dataurl) {
+  if (!dataurl || typeof dataurl !== 'string' || !dataurl.startsWith('data:')) {
+    return null;
+  }
+  try {
+    const arr = dataurl.split(',');
+    const mime = arr[0].match(/:(.*?);/)[1];
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  } catch (err) {
+    console.warn('Error converting dataURL to Blob:', err);
+    return null;
+  }
+}
+
+// Helper to convert any image source (file, blob, base64, path) to Blob
+export async function imageToBlob(imageSource) {
+  if (!imageSource) return null;
+  if (imageSource instanceof Blob) return imageSource;
+  if (imageSource instanceof File) return imageSource;
+  if (typeof imageSource === 'string') {
+    if (imageSource.startsWith('data:')) {
+      return dataURLtoBlob(imageSource);
+    }
+    try {
+      const response = await fetch(imageSource);
+      return await response.blob();
+    } catch (err) {
+      console.warn('Could not fetch image to blob, sending dummy GIF:', err);
+      return new Blob([
+        new Uint8Array([
+          0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00,
+          0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x21, 0xf9, 0x04, 0x01, 0x00,
+          0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00,
+          0x00, 0x02, 0x02, 0x44, 0x01, 0x00, 0x3b
+        ])
+      ], { type: 'image/gif' });
+    }
+  }
+  return null;
+}
+
 export const productsApi = {
   /**
    * Get all products with optional filters using axios.get
@@ -60,16 +108,20 @@ export const productsApi = {
       if (params.minPrice) query.append('minPrice', params.minPrice);
       if (params.maxPrice) query.append('maxPrice', params.maxPrice);
       if (params.sortBy || params.sort) query.append('sortBy', params.sortBy || params.sort);
+      if (params.category) query.append('category', params.category);
       
       const qs = query.toString();
       const endpoint = `/products${qs ? `?${qs}` : ''}`;
       const res = await axiosInstance.get(endpoint);
       
-      if (res && res.data && Array.isArray(res.data)) {
-        rawList = res.data;
-        pagination = res.pagination || null;
-      } else if (Array.isArray(res)) {
-        rawList = res;
+      const parsed = res?.data || res;
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+        pagination = res.pagination || parsed.pagination || null;
+      } else if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.products)) {
+        rawList = parsed.products;
       }
     } catch (e) {
       console.debug('Using local fallback products due to network/server response:', e);
@@ -118,64 +170,30 @@ export const productsApi = {
   },
 
   /**
-   * Create a new product (Admin) using axios.post with explicit Token header support
+   * Create a new product (Admin) using Multipart Form-Data
    */
   async create(productData) {
-    const priceNum = Number(productData.price || productData.originalPrice || 0);
-    const originalPriceNum = Number(productData.originalPrice || productData.price || 0);
-    const discountNum = Number(productData.discountPercent || 0);
-    const stockNum = Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20));
-    const finalImage = productData.imageBase64 || productData.image || '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+    const formData = new FormData();
+    formData.append('name', (productData.name || '').trim());
+    formData.append('description', (productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز').trim());
+    formData.append('price', String(productData.price || 0));
+    formData.append('stock', String(productData.stock !== undefined ? productData.stock : 20));
+    formData.append('category', (productData.category || 'kamfirouz').trim());
+    formData.append('isAvailable', productData.isAvailable !== false ? 'true' : 'false');
+    
+    if (productData.weight) {
+      formData.append('weight', String(productData.weight));
+    }
 
-    // Build an exhaustive payload to satisfy any possible backend mongoose/sequelize schemas
-    const payload = {
-      name: productData.name || productData.title || 'برنج اصیل کامفیروز',
-      title: productData.name || productData.title || 'برنج اصیل کامفیروز',
-      description: productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
-      desc: productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز',
-      price: priceNum,
-      originalPrice: originalPriceNum,
-      oldPrice: originalPriceNum,
-      discountPercent: discountNum,
-      discount: discountNum,
-      countInStock: stockNum,
-      stock: stockNum,
-      category: productData.category || 'kamfirouz',
-      weight: productData.weight || '۱۰ کیلوگرم',
-      image: finalImage,
-      imageUrl: finalImage,
-      imageBase64: finalImage
-    };
+    const imageBlob = await imageToBlob(productData.image);
+    if (imageBlob) {
+      formData.append('image', imageBlob, 'product_image.jpg');
+    }
 
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    // Try all possible endpoint variations to avoid 404
-    const endpoints = [
-      '/admin/products',
-      '/products',
-      '/products/create',
-      '/products/add',
-      '/admin/products/create',
-      '/admin/add-product',
-      '/products/admin'
-    ];
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.post(ep, payload, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
+    const res = await axiosInstance.post('/products', formData, { headers });
     const raw = res?.data || res?.product || res;
     return normalizeProduct(raw);
   },
@@ -185,59 +203,29 @@ export const productsApi = {
   },
 
   /**
-   * Update product (Admin) using axios.put / axios.patch with Token header
+   * Update product (Admin) using Multipart Form-Data
    */
   async update(id, productData) {
-    const token = getStoredToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const formData = new FormData();
+    if (productData.name !== undefined) formData.append('name', (productData.name || '').trim());
+    if (productData.description !== undefined) formData.append('description', (productData.description || '').trim());
+    if (productData.price !== undefined) formData.append('price', String(productData.price || 0));
+    if (productData.stock !== undefined) formData.append('stock', String(productData.stock || 20));
+    if (productData.category !== undefined) formData.append('category', (productData.category || '').trim());
+    if (productData.isAvailable !== undefined) formData.append('isAvailable', productData.isAvailable ? 'true' : 'false');
+    if (productData.weight !== undefined) formData.append('weight', String(productData.weight));
 
-    // Map any possible schema structure to ensure compatibility
-    const priceNum = Number(productData.price || productData.originalPrice || 0);
-    const originalPriceNum = Number(productData.originalPrice || productData.price || 0);
-    const discountNum = Number(productData.discountPercent || 0);
-    const stockNum = Number(productData.stock !== undefined ? productData.stock : (productData.countInStock || 20));
-
-    const payload = {
-      ...productData,
-      price: priceNum,
-      originalPrice: originalPriceNum,
-      oldPrice: originalPriceNum,
-      discountPercent: discountNum,
-      discount: discountNum,
-      countInStock: stockNum,
-      stock: stockNum
-    };
-
-    const endpoints = [
-      `/admin/products/${id}`,
-      `/products/${id}`,
-      `/products/update/${id}`,
-      `/products/edit/${id}`,
-      `/admin/products/update/${id}`,
-      `/admin/products/edit/${id}`
-    ];
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        res = await axiosInstance.put(ep, payload, { headers });
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await axiosInstance.patch(ep, payload, { headers });
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
+    if (productData.image) {
+      const imageBlob = await imageToBlob(productData.image);
+      if (imageBlob) {
+        formData.append('image', imageBlob, 'product_image.jpg');
       }
     }
 
-    if (!res && lastErr) {
-      throw lastErr;
-    }
+    const token = getStoredToken();
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+    const res = await axiosInstance.put(`/products/${id}`, formData, { headers });
     const raw = res?.data || res?.product || res;
     return normalizeProduct(raw);
   },
@@ -247,29 +235,13 @@ export const productsApi = {
   },
 
   /**
-   * Delete product (Admin) using axios.delete with Token header
+   * Delete product (Admin) using DELETE /products/:id
    */
   async delete(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const endpoints = [
-      `/admin/products/${id}`,
-      `/products/${id}`,
-      `/products/delete/${id}`,
-      `/admin/products/delete/${id}`
-    ];
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        return await axiosInstance.delete(ep, { headers });
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    throw lastErr;
+    return await axiosInstance.delete(`/products/${id}`, { headers });
   },
 
   deleteProduct(id) {
@@ -277,12 +249,17 @@ export const productsApi = {
   },
 
   /**
-   * Add a review to a product using axios.post
+   * Add a review to a product (Section 6)
+   * POST /api/reviews with body { productId, rating, comment }
    */
   async addReview(productId, reviewData) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    return await axiosInstance.post(`/products/${productId}/reviews`, reviewData, { headers });
+    return await axiosInstance.post('/reviews', {
+      productId,
+      rating: Number(reviewData.rating || 5),
+      comment: (reviewData.comment || '').trim()
+    }, { headers });
   }
 };
 

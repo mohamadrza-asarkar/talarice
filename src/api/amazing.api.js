@@ -4,7 +4,7 @@
 // -------------------------------------------------------------
 import { client } from './client';
 import { unwrapDoc } from './auth.api';
-import { normalizeProduct } from './products.api';
+import { normalizeProduct, imageToBlob } from './products.api';
 
 export function normalizeAmazingProduct(raw) {
   if (!raw) return null;
@@ -30,103 +30,66 @@ export const amazingProductsApi = {
     if (params.sortBy) query.append('sortBy', params.sortBy);
 
     const qs = query.toString();
-    const candidateEndpoints = [
-      `/amazing-products${qs ? `?${qs}` : ''}`,
-      `/products/amazing${qs ? `?${qs}` : ''}`,
-      `/products?isAmazing=true${qs ? `&${qs}` : ''}`
-    ];
+    const endpoint = `/amazing-products${qs ? `?${qs}` : ''}`;
 
-    let rawList = null;
-    let lastErr = null;
-
-    for (const ep of candidateEndpoints) {
-      try {
-        const res = await client.get(ep);
-        if (Array.isArray(res)) {
-          rawList = res;
-          break;
-        } else if (Array.isArray(res?.data)) {
-          rawList = res.data;
-          break;
-        } else if (Array.isArray(res?.products)) {
-          rawList = res.products;
-          break;
-        }
-      } catch (err) {
-        lastErr = err;
+    let rawList = [];
+    try {
+      const res = await client.get(endpoint);
+      const parsed = res?.data || res;
+      if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
       }
-    }
-
-    if (!rawList) {
-      if (lastErr && !lastErr.isNetworkError && lastErr.status !== 404) {
-        throw lastErr;
-      }
-      return [];
+    } catch (err) {
+      console.debug('Error getting amazing products:', err);
     }
 
     return rawList.map(normalizeAmazingProduct).filter(Boolean);
   },
 
   /**
-   * Create amazing product (Admin)
+   * Create amazing product (Admin) using Multipart Form-Data
    */
   async create({ name, originalPrice, discountPercent, amazingExpiresAt, imageBase64, image }) {
-    const payload = {
-      name: name?.trim(),
-      originalPrice: Number(originalPrice || 0),
-      discountPercent: Number(discountPercent || 0),
-      amazingExpiresAt: amazingExpiresAt || null,
-      imageBase64: imageBase64 || image || ''
-    };
-
-    const endpoints = ['/amazing-products', '/products/amazing'];
-    let res = null;
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        res = await client.post(ep, payload);
-        break;
-      } catch (err) {
-        lastErr = err;
-      }
+    const formData = new FormData();
+    formData.append('name', (name || '').trim());
+    formData.append('originalPrice', String(originalPrice || 0));
+    formData.append('discountPercent', String(discountPercent || 0));
+    if (amazingExpiresAt) {
+      formData.append('amazingExpiresAt', String(amazingExpiresAt));
     }
 
-    if (!res && lastErr) {
-      throw lastErr;
+    const imageBlob = await imageToBlob(imageBase64 || image);
+    if (imageBlob) {
+      formData.append('image', imageBlob, 'amazing_image.jpg');
     }
 
+    const res = await client.post('/amazing-products', formData);
     const raw = res?.data || res?.product || res;
     return normalizeAmazingProduct(raw);
   },
 
   /**
-   * Update amazing product (Admin)
+   * Update amazing product (Admin) using Multipart Form-Data
    */
   async update(id, updateData) {
-    const endpoints = [`/amazing-products/${id}`, `/products/amazing/${id}`];
-    let res = null;
-    let lastErr = null;
+    const formData = new FormData();
+    if (updateData.name !== undefined) formData.append('name', (updateData.name || '').trim());
+    if (updateData.originalPrice !== undefined) formData.append('originalPrice', String(updateData.originalPrice || 0));
+    if (updateData.discountPercent !== undefined) formData.append('discountPercent', String(updateData.discountPercent || 0));
+    if (updateData.amazingExpiresAt !== undefined) {
+      formData.append('amazingExpiresAt', updateData.amazingExpiresAt ? String(updateData.amazingExpiresAt) : '');
+    }
 
-    for (const ep of endpoints) {
-      try {
-        res = await client.put(ep, updateData);
-        break;
-      } catch (err) {
-        lastErr = err;
-        try {
-          res = await client.patch(ep, updateData);
-          break;
-        } catch (patchErr) {
-          lastErr = patchErr;
-        }
+    if (updateData.imageBase64 || updateData.image) {
+      const imageBlob = await imageToBlob(updateData.imageBase64 || updateData.image);
+      if (imageBlob) {
+        formData.append('image', imageBlob, 'amazing_image.jpg');
       }
     }
 
-    if (!res && lastErr) {
-      throw lastErr;
-    }
-
+    const res = await client.put(`/amazing-products/${id}`, formData);
     const raw = res?.data || res?.product || res;
     return normalizeAmazingProduct(raw);
   },
@@ -135,18 +98,7 @@ export const amazingProductsApi = {
    * Delete amazing product (Admin)
    */
   async delete(id) {
-    const endpoints = [`/amazing-products/${id}`, `/products/amazing/${id}`];
-    let lastErr = null;
-
-    for (const ep of endpoints) {
-      try {
-        return await client.delete(ep);
-      } catch (err) {
-        lastErr = err;
-      }
-    }
-
-    throw lastErr;
+    return await client.delete(`/amazing-products/${id}`);
   }
 };
 
