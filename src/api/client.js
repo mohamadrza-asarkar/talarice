@@ -54,22 +54,37 @@ export async function request(endpoint, options = {}) {
     : `${API_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
   const token = getStoredToken();
-  const isFormData = options.body instanceof FormData;
+  const rawBody = options.body !== undefined ? options.body : options.data;
+  const isFormData = typeof FormData !== 'undefined' && rawBody instanceof FormData;
+
+  // Preserve Content-Type and Accept headers properly without options.headers overwriting Content-Type
+  const customHeaders = options.headers || {};
   const headers = {
-    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     'Accept': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-    ...(options.headers || {})
+    ...customHeaders
   };
+
+  let body = undefined;
+  if (rawBody !== undefined && rawBody !== null) {
+    if (isFormData || typeof rawBody === 'string') {
+      body = rawBody;
+    } else {
+      body = JSON.stringify(rawBody);
+    }
+  }
+
+  const { headers: _h, body: _b, data: _d, ...restOptions } = options;
 
   const config = {
     method: options.method || 'GET',
     headers,
-    ...options
+    ...restOptions
   };
 
-  if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
-    config.body = JSON.stringify(config.body);
+  if (body !== undefined && config.method !== 'GET' && config.method !== 'HEAD') {
+    config.body = body;
   }
 
   try {

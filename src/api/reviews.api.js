@@ -61,10 +61,10 @@ export const reviewsApi = {
     const cleanId = typeof productId === 'object' ? (productId._id || productId.id) : productId;
     if (!cleanId) return [];
 
-    let rawList = [];
     try {
       const res = await axiosInstance.get(`/reviews?productId=${encodeURIComponent(cleanId)}`);
       const parsed = res?.data || res;
+      let rawList = [];
       if (Array.isArray(parsed)) {
         rawList = parsed;
       } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
@@ -72,28 +72,15 @@ export const reviewsApi = {
       } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.reviews)) {
         rawList = parsed.reviews;
       }
+      return rawList.map(normalizeReview).filter(Boolean);
     } catch (err) {
-      // In case product reviews are mounted at /api/products/:id/reviews
-      try {
-        const res2 = await axiosInstance.get(`/products/${cleanId}/reviews`);
-        const parsed2 = res2?.data || res2;
-        if (Array.isArray(parsed2)) {
-          rawList = parsed2;
-        } else if (parsed2 && typeof parsed2 === 'object' && Array.isArray(parsed2.data)) {
-          rawList = parsed2.data;
-        } else if (parsed2 && typeof parsed2 === 'object' && Array.isArray(parsed2.reviews)) {
-          rawList = parsed2.reviews;
-        }
-      } catch (err2) {
-        console.warn('Could not fetch reviews for product:', cleanId, err2);
-      }
+      console.warn('Error fetching reviews for product:', cleanId, err);
+      return [];
     }
-
-    return rawList.map(normalizeReview).filter(Boolean);
   },
 
   /**
-   * Post new review using POST /api/reviews (Section 6)
+   * Post new review using POST /api/reviews
    * Request body: { productId: string, rating: number, comment: string }
    */
   async create({ productId, comment, rating = 5 }) {
@@ -114,26 +101,9 @@ export const reviewsApi = {
       comment: String(comment || '').trim()
     };
 
-    try {
-      const res = await axiosInstance.post('/reviews', payload, { headers });
-      const raw = res?.data || res?.review || res;
-      return normalizeReview(raw);
-    } catch (err) {
-      // If 404, check alternate backend routes
-      if (err.status === 404 || err.response?.status === 404) {
-        try {
-          const res2 = await axiosInstance.post(`/products/${cleanId}/reviews`, {
-            rating: Number(rating || 5),
-            comment: String(comment || '').trim()
-          }, { headers });
-          const raw2 = res2?.data || res2?.review || res2;
-          return normalizeReview(raw2);
-        } catch (subErr) {
-          throw subErr;
-        }
-      }
-      throw err;
-    }
+    const res = await axiosInstance.post('/reviews', payload, { headers });
+    const raw = res?.data || res?.review || res;
+    return normalizeReview(raw);
   },
 
   /**
