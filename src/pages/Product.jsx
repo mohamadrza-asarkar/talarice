@@ -30,9 +30,32 @@ export default function Product() {
   const [newComment, setNewComment] = useState('');
   const [newRating, setNewRating] = useState(5);
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [fetchedProduct, setFetchedProduct] = useState(null);
 
-  const product = products.find((p) => p.id === id || p._id === id) || products[0];
+  // Match from store or fallback to fetched product
+  const matchedProduct = products.find((p) => String(p.id) === String(id) || String(p._id) === String(id));
+  const product = matchedProduct || fetchedProduct || products[0];
 
+  // Fetch product if not available in current memory
+  React.useEffect(() => {
+    let isMounted = true;
+    async function loadProduct() {
+      if (!matchedProduct && id) {
+        try {
+          const single = await productsApi.getById(id);
+          if (isMounted && single) {
+            setFetchedProduct(single);
+          }
+        } catch (err) {
+          console.debug('Failed to fetch product by id:', id, err);
+        }
+      }
+    }
+    loadProduct();
+    return () => { isMounted = false; };
+  }, [id, matchedProduct]);
+
+  // Load reviews for this product
   React.useEffect(() => {
     let isMounted = true;
     async function fetchReviews() {
@@ -305,72 +328,90 @@ export default function Product() {
 
             <div className={styles.reviewsItemsList}>
               {/* فرم ارسال دیدگاه جدید */}
-              <form
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  if (!newComment.trim()) return;
-                  setIsSubmittingReview(true);
-                  const prodId = product._id || product.id;
-                  try {
-                    const res = await productsApi.addReview(prodId, {
-                      comment: newComment.trim(),
-                      rating: Number(newRating)
-                    });
-                    const serverRev = res?.data || res?.review || res;
-                    const newRev = {
-                      id: serverRev?._id || serverRev?.id || `rev-${Date.now()}`,
-                      userName: currentUser?.name || 'خریدار محترم',
-                      author: currentUser?.name || 'خریدار محترم',
-                      rating: Number(newRating),
-                      productId: prodId,
-                      comment: newComment.trim(),
-                      city: 'ایران'
-                    };
-                    setReviews((prev) => [newRev, ...prev]);
-                    showSuccess('دیدگاه شما با موفقیت در سرور ثبت گردید.');
-                    setNewComment('');
-                  } catch (err) {
-                    showError(`خطا در ثبت دیدگاه: ${err.message}`);
-                  } finally {
-                    setIsSubmittingReview(false);
-                  }
-                }}
-                className={styles.cardHighlight}
-                style={{ marginBottom: '1rem', padding: '1rem' }}
-              >
-                <strong style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.5rem' }}>
-                  ثبت نظر و تجربه پخت
-                </strong>
-                <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.5rem' }}>
-                  <label style={{ fontSize: '0.85rem' }}>امتیاز شما:</label>
-                  <select
-                    value={newRating}
-                    onChange={(e) => setNewRating(Number(e.target.value))}
-                    className={styles.select}
-                    style={{ width: 'auto', padding: '0.25rem 0.5rem' }}
+              {!currentUser ? (
+                <div style={{
+                  padding: '1rem',
+                  background: '#f8fafc',
+                  border: '1px dashed #cbd5e1',
+                  borderRadius: '12px',
+                  marginBottom: '1rem',
+                  textAlign: 'center'
+                }}>
+                  <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#475569' }}>
+                    برای ثبت نظر و امتیازدهی به این محصول، لطفاً ابتدا وارد حساب کاربری خود شوید.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/auth')}
+                    className={styles.btnPrimary}
+                    style={{ padding: '0.35rem 1rem', fontSize: '0.85rem' }}
                   >
-                    <option value={5}>۵ ستاره (عالی)</option>
-                    <option value={4}>۴ ستاره (بسیار خوب)</option>
-                    <option value={3}>۳ ستاره (متوسط)</option>
-                  </select>
+                    ورود / ثبت‌نام در سایت
+                  </button>
                 </div>
-                <textarea
-                  className={styles.textarea}
-                  rows={2}
-                  placeholder="تجربه شما از عطر، قدکشیدگی و کیفیت پخت..."
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  required
-                />
-                <button
-                  type="submit"
-                  disabled={isSubmittingReview}
-                  className={styles.btnPrimary}
-                  style={{ marginTop: '0.5rem', padding: '0.4rem 1rem' }}
+              ) : (
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!newComment.trim()) return;
+                    setIsSubmittingReview(true);
+                    const prodId = product._id || product.id || id;
+                    try {
+                      await reviewsApi.create({
+                        productId: prodId,
+                        comment: newComment.trim(),
+                        rating: Number(newRating)
+                      });
+                      showSuccess('دیدگاه شما با موفقیت ثبت شد.');
+                      setNewComment('');
+                      // Refresh reviews from API
+                      const updatedList = await reviewsApi.getByProductId(prodId);
+                      setReviews(updatedList || []);
+                    } catch (err) {
+                      showError(err.response?.data?.message || err.message || 'خطا در ثبت نظر');
+                    } finally {
+                      setIsSubmittingReview(false);
+                    }
+                  }}
+                  className={styles.cardHighlight}
+                  style={{ marginBottom: '1rem', padding: '1rem' }}
                 >
-                  {isSubmittingReview ? 'در حال ثبت...' : 'ارسال نظر'}
-                </button>
-              </form>
+                  <strong style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.5rem' }}>
+                    ثبت نظر و تجربه پخت
+                  </strong>
+                  <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <label style={{ fontSize: '0.85rem' }}>امتیاز شما:</label>
+                    <select
+                      value={newRating}
+                      onChange={(e) => setNewRating(Number(e.target.value))}
+                      className={styles.select}
+                      style={{ width: 'auto', padding: '0.25rem 0.5rem' }}
+                    >
+                      <option value={5}>۵ ستاره (عالی)</option>
+                      <option value={4}>۴ ستاره (بسیار خوب)</option>
+                      <option value={3}>۳ ستاره (متوسط)</option>
+                      <option value={2}>۲ ستاره (ضعیف)</option>
+                      <option value={1}>۱ ستاره (خیلی ضعیف)</option>
+                    </select>
+                  </div>
+                  <textarea
+                    className={styles.textarea}
+                    rows={2}
+                    placeholder="تجربه شما از عطر، قدکشیدگی و کیفیت پخت..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="submit"
+                    disabled={isSubmittingReview}
+                    className={styles.btnPrimary}
+                    style={{ marginTop: '0.5rem', padding: '0.4rem 1rem' }}
+                  >
+                    {isSubmittingReview ? 'در حال ثبت...' : 'ارسال نظر'}
+                  </button>
+                </form>
+              )}
 
               {reviews.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '1.5rem 1rem', color: '#78716c', fontSize: '0.9rem' }}>
@@ -392,6 +433,21 @@ export default function Product() {
                       </div>
                     </div>
                     <p className={styles.reviewComment}>{rev.comment}</p>
+                    {rev.reply && (
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.6rem 0.8rem',
+                        background: '#f0fdf4',
+                        borderRight: '3px solid #16a34a',
+                        borderRadius: '6px',
+                        fontSize: '0.85rem'
+                      }}>
+                        <strong style={{ color: '#166534', display: 'block', marginBottom: '0.2rem' }}>
+                          پاسخ مدیر فروشگاه:
+                        </strong>
+                        <span style={{ color: '#14532d' }}>{rev.reply}</span>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

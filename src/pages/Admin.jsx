@@ -95,6 +95,86 @@ export default function Admin() {
   const [newProdImageBase64, setNewProdImageBase64] = useState('');
   const [isSubmittingProd, setIsSubmittingProd] = useState(false);
 
+  // Auto-calculation functions for new product pricing
+  const handleNewPriceChange = (val) => {
+    setNewProdPrice(val);
+    const orig = Number(newProdOriginalPrice);
+    const cur = Number(val);
+    if (orig > 0 && cur > 0 && orig > cur) {
+      const disc = Math.round(((orig - cur) / orig) * 100);
+      setNewProdDiscount(String(disc));
+    } else if (cur >= orig && orig > 0) {
+      setNewProdDiscount('0');
+    }
+  };
+
+  const handleNewOriginalPriceChange = (val) => {
+    setNewProdOriginalPrice(val);
+    const orig = Number(val);
+    const cur = Number(newProdPrice);
+    const disc = Number(newProdDiscount);
+    if (orig > 0 && cur > 0 && orig > cur) {
+      const calculatedDisc = Math.round(((orig - cur) / orig) * 100);
+      setNewProdDiscount(String(calculatedDisc));
+    } else if (orig > 0 && disc > 0 && (!cur || cur === orig)) {
+      const calculatedPrice = Math.round(orig * (1 - disc / 100));
+      setNewProdPrice(String(calculatedPrice));
+    }
+  };
+
+  const handleNewDiscountChange = (val) => {
+    setNewProdDiscount(val);
+    const disc = Number(val);
+    const orig = Number(newProdOriginalPrice || newProdPrice);
+    if (orig > 0 && disc >= 0 && disc <= 100) {
+      const calculatedPrice = Math.round(orig * (1 - disc / 100));
+      setNewProdPrice(String(calculatedPrice));
+      if (!newProdOriginalPrice) {
+        setNewProdOriginalPrice(String(orig));
+      }
+    }
+  };
+
+  // Auto-calculation functions for edit product pricing
+  const handleEditPriceChange = (val) => {
+    setEditProdPrice(val);
+    const orig = Number(editProdOriginalPrice);
+    const cur = Number(val);
+    if (orig > 0 && cur > 0 && orig > cur) {
+      const disc = Math.round(((orig - cur) / orig) * 100);
+      setEditProdDiscount(String(disc));
+    } else if (cur >= orig && orig > 0) {
+      setEditProdDiscount('0');
+    }
+  };
+
+  const handleEditOriginalPriceChange = (val) => {
+    setEditProdOriginalPrice(val);
+    const orig = Number(val);
+    const cur = Number(editProdPrice);
+    const disc = Number(editProdDiscount);
+    if (orig > 0 && cur > 0 && orig > cur) {
+      const calculatedDisc = Math.round(((orig - cur) / orig) * 100);
+      setEditProdDiscount(String(calculatedDisc));
+    } else if (orig > 0 && disc > 0 && (!cur || cur === orig)) {
+      const calculatedPrice = Math.round(orig * (1 - disc / 100));
+      setEditProdPrice(String(calculatedPrice));
+    }
+  };
+
+  const handleEditDiscountChange = (val) => {
+    setEditProdDiscount(val);
+    const disc = Number(val);
+    const orig = Number(editProdOriginalPrice || editProdPrice);
+    if (orig > 0 && disc >= 0 && disc <= 100) {
+      const calculatedPrice = Math.round(orig * (1 - disc / 100));
+      setEditProdPrice(String(calculatedPrice));
+      if (!editProdOriginalPrice) {
+        setEditProdOriginalPrice(String(orig));
+      }
+    }
+  };
+
   // Form states for NEW Slide
   const [showAddSlideForm, setShowAddSlideForm] = useState(false);
   const [newSlideTitle, setNewSlideTitle] = useState('');
@@ -231,10 +311,23 @@ export default function Admin() {
     }
   }, []);
 
+  // Review states and actions
+  const [replyingReviewId, setReplyingReviewId] = useState(null);
+  const [replyInputText, setReplyInputText] = useState('');
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false);
+
   // Fetch reviews for all products
   const fetchAdminReviews = useCallback(async () => {
     setIsLoadingReviews(true);
     try {
+      // 1. Try global /api/reviews first
+      const globalList = await reviewsApi.getAll();
+      if (Array.isArray(globalList) && globalList.length > 0) {
+        setAllReviews(globalList);
+        return;
+      }
+
+      // 2. Fallback: fetch per product
       let activeProds = products || [];
       if (activeProds.length === 0) {
         const res = await productsApi.getAll({ limit: 100 });
@@ -312,12 +405,18 @@ export default function Admin() {
       return;
     }
     setIsSubmittingProd(true);
+    const salePrice = Number(newProdPrice);
+    const origPrice = Number(newProdOriginalPrice || newProdPrice);
+    const computedDiscount = Number(newProdDiscount) > 0 
+      ? Number(newProdDiscount) 
+      : (origPrice > salePrice ? Math.round(((origPrice - salePrice) / origPrice) * 100) : 0);
+
     try {
       await productsApi.create({
         name: newProdName.trim(),
-        price: Number(newProdPrice),
-        originalPrice: Number(newProdOriginalPrice || newProdPrice),
-        discountPercent: Number(newProdDiscount || 0),
+        price: salePrice,
+        originalPrice: origPrice,
+        discountPercent: computedDiscount,
         category: newProdCategory,
         weight: newProdWeight,
         stock: Number(newProdStock || 20),
@@ -329,8 +428,8 @@ export default function Admin() {
         try {
           await amazingProductsApi.create({
             name: newProdName.trim(),
-            originalPrice: Number(newProdOriginalPrice || newProdPrice),
-            discountPercent: Number(newProdDiscount || 15),
+            originalPrice: origPrice,
+            discountPercent: computedDiscount || 15,
             image: newProdImageBase64 || '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
           });
           fetchAdminAmazingProducts();
@@ -371,12 +470,18 @@ export default function Admin() {
     e.preventDefault();
     if (!editingProduct) return;
     setIsUpdatingProd(true);
+    const salePrice = Number(editProdPrice);
+    const origPrice = Number(editProdOriginalPrice || editProdPrice);
+    const computedDiscount = Number(editProdDiscount) > 0
+      ? Number(editProdDiscount)
+      : (origPrice > salePrice ? Math.round(((origPrice - salePrice) / origPrice) * 100) : 0);
+
     try {
       await productsApi.update(editingProduct._id || editingProduct.id, {
         name: editProdName.trim(),
-        price: Number(editProdPrice),
-        originalPrice: Number(editProdOriginalPrice),
-        discountPercent: Number(editProdDiscount),
+        price: salePrice,
+        originalPrice: origPrice,
+        discountPercent: computedDiscount,
         category: editProdCategory,
         weight: editProdWeight,
         stock: Number(editProdStock),
@@ -397,8 +502,8 @@ export default function Admin() {
         try {
           await amazingProductsApi.create({
             name: editProdName.trim(),
-            originalPrice: Number(editProdOriginalPrice || editProdPrice),
-            discountPercent: Number(editProdDiscount || 15),
+            originalPrice: origPrice,
+            discountPercent: computedDiscount || 15,
             image: editProdImageBase64 || editingProduct.image
           });
           fetchAdminAmazingProducts();
@@ -499,8 +604,21 @@ export default function Admin() {
     setEditingProduct(p);
     setEditProdName(p.name || p.title || '');
     setEditProdPrice(p.price || '');
-    setEditProdOriginalPrice(p.originalPrice || p.price || '');
-    setEditProdDiscount(p.discountPercent || '0');
+    const orig = p.originalPrice || p.price || '';
+    setEditProdOriginalPrice(orig);
+
+    const origNum = Number(orig);
+    const priceNum = Number(p.price);
+    let computedDiscount = p.discountPercent;
+    if (!computedDiscount || computedDiscount === '0' || computedDiscount === 0) {
+      if (origNum > 0 && priceNum > 0 && origNum > priceNum) {
+        computedDiscount = Math.round(((origNum - priceNum) / origNum) * 100);
+      } else {
+        computedDiscount = '0';
+      }
+    }
+    setEditProdDiscount(String(computedDiscount));
+
     setEditProdCategory(p.category || 'kamfirouz');
     setEditProdWeight(p.weight || '۱۰ کیلوگرم');
     setEditProdStock(p.stock !== undefined ? p.stock : (p.countInStock || '30'));
@@ -575,6 +693,36 @@ export default function Admin() {
       } catch (subErr) {
         showToast('خطا در تغییر نقش کاربر', 'error');
       }
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('آیا از حذف این نظر اطمینان دارید؟')) return;
+    try {
+      await reviewsApi.delete(reviewId);
+      showToast('نظر با موفقیت حذف شد.', 'success');
+      fetchAdminReviews();
+    } catch (err) {
+      showToast('خطا در حذف نظر: ' + (err.response?.data?.message || err.message), 'error');
+    }
+  };
+
+  const handleReplyReview = async (reviewId) => {
+    if (!replyInputText.trim()) {
+      showToast('لطفاً متن پاسخ را وارد نمایید.', 'error');
+      return;
+    }
+    setIsSubmittingReply(true);
+    try {
+      await reviewsApi.reply(reviewId, replyInputText.trim());
+      showToast('پاسخ به نظر با موفقیت ارسال شد.', 'success');
+      setReplyingReviewId(null);
+      setReplyInputText('');
+      fetchAdminReviews();
+    } catch (err) {
+      showToast('خطا در ارسال پاسخ: ' + (err.response?.data?.message || err.message), 'error');
+    } finally {
+      setIsSubmittingReply(false);
     }
   };
 
@@ -726,6 +874,9 @@ export default function Admin() {
           isSubmittingProd={isSubmittingProd}
           openEditProductModal={openEditProductModal}
           handleDeleteProduct={handleDeleteProduct}
+          handleNewPriceChange={handleNewPriceChange}
+          handleNewOriginalPriceChange={handleNewOriginalPriceChange}
+          handleNewDiscountChange={handleNewDiscountChange}
         />
       )}
 
@@ -826,30 +977,92 @@ export default function Admin() {
                 })
                 .map((r) => {
                   const rid = r._id || r.id;
+                  const isReplying = replyingReviewId === rid;
                   return (
                     <div key={rid} className={styles.statBox} style={{ border: '1px solid #e2e8f0', background: '#fff', padding: '1rem', borderRadius: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
                         <div>
-                          <strong style={{ color: '#111827' }}>{r.userName}</strong>
+                          <strong style={{ color: '#111827' }}>{r.userName || r.author || 'کاربر خریدار'}</strong>
                           <span style={{ fontSize: '0.8rem', color: '#6b7280', marginRight: '0.5rem' }}>
-                            روی محصول: <strong>{r.product?.name || 'محصول نامشخص'}</strong>
+                            روی محصول: <strong>{r.product?.name || r.productName || 'برنج اصیل'}</strong>
                           </span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{ background: '#fef3c7', color: '#d97706', padding: '0.15rem 0.5rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: 700 }}>
                             ★ {r.rating}
                           </span>
                           <button
                             type="button"
+                            className={styles.btnSecondary}
+                            style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#f1f5f9', color: '#334155', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                            onClick={() => {
+                              if (isReplying) {
+                                setReplyingReviewId(null);
+                                setReplyInputText('');
+                              } else {
+                                setReplyingReviewId(rid);
+                                setReplyInputText(r.reply || '');
+                              }
+                            }}
+                          >
+                            {isReplying ? 'انصراف' : (r.reply ? 'ویرایش پاسخ' : 'پاسخ به نظر')}
+                          </button>
+                          <button
+                            type="button"
                             className={styles.btnDanger}
                             style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
-                            onClick={() => handleDeleteReview && handleDeleteReview(rid)}
+                            onClick={() => handleDeleteReview(rid)}
                           >
                             حذف نظر
                           </button>
                         </div>
                       </div>
                       <p style={{ margin: '0 0 0.5rem 0', color: '#374151', fontSize: '0.9rem', lineHeight: 1.6 }}>{r.comment}</p>
+
+                      {r.reply && !isReplying && (
+                        <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: '#f0fdf4', borderRight: '3px solid #16a34a', borderRadius: '6px', fontSize: '0.85rem' }}>
+                          <strong style={{ color: '#166534', display: 'block', marginBottom: '0.2rem' }}>پاسخ ثبت‌شده ادمین:</strong>
+                          <span style={{ color: '#14532d' }}>{r.reply}</span>
+                        </div>
+                      )}
+
+                      {isReplying && (
+                        <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                          <label style={{ fontSize: '0.8rem', fontWeight: 600, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>
+                            متن پاسخ مدیر به این نظر:
+                          </label>
+                          <textarea
+                            className={styles.textarea}
+                            rows={2}
+                            placeholder="متن پاسخ رسمی فروشگاه را بنویسید..."
+                            value={replyInputText}
+                            onChange={(e) => setReplyInputText(e.target.value)}
+                            style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}
+                          />
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                              type="button"
+                              className={styles.btnPrimary}
+                              style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}
+                              disabled={isSubmittingReply}
+                              onClick={() => handleReplyReview(rid)}
+                            >
+                              {isSubmittingReply ? 'در حال ارسال...' : 'ثبت پاسخ'}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.btnSecondary}
+                              style={{ padding: '0.3rem 0.8rem', fontSize: '0.8rem' }}
+                              onClick={() => {
+                                setReplyingReviewId(null);
+                                setReplyInputText('');
+                              }}
+                            >
+                              لغو
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })
@@ -983,35 +1196,39 @@ export default function Admin() {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>قیمت فروش (تومان)</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>قیمت نهایی فروش (تومان)</label>
                   <input
                     type="number"
                     required
                     className={styles.input}
                     value={editProdPrice}
-                    onChange={(e) => setEditProdPrice(e.target.value)}
+                    onChange={(e) => handleEditPriceChange(e.target.value)}
                   />
                 </div>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>قیمت خط‌خورده (تومان)</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>قیمت اصلی / خط‌خورده (تومان)</label>
                   <input
                     type="number"
                     required
                     className={styles.input}
                     value={editProdOriginalPrice}
-                    onChange={(e) => setEditProdOriginalPrice(e.target.value)}
+                    onChange={(e) => handleEditOriginalPriceChange(e.target.value)}
                   />
                 </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>تخفیف (درصد)</label>
+                  <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>
+                    تخفیف (درصد) <span style={{ fontSize: '0.75rem', color: '#16a34a' }}>محاسبه خودکار ٪</span>
+                  </label>
                   <input
                     type="number"
+                    min="0"
+                    max="100"
                     className={styles.input}
                     value={editProdDiscount}
-                    onChange={(e) => setEditProdDiscount(e.target.value)}
+                    onChange={(e) => handleEditDiscountChange(e.target.value)}
                   />
                 </div>
                 <div>

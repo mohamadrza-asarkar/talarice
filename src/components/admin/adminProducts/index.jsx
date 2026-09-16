@@ -32,10 +32,53 @@ export function AdminProducts({
   setNewProdImageBase64,
   isSubmittingProd,
   openEditProductModal,
-  handleDeleteProduct
+  handleDeleteProduct,
+  handleNewPriceChange,
+  handleNewOriginalPriceChange,
+  handleNewDiscountChange
 }) {
   const fileInputRef = useRef(null);
   const [dragActive, setDragActive] = useState(false);
+
+  const onPriceChange = (val) => {
+    if (handleNewPriceChange) {
+      handleNewPriceChange(val);
+    } else {
+      setNewProdPrice(val);
+      const orig = Number(newProdOriginalPrice);
+      const cur = Number(val);
+      if (orig > 0 && cur > 0 && orig > cur && setNewProdDiscount) {
+        setNewProdDiscount(String(Math.round(((orig - cur) / orig) * 100)));
+      }
+    }
+  };
+
+  const onOriginalPriceChange = (val) => {
+    if (handleNewOriginalPriceChange) {
+      handleNewOriginalPriceChange(val);
+    } else {
+      setNewProdOriginalPrice(val);
+      const orig = Number(val);
+      const cur = Number(newProdPrice);
+      if (orig > 0 && cur > 0 && orig > cur && setNewProdDiscount) {
+        setNewProdDiscount(String(Math.round(((orig - cur) / orig) * 100)));
+      }
+    }
+  };
+
+  const onDiscountChange = (val) => {
+    if (handleNewDiscountChange) {
+      handleNewDiscountChange(val);
+    } else {
+      if (setNewProdDiscount) setNewProdDiscount(val);
+      const disc = Number(val);
+      const orig = Number(newProdOriginalPrice || newProdPrice);
+      if (orig > 0 && disc >= 0 && disc <= 100) {
+        setNewProdPrice(String(Math.round(orig * (1 - disc / 100))));
+        if (!newProdOriginalPrice) setNewProdOriginalPrice(String(orig));
+      }
+    }
+  };
 
   const handleDrag = (e) => {
     e.preventDefault();
@@ -135,24 +178,38 @@ export function AdminProducts({
               />
             </div>
             <div>
-              <label className={styles.label}>قیمت فروش (تومان) <span style={{ color: '#b91c1c' }}>*</span></label>
+              <label className={styles.label}>قیمت نهایی فروش (تومان) <span style={{ color: '#b91c1c' }}>*</span></label>
               <input
                 type="number"
                 className={styles.input}
                 placeholder="430000"
                 value={newProdPrice}
-                onChange={(e) => setNewProdPrice(e.target.value)}
+                onChange={(e) => onPriceChange(e.target.value)}
                 required
               />
             </div>
             <div>
-              <label className={styles.label}>قیمت خط‌خورده (تومان)</label>
+              <label className={styles.label}>قیمت اصلی / خط‌خورده (تومان)</label>
               <input
                 type="number"
                 className={styles.input}
                 placeholder="480000"
                 value={newProdOriginalPrice}
-                onChange={(e) => setNewProdOriginalPrice(e.target.value)}
+                onChange={(e) => onOriginalPriceChange(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className={styles.label}>
+                تخفیف (درصد) <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 'bold' }}>٪ خودکار</span>
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                className={styles.input}
+                placeholder="مثلا: 10"
+                value={newProdDiscount}
+                onChange={(e) => onDiscountChange(e.target.value)}
               />
             </div>
             <div>
