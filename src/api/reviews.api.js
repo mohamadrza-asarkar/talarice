@@ -16,13 +16,46 @@ export function normalizeReview(raw) {
 
   const reply = r.reply || r.adminReply || r.replyText || null;
 
+  // Extract author / username accurately from all possible backend fields
+  let userDisplay = '';
+  const u = (r.user && typeof r.user === 'object') ? r.user : ((r.userId && typeof r.userId === 'object') ? r.userId : null);
+
+  if (r.userName && typeof r.userName === 'string' && r.userName.trim() && r.userName !== 'کاربر خریدار' && r.userName !== 'خریدار محترم' && r.userName !== 'کاربر محترم') {
+    userDisplay = r.userName.trim();
+  } else if (r.name && typeof r.name === 'string' && r.name.trim()) {
+    userDisplay = r.name.trim();
+  } else if (r.fullName && typeof r.fullName === 'string' && r.fullName.trim()) {
+    userDisplay = r.fullName.trim();
+  } else if (r.author && typeof r.author === 'string' && r.author.trim() && r.author !== 'خریدار محترم' && r.author !== 'کاربر خریدار' && r.author !== 'کاربر محترم') {
+    userDisplay = r.author.trim();
+  } else if (r.authorName && typeof r.authorName === 'string' && r.authorName.trim()) {
+    userDisplay = r.authorName.trim();
+  } else if (r.username && typeof r.username === 'string' && r.username.trim()) {
+    userDisplay = r.username.trim();
+  } else if (u) {
+    userDisplay = u.name || u.fullName || u.username || (u.phone ? `کاربر (${u.phone})` : (u.email ? u.email.split('@')[0] : ''));
+  } else if (typeof r.user === 'string' && r.user.trim()) {
+    const val = r.user.trim();
+    if (val.startsWith('09') || /^\d{10,12}$/.test(val)) {
+      userDisplay = `کاربر (${val})`;
+    } else if (val.includes('@')) {
+      userDisplay = val.split('@')[0];
+    } else if (!/^[0-9a-fA-F]{24}$/.test(val)) {
+      userDisplay = val;
+    }
+  }
+
+  if (!userDisplay) {
+    userDisplay = r.phone ? `کاربر (${r.phone})` : (r.email ? r.email.split('@')[0] : (r.userName || r.author || 'کاربر سایت'));
+  }
+
   return {
     ...r,
     id: revId,
     _id: revId,
     productId: prodId,
-    userName: r.userName || r.name || r.author || r.user?.name || (typeof r.user === 'string' ? r.user : 'کاربر خریدار'),
-    author: r.userName || r.name || r.author || r.user?.name || 'خریدار محترم',
+    userName: userDisplay,
+    author: userDisplay,
     comment: r.comment || r.text || r.body || '',
     rating: Number(r.rating || 5),
     createdAt: r.createdAt || new Date().toISOString(),
@@ -81,9 +114,9 @@ export const reviewsApi = {
 
   /**
    * Post new review using POST /api/reviews
-   * Request body: { productId: string, rating: number, comment: string }
+   * Request body: { productId: string, rating: number, comment: string, userName?: string }
    */
-  async create({ productId, comment, rating = 5 }) {
+  async create({ productId, comment, rating = 5, userName = '' }) {
     const cleanId = typeof productId === 'object' ? (productId._id || productId.id) : productId;
     if (!cleanId) {
       throw new Error('شناسه محصول برای ثبت نظر نامعتبر است.');
@@ -101,9 +134,20 @@ export const reviewsApi = {
       comment: String(comment || '').trim()
     };
 
+    if (userName && typeof userName === 'string' && userName.trim()) {
+      payload.userName = userName.trim();
+      payload.name = userName.trim();
+      payload.author = userName.trim();
+    }
+
     const res = await axiosInstance.post('/reviews', payload, { headers });
     const raw = res?.data || res?.review || res;
-    return normalizeReview(raw);
+    const normalized = normalizeReview(raw);
+    if (normalized && (!normalized.userName || normalized.userName === 'کاربر سایت') && userName) {
+      normalized.userName = userName;
+      normalized.author = userName;
+    }
+    return normalized;
   },
 
   /**

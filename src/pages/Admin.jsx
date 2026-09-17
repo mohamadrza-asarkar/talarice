@@ -978,11 +978,12 @@ export default function Admin() {
                 .map((r) => {
                   const rid = r._id || r.id;
                   const isReplying = replyingReviewId === rid;
+                  const reviewerName = r.userName || r.author || r.name || (r.user?.name || r.user?.username || (r.user?.phone ? `کاربر (${r.user.phone})` : (r.phone ? `کاربر (${r.phone})` : 'کاربر')));
                   return (
                     <div key={rid} className={styles.statBox} style={{ border: '1px solid #e2e8f0', background: '#fff', padding: '1rem', borderRadius: '12px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
                         <div>
-                          <strong style={{ color: '#111827' }}>{r.userName || r.author || 'کاربر خریدار'}</strong>
+                          <strong style={{ color: '#111827' }}>{reviewerName}</strong>
                           <span style={{ fontSize: '0.8rem', color: '#6b7280', marginRight: '0.5rem' }}>
                             روی محصول: <strong>{r.product?.name || r.productName || 'برنج اصیل'}</strong>
                           </span>

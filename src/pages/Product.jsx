@@ -356,11 +356,13 @@ export default function Product() {
                     if (!newComment.trim()) return;
                     setIsSubmittingReview(true);
                     const prodId = product._id || product.id || id;
+                    const userDisplayName = currentUser?.name || currentUser?.fullName || currentUser?.username || (currentUser?.phone ? `کاربر (${currentUser.phone})` : '');
                     try {
                       const createdReview = await reviewsApi.create({
                         productId: prodId,
                         comment: newComment.trim(),
-                        rating: Number(newRating)
+                        rating: Number(newRating),
+                        userName: userDisplayName
                       });
                       showSuccess('دیدگاه شما با موفقیت در سامانه ثبت شد.');
                       setNewComment('');
@@ -430,37 +432,40 @@ export default function Product() {
                   هنوز دیدگاهی برای این محصول ثبت نشده است. اولین نظر و تجربه پخت را شما ثبت کنید!
                 </div>
               ) : (
-                reviews.map((rev) => (
-                  <div key={rev.id || rev._id} className={styles.reviewCardItem}>
-                    <div className={styles.reviewCardHeader}>
-                      <div>
-                        <strong className={styles.reviewerName}>{rev.author || rev.userName}</strong>
-                        <span className={styles.reviewerCity}>خریدار از {rev.city || 'ایران'}</span>
+                reviews.map((rev) => {
+                  const authorTitle = rev.userName || rev.author || rev.name || (rev.user?.name || rev.user?.username || (rev.user?.phone ? `کاربر (${rev.user.phone})` : (currentUser && (currentUser._id === rev.user || currentUser.id === rev.user) ? (currentUser.name || `کاربر (${currentUser.phone})`) : 'کاربر')));
+                  return (
+                    <div key={rev.id || rev._id} className={styles.reviewCardItem}>
+                      <div className={styles.reviewCardHeader}>
+                        <div>
+                          <strong className={styles.reviewerName}>{authorTitle}</strong>
+                          <span className={styles.reviewerCity}>{rev.city ? `خریدار از ${rev.city}` : 'خریدار محصول'}</span>
+                        </div>
+                        <div className={styles.starsSmall}>
+                          {[...Array(rev.rating || 5)].map((_, idx) => (
+                            <Star key={idx} size={12} className="fill-current text-yellow-400" />
+                          ))}
+                        </div>
                       </div>
-                      <div className={styles.starsSmall}>
-                        {[...Array(rev.rating || 5)].map((_, idx) => (
-                          <Star key={idx} size={12} className="fill-current text-yellow-400" />
-                        ))}
-                      </div>
+                      <p className={styles.reviewComment}>{rev.comment}</p>
+                      {rev.reply && (
+                        <div style={{
+                          marginTop: '0.5rem',
+                          padding: '0.6rem 0.8rem',
+                          background: '#f0fdf4',
+                          borderRight: '3px solid #16a34a',
+                          borderRadius: '6px',
+                          fontSize: '0.85rem'
+                        }}>
+                          <strong style={{ color: '#166534', display: 'block', marginBottom: '0.2rem' }}>
+                            پاسخ مدیر فروشگاه:
+                          </strong>
+                          <span style={{ color: '#14532d' }}>{rev.reply}</span>
+                        </div>
+                      )}
                     </div>
-                    <p className={styles.reviewComment}>{rev.comment}</p>
-                    {rev.reply && (
-                      <div style={{
-                        marginTop: '0.5rem',
-                        padding: '0.6rem 0.8rem',
-                        background: '#f0fdf4',
-                        borderRight: '3px solid #16a34a',
-                        borderRadius: '6px',
-                        fontSize: '0.85rem'
-                      }}>
-                        <strong style={{ color: '#166534', display: 'block', marginBottom: '0.2rem' }}>
-                          پاسخ مدیر فروشگاه:
-                        </strong>
-                        <span style={{ color: '#14532d' }}>{rev.reply}</span>
-                      </div>
-                    )}
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
