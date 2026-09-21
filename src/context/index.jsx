@@ -235,6 +235,19 @@ export function AppProvider({ children }) {
     };
   }, []);
 
+  // Listen for global 401 unauthorized events to gracefully notify user
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      setCurrentUser(null);
+      triggerNotification('نشست کاربری شما منقضی شده است یا نیاز به ورود با دسترسی مدیر دارید (خطای ۴۰۱).', 'error');
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    return () => {
+      window.removeEventListener('auth:unauthorized', handleUnauthorized);
+    };
+  }, [triggerNotification]);
+
   // Auth actions
   const loginUser = useCallback(async (phone, password) => {
     const cleanPhone = (phone || '').trim();
@@ -250,7 +263,8 @@ export function AppProvider({ children }) {
       const userObj = res?.user || normalizeUser(res);
       if (!userObj) throw new Error(res?.message || 'پاسخ نامعتبر از سرور.');
 
-      if (res.token) setStoredToken(res.token);
+      const token = res?.token || res?.data?.token;
+      if (token) setStoredToken(token);
       const uid = userObj.id || userObj._id;
       if (uid) localStorage.setItem(STORAGE_KEYS.USER_ID, String(uid));
 
@@ -284,7 +298,8 @@ export function AppProvider({ children }) {
       const userObj = res?.user || normalizeUser(res);
       if (!userObj) throw new Error(res?.message || 'پاسخ نامعتبر از سرور.');
 
-      if (res.token) setStoredToken(res.token);
+      const token = res?.token || res?.data?.token;
+      if (token) setStoredToken(token);
       const uid = userObj.id || userObj._id;
       if (uid) localStorage.setItem(STORAGE_KEYS.USER_ID, String(uid));
 

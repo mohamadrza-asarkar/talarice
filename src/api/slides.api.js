@@ -143,7 +143,14 @@ export const slidesApi = {
   async delete(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    return await axiosInstance.delete(`/slides/${id}`, { headers });
+    try {
+      return await axiosInstance.delete(`/slides/${id}`, { headers });
+    } catch (err) {
+      if (err.status === 404 || err.status === 405) {
+        return await axiosInstance.delete(`/admin/slides/${id}`, { headers });
+      }
+      throw err;
+    }
   },
 
   deleteSlide(id) {

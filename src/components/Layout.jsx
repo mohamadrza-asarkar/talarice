@@ -3,7 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { Header } from './header';
 import { BottomNav } from './bottomNav';
 import { CheckoutModal } from './checkoutModal';
-import styles from '../App.module.css';
+import styles from './layout.module.css';
 
 export function Layout() {
   return (

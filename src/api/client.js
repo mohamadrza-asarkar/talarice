@@ -1,25 +1,42 @@
 // -------------------------------------------------------------
 // Native Fetch API Client (No Axios / No XHR)
-// Base URL from documentation:
-// https://ais-dev-rpvkewlvjilhjnoamjgjvq-240344892228.europe-west1.run.app/api
+// Base URL: https://talarice.ir/api
 // -------------------------------------------------------------
 
-let DEFAULT_DOCS_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
-  ? import.meta.env.VITE_API_BASE_URL
-  : 'http://localhost:5000/api';
+let rawEnv = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
+  ? String(import.meta.env.VITE_API_BASE_URL).trim()
+  : '';
+
+if (rawEnv.startsWith('httsp://')) {
+  rawEnv = rawEnv.replace('httsp://', 'https://');
+}
+
+// If container environment injected localhost:5000, fallback to live backend at https://talarice.ir/api
+let DEFAULT_DOCS_BASE_URL = (rawEnv && !rawEnv.includes('localhost') && !rawEnv.includes('127.0.0.1'))
+  ? rawEnv
+  : 'https://talarice.ir/api';
+
+DEFAULT_DOCS_BASE_URL = DEFAULT_DOCS_BASE_URL.replace(/\/+$/, '');
 
 export const API_BASE_URL = DEFAULT_DOCS_BASE_URL;
 
 export function getImageUrl(imgPath) {
-  if (!imgPath) return '';
-  if (imgPath.startsWith('http://') || imgPath.startsWith('https://') || imgPath.startsWith('data:')) {
-    return imgPath;
+  if (!imgPath || typeof imgPath !== 'string') {
+    return '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   }
-  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '');
-  if (imgPath.startsWith('/')) {
-    return `${baseUrl}${imgPath}`;
+  const trimmed = imgPath.trim();
+  if (!trimmed) {
+    return '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   }
-  return `${baseUrl}/${imgPath}`;
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+    return trimmed;
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  const baseUrl = (API_BASE_URL || 'https://talarice.ir/api').replace(/\/api\/?$/, '');
+  const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
+  return `${baseUrl}${cleanPath}`;
 }
 
 export const TOKEN_STORAGE_KEY = 'tala_rice_token';
@@ -56,13 +73,14 @@ export async function request(endpoint, options = {}) {
   const token = getStoredToken();
   const rawBody = options.body !== undefined ? options.body : options.data;
   const isFormData = typeof FormData !== 'undefined' && rawBody instanceof FormData;
+  const isAuthPublicRoute = endpoint.includes('/auth/login') || endpoint.includes('/auth/register');
 
   // Preserve Content-Type and Accept headers properly without options.headers overwriting Content-Type
   const customHeaders = options.headers || {};
   const headers = {
     'Accept': 'application/json',
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(token && !isAuthPublicRoute && !options.skipAuth ? { 'Authorization': `Bearer ${token}` } : {}),
     ...customHeaders
   };
 
@@ -113,7 +131,35 @@ export async function request(endpoint, options = {}) {
     }
 
     if (!response.ok && response.status !== 304) {
-      const errorMsg = data?.message || data?.error || `خطای سرور (کد ${response.status})`;
+      let rawMsg = data?.message || data?.error;
+      const isHtmlError = !rawMsg || typeof rawMsg !== 'string' || rawMsg.trim().startsWith('<') || rawMsg.includes('<!DOCTYPE') || rawMsg.includes('<html');
+
+      let errorMsg = !isHtmlError ? rawMsg : '';
+
+      if (response.status === 401) {
+        if (isAuthPublicRoute) {
+          errorMsg = errorMsg || 'شماره موبایل یا رمز عبور وارد شده اشتباه است.';
+        } else {
+          errorMsg = errorMsg || 'نشست کاربری شما منقضی شده است یا نیاز به دسترسی مدیر دارید (خطای ۴۰۱). لطفاً مجدداً وارد شوید.';
+          setStoredToken(null);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { endpoint, status: 401 } }));
+          }
+        }
+      } else if (response.status === 403) {
+        errorMsg = errorMsg || 'دسترسی به این بخش نیازمند مجوز مدیریت سامانه است (خطای ۴۰۳).';
+      } else if (response.status === 400) {
+        errorMsg = errorMsg || 'اطلاعات ارسالی نامعتبر یا شماره موبایل تکراری است.';
+      } else if (response.status === 422) {
+        errorMsg = errorMsg || 'فرمت اطلاعات ورودی نامعتبر است. لطفاً شماره موبایل (۱۱ رقم با ۰۹) و رمز عبور (حداقل ۶ کاراکتر) را بررسی کنید.';
+      } else if (response.status === 404) {
+        errorMsg = errorMsg || 'اطلاعات یا آیتم مورد نظر در سرور یافت نشد (خطای ۴۰۴).';
+      } else if (response.status >= 500) {
+        errorMsg = 'سرور با خطای موقت مواجه شد. لطفاً لحظاتی بعد مجدداً تلاش نمایید.';
+      } else if (!errorMsg) {
+        errorMsg = `خطای سرور (کد ${response.status})`;
+      }
+
       const error = new Error(errorMsg);
       error.status = response.status;
       error.statusCode = response.status;

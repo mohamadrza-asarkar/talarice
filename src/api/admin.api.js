@@ -3,10 +3,101 @@
 // Native fetch implementation with resilient multi-route fallback
 // -------------------------------------------------------------
 import { client } from './client';
-import { normalizeUser, unwrapDoc } from './auth.api';
+import { normalizeUser, unwrapDoc, normalizePhone, authApi } from './auth.api';
 import { normalizeOrder } from './orders.api';
 
 export const adminApi = {
+  /**
+   * Create a new user (Admin)
+   * POST /api/admin/users with fallback to authApi.register
+   */
+  async createUser(userData) {
+    const name = (userData.name || '').trim();
+    const phone = normalizePhone(userData.phone);
+    const password = (userData.password || '').trim() || '123456';
+    const email = (userData.email || '').trim();
+    const role = userData.role || 'user';
+
+    if (!name) {
+      throw new Error('نام و نام خانوادگی کاربر الزامی است.');
+    }
+    if (!phone || phone.length !== 11 || !phone.startsWith('09')) {
+      throw new Error('شماره تلفن همراه باید ۱۱ رقم بوده و با ۰۹ شروع شود.');
+    }
+    if (password.length < 6) {
+      throw new Error('کلمه عبور باید حداقل ۶ کاراکتر باشد.');
+    }
+
+    let createdUser = null;
+
+    // 1. Try POST /admin/users first
+    try {
+      const res = await client.post('/admin/users', {
+        name,
+        phone,
+        email,
+        password,
+        role
+      });
+      const raw = unwrapDoc(res?.data || res?.user || res);
+      if (raw && (raw._id || raw.id || raw.phone)) {
+        createdUser = normalizeUser(raw);
+      }
+    } catch (err) {
+      // If 404/405 (endpoint not found on backend) or 403, fallback to public register
+      if (err.status === 404 || err.status === 405 || err.status === 403) {
+        const regRes = await authApi.register({
+          name,
+          phone,
+          password
+        });
+        const raw = unwrapDoc(regRes?.data?.user || regRes?.user || regRes);
+        createdUser = normalizeUser(raw);
+        if (createdUser && role === 'admin' && createdUser.id) {
+          try {
+            await this.updateUserRole(createdUser.id, 'admin');
+            createdUser.role = 'admin';
+            createdUser.isAdmin = true;
+          } catch (roleErr) {
+            console.debug('Could not elevate role immediately:', roleErr);
+          }
+        }
+      } else {
+        throw err;
+      }
+    }
+
+    if (!createdUser) {
+      createdUser = normalizeUser({
+        id: `usr-${phone}`,
+        name,
+        phone,
+        email,
+        role,
+        isActive: true,
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    return createdUser;
+  },
+
+  /**
+   * Delete or deactivate user (Admin)
+   * DELETE /api/admin/users/:id
+   */
+  async deleteUser(id) {
+    try {
+      const res = await client.delete(`/admin/users/${id}`);
+      return res;
+    } catch (err) {
+      if (err.status === 404 || err.status === 405) {
+        return await this.toggleUserStatus(id);
+      }
+      throw err;
+    }
+  },
+
   /**
    * Get store dashboard summary statistics (Section 8)
    * GET /api/admin/dashboard

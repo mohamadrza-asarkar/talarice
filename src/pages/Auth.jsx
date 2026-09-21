@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useApp } from '../context';
+import { normalizePhone } from '../api/auth.api';
 import styles from './auth.module.css';
 import logoImg from '../assets/logo.png';
 
@@ -31,8 +32,21 @@ export default function Auth() {
     e.preventDefault();
     setErrorMessage('');
 
-    if (!phone.trim()) {
+    // Normalize phone number on submit
+    const cleanPhone = normalizePhone(phone);
+
+    if (!cleanPhone) {
       setErrorMessage('لطفاً شماره موبایل خود را وارد نمایید.');
+      return;
+    }
+
+    if (!/^09\d{9}$/.test(cleanPhone)) {
+      setErrorMessage('شماره موبایل نامعتبر است. لطفاً شماره موبایل ۱۱ رقمی معتبر (مانند ۰۹۱۲۳۴۵۶۷۸۹) وارد کنید.');
+      return;
+    }
+
+    if (mode === 'register' && !name.trim()) {
+      setErrorMessage('وارد کردن نام و نام خانوادگی الزامی است.');
       return;
     }
 
@@ -41,22 +55,22 @@ export default function Auth() {
       return;
     }
 
+    if (password.trim().length < 6) {
+      setErrorMessage('کلمه عبور باید حداقل ۶ رقم یا کاراکتر باشد.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       if (mode === 'register') {
-        if (password.trim().length < 4) {
-          setErrorMessage('رمز عبور باید حداقل ۴ رقم یا کاراکتر باشد.');
-          setIsSubmitting(false);
-          return;
-        }
-        const res = await registerUser(name.trim(), phone.trim(), password.trim());
+        const res = await registerUser(name.trim(), cleanPhone, password.trim());
         if (res.success) {
           navigate(redirectPath, { replace: true });
         } else {
           setErrorMessage(res.message || 'خطا در ثبت‌نام.');
         }
       } else {
-        const res = await loginUser(phone.trim(), password.trim());
+        const res = await loginUser(cleanPhone, password.trim());
         if (res.success) {
           navigate(redirectPath, { replace: true });
         } else {
@@ -109,8 +123,60 @@ export default function Auth() {
         {/* جعبه نمایش خطا */}
         {errorMessage && (
           <div className={styles.errorBox} role="alert">
-            <i className="fa-solid fa-circle-exclamation" />
-            <span>{errorMessage}</span>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', width: '100%' }}>
+              <i className="fa-solid fa-circle-exclamation" style={{ marginTop: '3px' }} />
+              <div style={{ flex: 1 }}>
+                <div>{errorMessage}</div>
+                {mode === 'login' && (errorMessage.includes('یافت نشد') || errorMessage.includes('اشتباه است')) && (
+                  <div style={{ marginTop: '8px', fontSize: '0.85rem' }}>
+                    <span>هنوز ثبت‌نام نکرده‌اید؟ </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('register');
+                        setErrorMessage('');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        color: 'inherit',
+                        textDecoration: 'underline',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      اینجا حساب جدید بسازید
+                    </button>
+                  </div>
+                )}
+                {mode === 'register' && errorMessage.includes('قبلاً ثبت‌نام شده') && (
+                  <div style={{ marginTop: '8px', fontSize: '0.85rem' }}>
+                    <span>قبلاً عضو شده‌اید؟ </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMode('login');
+                        setErrorMessage('');
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 0,
+                        color: 'inherit',
+                        textDecoration: 'underline',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        fontFamily: 'inherit'
+                      }}
+                    >
+                      ورود به حساب کاربری
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -128,6 +194,7 @@ export default function Auth() {
                   placeholder="مثال: علی محمدی"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  required
                 />
               </div>
             </div>
@@ -160,7 +227,7 @@ export default function Auth() {
               <input
                 type={showPassword ? 'text' : 'password'}
                 className={styles.passwordInput}
-                placeholder={mode === 'register' ? 'حداقل ۴ کاراکتر وارد کنید' : 'رمز عبور خود را وارد کنید'}
+                placeholder={mode === 'register' ? 'حداقل ۶ کاراکتر وارد کنید' : 'رمز عبور خود را وارد کنید'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

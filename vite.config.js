@@ -1,11 +1,10 @@
 import react from '@vitejs/plugin-react';
-import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 import { defineConfig } from 'vite';
 
 export default defineConfig(function () {
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [react()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
@@ -18,7 +17,12 @@ export default defineConfig(function () {
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {
         '/api': {
-          target: process.env.VITE_BACKEND_URL || 'http://localhost:5000',
+          target: process.env.VITE_BACKEND_URL || 'https://talarice.ir',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/uploads': {
+          target: process.env.VITE_BACKEND_URL || 'https://talarice.ir',
           changeOrigin: true,
           secure: false,
         },

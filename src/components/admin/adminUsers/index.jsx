@@ -1,110 +1,127 @@
-import React from 'react';
-import { Users, UserPlus, ShieldCheck, Trash2, X } from 'lucide-react';
-import styles from '../../../pages/pages.module.css';
+import React, { useState } from 'react';
+import { Users, UserPlus, ShieldCheck, Trash2, X, AlertCircle } from 'lucide-react';
+import styles from '../admin.module.css';
+
+const initialForm = {
+  name: '',
+  phone: '',
+  email: '',
+  password: '',
+  role: 'user'
+};
 
 export function AdminUsers({
   adminUsers = [],
-  userSearchQuery = '',
-  setUserSearchQuery,
-  showAddUserModal,
-  setShowAddUserModal,
-  newUserName = '',
-  setNewUserName,
-  newUserPhone = '',
-  setNewUserPhone,
-  newUserEmail = '',
-  setNewUserEmail,
-  newUserPassword = '',
-  setNewUserPassword,
-  newUserRole = 'user',
-  setNewUserRole,
-  handleAddUser,
-  isSubmittingUser = false,
-  handleDeleteUser,
-  handleUpdateUserRole
+  onAddUser,
+  onDeleteUser,
+  onUpdateRole
 }) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [form, setForm] = useState(initialForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const filteredUsers = adminUsers.filter((u) => {
-    if (!userSearchQuery.trim()) return true;
-    const q = userSearchQuery.toLowerCase().trim();
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
     return (
       String(u.name || '').toLowerCase().includes(q) ||
-      String(u.phone || u.mobile || '').includes(q) ||
+      String(u.phone || '').includes(q) ||
       String(u.email || '').toLowerCase().includes(q)
     );
   });
 
+  const handleFieldChange = (key, value) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.phone.trim()) return;
+    setIsSubmitting(true);
+    try {
+      if (onAddUser) {
+        await onAddUser(form);
+      }
+      setForm(initialForm);
+      setShowModal(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <section className={styles.card}>
-      <div className={styles.pageHeader}>
-        <div>
-          <h2 className={styles.pageTitle} style={{ margin: 0 }}>مدیریت کاربران سامانه</h2>
-          <p className={styles.pageSubtitle}>فهرست مشتریان، کشاورزان و مدیران ثبت‌نام شده در پایگاه داده با قابلیت مدیریت نقش و حذف</p>
+      <div className={styles.toolbar}>
+        <div className={styles.titleArea}>
+          <h2 className={styles.title}>مدیریت کاربران سامانه</h2>
+          <p className={styles.subtitle}>مشاهده، ارتقا نقش یا حذف حساب‌های کاربری</p>
         </div>
         <button
           type="button"
-          className={styles.backButton}
-          style={{ backgroundColor: '#1C3A27', color: '#fff', borderColor: '#1C3A27' }}
-          onClick={() => setShowAddUserModal && setShowAddUserModal(true)}
+          className={styles.primaryBtn}
+          onClick={() => setShowModal(true)}
         >
-          <UserPlus size={15} />
-          افزودن کاربر جدید
+          <UserPlus size={16} />
+          <span>افزودن کاربر جدید</span>
         </button>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
+      <div className={styles.toolbar}>
         <input
           type="text"
-          className={styles.input}
-          placeholder="جستجو با نام، شماره تماس یا ایمیل کاربر..."
-          value={userSearchQuery}
-          onChange={(e) => setUserSearchQuery(e.target.value)}
+          className={styles.searchInput}
+          placeholder="جستجو با نام، شماره تماس یا ایمیل..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
         />
       </div>
 
-      <div className={styles.flexCol} style={{ gap: '0.75rem' }}>
+      <div className={styles.itemsList}>
         {filteredUsers.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '2rem', color: '#78716c', background: '#fafaf9', borderRadius: '12px' }}>
-            <Users size={32} style={{ margin: '0 auto 0.5rem auto', opacity: 0.5 }} />
-            <p>کاربری با مشخصات مورد نظر یافت نشد.</p>
+          <div className={styles.emptyState}>
+            <Users size={32} />
+            <p>کاربری با این مشخصات یافت نشد.</p>
           </div>
         ) : (
           filteredUsers.map((u) => {
-            const uid = u._id || u.id;
-            const isAdminRole = u.role === 'admin' || u.isAdmin;
+            const uid = u.id || u._id;
+            const isAdmin = u.role === 'admin' || u.isAdmin;
             return (
-              <div key={uid} className={styles.statBox} style={{ border: '1px solid #e2e8f0', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-                <div>
-                  <div className={styles.flexRow} style={{ alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                    <strong style={{ fontSize: '1rem', color: '#111827' }}>{u.name || 'کاربر بدون نام'}</strong>
-                    {isAdminRole && (
-                      <span className={styles.badge} style={{ backgroundColor: '#fef3c7', color: '#92400e', borderColor: '#fde68a' }}>
-                        <ShieldCheck size={12} style={{ display: 'inline', verticalAlign: '-2px', marginLeft: '3px' }} />
-                        مدیر سیستم
+              <div key={uid} className={styles.itemRow}>
+                <div className={styles.itemDetails}>
+                  <div className={styles.rowCenter}>
+                    <h3 className={styles.itemName}>{u.name || 'کاربر بدون نام'}</h3>
+                    {isAdmin && (
+                      <span className={`${styles.badge} ${styles.badgeWarning}`}>
+                        <ShieldCheck size={12} />
+                        <span>مدیر سیستم</span>
                       </span>
                     )}
                   </div>
-                  <p className={styles.pageSubtitle} style={{ margin: 0 }}>
-                    تلفن: <span dir="ltr">{u.phone || u.mobile || 'ثبت نشده'}</span> | ایمیل: {u.email || 'ثبت نشده'}
+                  <p className={styles.itemMeta}>
+                    <span>تلفن: {u.phone || 'ثبت نشده'}</span>
+                    <span>|</span>
+                    <span>ایمیل: {u.email || 'ثبت نشده'}</span>
                   </p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.itemActions}>
                   <button
                     type="button"
-                    className={styles.backButton}
-                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                    onClick={() => handleUpdateUserRole && handleUpdateUserRole(uid, u.role || (isAdminRole ? 'admin' : 'user'))}
+                    className={styles.secondaryBtn}
+                    onClick={() => onUpdateRole && onUpdateRole(uid, isAdmin ? 'user' : 'admin')}
                   >
-                    {isAdminRole ? 'تنظیم به کاربر' : 'ارتقا به مدیر'}
+                    {isAdmin ? 'تنظیم به کاربر عادی' : 'ارتقا به مدیر'}
                   </button>
                   <button
                     type="button"
-                    className={styles.btnDanger}
-                    style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', background: '#fee2e2', color: '#b91c1c', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}
-                    onClick={() => handleDeleteUser && handleDeleteUser(uid)}
+                    className={styles.dangerBtn}
+                    onClick={() => setUserToDelete(u)}
                   >
                     <Trash2 size={14} />
-                    حذف
+                    <span>حذف</span>
                   </button>
                 </div>
               </div>
@@ -113,98 +130,135 @@ export function AdminUsers({
         )}
       </div>
 
-      {/* Add User Modal */}
-      {showAddUserModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 1100, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-          <div style={{ background: '#fff', borderRadius: '16px', padding: '2rem', maxWidth: '500px', width: '100%', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <h3 style={{ margin: 0, color: '#1C3A27', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <UserPlus size={20} />
-                افزودن کاربر جدید به سامانه
-              </h3>
+      {/* Delete confirmation modal */}
+      {userToDelete && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>تأیید حذف کاربر</h3>
               <button
                 type="button"
-                onClick={() => setShowAddUserModal(false)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6b7280' }}
+                className={styles.closeBtn}
+                onClick={() => setUserToDelete(null)}
               >
-                <X size={20} />
+                <X size={18} />
+              </button>
+            </div>
+            <p className={styles.confirmText}>
+              آیا از حذف حساب کاربری «{userToDelete.name || userToDelete.phone}» اطمینان دارید؟
+            </p>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => setUserToDelete(null)}
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                className={styles.dangerBtn}
+                onClick={() => {
+                  const uid = userToDelete.id || userToDelete._id;
+                  setUserToDelete(null);
+                  if (onDeleteUser) onDeleteUser(uid);
+                }}
+              >
+                حذف قطعی
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add User Modal */}
+      {showModal && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>افزودن کاربر جدید</h3>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setShowModal(false)}
+              >
+                <X size={18} />
               </button>
             </div>
 
-            <form onSubmit={handleAddUser} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>نام و نام خانوادگی *</label>
+            <form onSubmit={handleSubmit} className={styles.formGrid}>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>نام و نام خانوادگی</label>
                 <input
                   type="text"
-                  required
                   className={styles.input}
-                  placeholder="مثال: رضا کریمی"
-                  value={newUserName}
-                  onChange={(e) => setNewUserName(e.target.value)}
+                  placeholder="مثال: علی احمدی"
+                  value={form.name}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>شماره تماس (موبایل) *</label>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>شماره تماس (الزامی)</label>
                 <input
                   type="text"
-                  required
                   className={styles.input}
-                  placeholder="09123456789"
-                  value={newUserPhone}
-                  onChange={(e) => setNewUserPhone(e.target.value)}
+                  placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+                  value={form.phone}
+                  onChange={(e) => handleFieldChange('phone', e.target.value)}
+                  required
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>ایمیل (اختیاری)</label>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>رمز عبور (الزامی)</label>
+                <input
+                  type="password"
+                  className={styles.input}
+                  placeholder="حداقل ۶ کاراکتر"
+                  value={form.password}
+                  onChange={(e) => handleFieldChange('password', e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>ایمیل (اختیاری)</label>
                 <input
                   type="email"
                   className={styles.input}
                   placeholder="user@example.com"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  value={form.email}
+                  onChange={(e) => handleFieldChange('email', e.target.value)}
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>کلمه عبور اولیه *</label>
-                <input
-                  type="password"
-                  required
-                  className={styles.input}
-                  placeholder="حداقل ۶ کاراکتر"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, color: '#374151', marginBottom: '0.35rem' }}>نقش کاربر در سامانه</label>
+              <div className={styles.formGroup}>
+                <label className={styles.label}>سطح دسترسی</label>
                 <select
-                  className={styles.input}
-                  value={newUserRole}
-                  onChange={(e) => setNewUserRole(e.target.value)}
+                  className={styles.select}
+                  value={form.role}
+                  onChange={(e) => handleFieldChange('role', e.target.value)}
                 >
-                  <option value="user">کاربر عادی / مشتری</option>
-                  <option value="admin">مدیر سیستم (Admin)</option>
+                  <option value="user">کاربر عادی / خریدار</option>
+                  <option value="admin">مدیر سیستم (دسترسی کامل)</option>
                 </select>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
+              <div className={styles.modalFooter}>
                 <button
                   type="button"
-                  className={styles.backButton}
-                  onClick={() => setShowAddUserModal(false)}
+                  className={styles.secondaryBtn}
+                  onClick={() => setShowModal(false)}
                 >
                   انصراف
                 </button>
                 <button
                   type="submit"
-                  className={styles.btnPrimary}
-                  disabled={isSubmittingUser}
+                  className={styles.primaryBtn}
+                  disabled={isSubmitting}
                 >
-                  {isSubmittingUser ? 'در حال ثبت...' : 'ثبت و ایجاد کاربر'}
+                  {isSubmitting ? 'در حال ثبت...' : 'ثبت کاربر'}
                 </button>
               </div>
             </form>
@@ -214,3 +268,5 @@ export function AdminUsers({
     </section>
   );
 }
+
+export default AdminUsers;

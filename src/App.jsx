@@ -16,17 +16,9 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/catalog" element={<Navigate to="/products" replace />} />
         <Route path="/products" element={<Catalog />} />
         <Route path="/cart" element={<CartPage />} />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/auth" element={<Auth />} />
       </Route>
 
@@ -35,23 +27,7 @@ function App() {
         <Route path="/search" element={<Search />} />
       </Route>
 
-      <Route
-        path="/admin/*"
-        element={
-          <ProtectedRoute requireAdmin>
-            <Admin />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute requireAdmin>
-            <Admin />
-          </ProtectedRoute>
-        }
-      />
-
+      <Route path="/admin/*" element={<ProtectedRoute requireAdmin><Admin /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

@@ -55,13 +55,27 @@ export function normalizeUser(raw) {
   };
 }
 
+// Normalize Persian/Arabic and formatted phone numbers to standard 11-digit Iranian mobile (09xxxxxxxxx)
+export function normalizePhone(rawPhone) {
+  if (!rawPhone) return '';
+  let p = String(rawPhone).trim();
+  p = p.replace(/[۰-۹]/g, (d) => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+  p = p.replace(/[٠-٩]/g, (d) => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  p = p.replace(/\D/g, '');
+  if (p.startsWith('0098') && p.length === 14) {
+    p = '0' + p.slice(4);
+  } else if (p.startsWith('98') && p.length === 12) {
+    p = '0' + p.slice(2);
+  } else if (p.startsWith('9') && p.length === 10) {
+    p = '0' + p;
+  }
+  return p;
+}
+
 // Extract and save token from response
 function extractAndSaveToken(resData) {
   if (!resData || typeof resData !== 'object') return null;
-  const unwrapped = unwrapDoc(resData);
   const token =
-    unwrapped.token ||
-    unwrapped.accessToken ||
     resData.token ||
     resData.data?.token ||
     resData.accessToken ||
@@ -81,7 +95,7 @@ export const authApi = {
    * Register with name, phone, password using axios.post
    */
   async register({ name, phone, password }) {
-    const cleanPhone = (phone || '').trim();
+    const cleanPhone = normalizePhone(phone);
     const cleanPassword = (password || '').trim();
     const cleanName = (name || '').trim();
 
@@ -91,9 +105,10 @@ export const authApi = {
       password: cleanPassword
     });
 
-    extractAndSaveToken(res);
+    const token = extractAndSaveToken(res);
     return {
       ...res,
+      token,
       user: normalizeUser(res)
     };
   },
@@ -102,7 +117,7 @@ export const authApi = {
    * Login with phone and password using axios.post
    */
   async login({ phone, password }) {
-    const cleanPhone = (phone || '').trim();
+    const cleanPhone = normalizePhone(phone);
     const cleanPassword = (password || '').trim();
 
     const res = await axiosInstance.post('/auth/login', {
@@ -110,9 +125,10 @@ export const authApi = {
       password: cleanPassword
     });
 
-    extractAndSaveToken(res);
+    const token = extractAndSaveToken(res);
     return {
       ...res,
+      token,
       user: normalizeUser(res)
     };
   },
