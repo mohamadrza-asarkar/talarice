@@ -8,16 +8,8 @@ export function AmazingDeals() {
   const { products, amazingProducts, addToCart } = useApp();
   const navigate = useNavigate();
   
-  // 1. Use real amazing products from API if non-empty
-  // 2. Otherwise filter products with deal or discount flags
-  // 3. Otherwise fallback to first product in catalog so section is always present
-  const filteredFromProducts = (products || []).filter(function (p) {
-    return p.isAmazing || p.isDeal || p.isSpecialDeal || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || (p.dealPrice && p.dealPrice < p.price);
-  });
-
-  const dealProducts = (amazingProducts && amazingProducts.length > 0)
-    ? amazingProducts
-    : (filteredFromProducts.length > 0 ? filteredFromProducts : (products && products.length > 0 ? [products[0]] : []));
+  // Strictly use real amazing products returned from API
+  const dealProducts = Array.isArray(amazingProducts) ? amazingProducts : [];
 
   // Choose the single featured amazing product
   const product = dealProducts[0];

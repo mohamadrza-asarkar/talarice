@@ -108,9 +108,9 @@ export function HeroSlider() {
       />
 
       <div className={styles.content}>
-        <span className={styles.badge}>{slide.subtitle || 'فروش ویژه طلا رایس'}</span>
-        <h2 className={styles.title}>{slide.title}</h2>
-        <p className={styles.description}>{slide.description}</p>
+        {slide.subtitle ? <span className={styles.badge}>{slide.subtitle}</span> : null}
+        {slide.title ? <h2 className={styles.title}>{slide.title}</h2> : null}
+        {slide.description ? <p className={styles.description}>{slide.description}</p> : null}
       </div>
 
       <footer className={styles.controls}>
@@ -120,7 +120,7 @@ export function HeroSlider() {
           className={styles.ctaButton}
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <span>{slide.ctaText || 'مشاهده و خرید محصولات'}</span>
+          <span>{slide.ctaText || 'مشاهده و خرید'}</span>
           <i className="fa-solid fa-arrow-left" />
         </button>
 

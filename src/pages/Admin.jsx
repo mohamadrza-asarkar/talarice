@@ -212,53 +212,19 @@ export default function Admin() {
   const handleAddDeal = async (dealData) => {
     try {
       const pid = dealData.productId;
-      const hours = Number(dealData.dealDurationHours || dealData.amazingDurationHours || 24);
-      const days = Number(dealData.amazingDurationDays || Math.ceil(hours / 24) || 2);
-      const discount = Number(dealData.discountPercent || 15);
-
-      let success = false;
-
-      // Primary approach: update product flag via products API
-      try {
-        const updated = await productsApi.update(pid, {
-          isAmazing: true,
-          discountPercent: discount,
-          amazingDurationHours: hours,
-          amazingDurationDays: days
-        });
-        if (updated) success = true;
-      } catch (err) {
-        console.warn('productsApi.update failed for amazing:', err);
+      if (!pid) {
+        showToast('لطفاً یک محصول را انتخاب کنید.', 'error');
+        return;
       }
 
-      // Secondary approach: toggle via amazing API
-      try {
-        await amazingProductsApi.toggle(pid);
-        success = true;
-      } catch (err) {
-        // Fallback: create amazing deal via amazing API
-        try {
-          await amazingProductsApi.add({
-            ...dealData,
-            amazingDurationHours: hours,
-            amazingDurationDays: days
-          });
-          success = true;
-        } catch (err2) {
-          console.warn('amazingProductsApi.add failed:', err2);
-        }
-      }
+      // Single direct API request to toggle/enable amazing product
+      await amazingProductsApi.toggle(pid);
 
       if (refreshProductsFromApi) {
         await refreshProductsFromApi();
-      } else {
-        const selected = products.find((product) => product.id === pid || product._id === pid);
-        if (selected) {
-          setAmazingProducts((previous) => [...(Array.isArray(previous) ? previous : []), { ...selected, ...dealData, isAmazing: true }]);
-        }
       }
 
-      showToast('محصول با موفقیت به شگفت‌انگیز اضافه شد.', 'success');
+      showToast('محصول با موفقیت به پیشنهاد شگفت‌انگیز اضافه شد.', 'success');
     } catch {
       showToast('خطا در افزودن پیشنهاد شگفت‌انگیز', 'error');
     }
@@ -266,27 +232,14 @@ export default function Admin() {
 
   const handleRemoveDeal = async (id) => {
     try {
-      // 1. First attempt to untag isAmazing flag via products API
-      try {
-        await productsApi.update(id, { isAmazing: false, discountPercent: 0 });
-      } catch (err) {
-        console.warn('productsApi.update untag failed:', err);
-      }
-
-      // 2. Safely untag via toggle without invoking HTTP DELETE on backend
-      try {
-        await amazingProductsApi.toggle(id);
-      } catch (err) {
-        console.warn('amazingProductsApi.toggle failed:', err);
-      }
+      // Single direct API request to toggle/disable amazing product
+      await amazingProductsApi.toggle(id);
 
       if (refreshProductsFromApi) {
         await refreshProductsFromApi();
-      } else {
-        setAmazingProducts((previous) => (Array.isArray(previous) ? previous : []).filter((product) => product.id !== id && product._id !== id));
       }
 
-      showToast('محصول از پیشنهاد شگفت‌انگیز خارج شد (محصول در فروشگاه باقی ماند).', 'success');
+      showToast('محصول از پیشنهاد شگفت‌انگیز خارج شد.', 'success');
     } catch {
       showToast('خطا در خروج محصول از شگفت‌انگیز', 'error');
     }
