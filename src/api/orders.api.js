@@ -69,44 +69,69 @@ export const ordersApi = {
    */
   async create(orderData) {
     const data = orderData || {};
-    const formData = new FormData();
     const address = data.shippingAddress || data.fullAddress || data.address || '';
-    formData.append('shippingAddress', address);
-    formData.append('address', address);
-    formData.append('postalCode', data.postalCode || '');
     const recName = data.receiverName || data.recipientName || data.name || '';
-    formData.append('receiverName', recName);
-    formData.append('name', recName);
     const recPhone = data.receiverPhone || data.phone || '';
-    formData.append('receiverPhone', recPhone);
-    formData.append('phone', recPhone);
-    if (data.province) formData.append('province', data.province);
-    if (data.city) formData.append('city', data.city);
-    if (data.paymentMethod) formData.append('paymentMethod', data.paymentMethod);
-    if (data.totalPrice) formData.append('totalPrice', String(data.totalPrice));
     
-    if (data.items && Array.isArray(data.items)) {
-      formData.append('items', JSON.stringify(data.items));
-      formData.append('products', JSON.stringify(data.items));
-    } else if (data.products && Array.isArray(data.products)) {
-      formData.append('items', JSON.stringify(data.products));
-      formData.append('products', JSON.stringify(data.products));
-    }
+    // Prepare standardized products array
+    const rawItems = data.items || data.products || [];
+    const normalizedItems = Array.isArray(rawItems) ? rawItems.map((item) => {
+      const pid = item.id || item._id || item.productId;
+      return {
+        product: pid,
+        productId: pid,
+        quantity: Number(item.quantity || 1),
+        price: Number(item.price || 0),
+        name: item.name || 'برنج',
+        image: item.image || ''
+      };
+    }) : [];
 
+    // Construct pure JSON payload representing the order
+    const jsonPayload = {
+      shippingAddress: address,
+      address: address,
+      postalCode: data.postalCode || '',
+      receiverName: recName,
+      name: recName,
+      receiverPhone: recPhone,
+      phone: recPhone,
+      province: data.province || '',
+      city: data.city || '',
+      paymentMethod: data.paymentMethod || 'gateway',
+      totalPrice: Number(data.totalPrice || 0),
+      totalAmount: Number(data.totalPrice || 0),
+      finalAmount: Number(data.totalPrice || 0),
+      items: normalizedItems,
+      products: normalizedItems,
+      orderItems: normalizedItems
+    };
+
+    const token = getStoredToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {})
+    };
+
+    // Send the order as a JSON POST request
+    const res = await axiosInstance.post('/orders', jsonPayload, { headers });
+    const raw = res?.data || res?.order || res;
+    let order = normalizeOrder(raw);
+
+    // If order was successfully registered and a receipt image is attached, upload it
     const receiptImg = data.receipt || data.paymentReceipt || data.receiptImage;
-    if (receiptImg) {
-      const receiptBlob = await imageToBlob(receiptImg);
-      if (receiptBlob) {
-        formData.append('receipt', receiptBlob, 'receipt.jpg');
+    if (order && order.id && receiptImg) {
+      try {
+        const receiptRes = await this.uploadReceipt(order.id, receiptImg);
+        if (receiptRes) {
+          order = receiptRes;
+        }
+      } catch (receiptErr) {
+        console.warn('Could not upload receipt image after order registration:', receiptErr);
       }
     }
 
-    const token = getStoredToken();
-    const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    const res = await axiosInstance.post('/orders', formData, { headers });
-    const raw = res?.data || res?.order || res;
-    return normalizeOrder(raw);
+    return order;
   },
 
   createOrder(orderData) {

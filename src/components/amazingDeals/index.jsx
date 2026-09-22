@@ -15,7 +15,7 @@ export function AmazingDeals() {
       });
   
   // Choose the single featured amazing product
-  const product = dealProducts[0] || products?.[0];
+  const product = dealProducts[0];
 
   const [secondsLeft, setSecondsLeft] = useState(46785);
 
