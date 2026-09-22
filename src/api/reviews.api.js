@@ -151,8 +151,11 @@ export const reviewsApi = {
 
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    const cleanText = typeof text === 'object' ? (text.replyText || text.comment || text.text) : text;
-    const replyBody = { replyText: String(cleanText || '').trim() };
+    const cleanText = typeof text === 'object' ? (text.reply || text.replyText || text.comment || text.text) : text;
+    const replyBody = { 
+      replyText: String(cleanText || '').trim(),
+      reply: String(cleanText || '').trim()
+    };
 
     const res = await axiosInstance.post(`/reviews/${cleanId}/reply`, replyBody, { headers });
     return unwrapDoc(res?.data || res);
