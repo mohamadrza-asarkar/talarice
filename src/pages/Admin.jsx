@@ -1,16 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context';
-import {
-  TrendingUp,
-  Package,
-  ShoppingBag,
-  Users,
-  Layers,
-  Sparkles,
-  MessageSquare,
-  ArrowRight
-} from 'lucide-react';
 import { adminApi, ordersApi, productsApi, slidesApi, reviewsApi, amazingProductsApi, normalizePhone } from '../api';
 import { AdminOverview } from '../components/admin/adminOverview';
 import { AdminProducts } from '../components/admin/adminProducts';
@@ -81,8 +71,8 @@ export default function Admin() {
   const handleUpdateProduct = async (id, productData) => {
     try {
       const updated = await productsApi.update(id, productData);
-      setProducts((prev) =>
-        prev.map((p) => ((p.id || p._id) === id ? { ...p, ...updated } : p))
+      setProducts((previous) =>
+        previous.map((product) => (product.id === id || product._id === id ? { ...product, ...updated } : product))
       );
       showToast('محصول با موفقیت ویرایش شد.', 'success');
     } catch {
@@ -93,7 +83,7 @@ export default function Admin() {
   const handleDeleteProduct = async (id) => {
     try {
       await productsApi.delete(id);
-      setProducts((prev) => prev.filter((p) => (p.id || p._id) !== id));
+      setProducts((previous) => previous.filter((product) => product.id !== id && product._id !== id));
       showToast('محصول با موفقیت حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف محصول', 'error');
@@ -104,7 +94,7 @@ export default function Admin() {
   const handleAddSlide = async (slideData) => {
     try {
       const created = await slidesApi.create(slideData);
-      setSliders((prev) => [...(Array.isArray(prev) ? prev : []), created]);
+      setSliders((previous) => [...(Array.isArray(previous) ? previous : []), created]);
       showToast('اسلاید جدید ثبت شد.', 'success');
     } catch {
       showToast('خطا در ثبت اسلاید', 'error');
@@ -114,8 +104,8 @@ export default function Admin() {
   const handleUpdateSlide = async (id, slideData) => {
     try {
       const updated = await slidesApi.update(id, slideData);
-      setSliders((prev) =>
-        prev.map((s) => ((s.id || s._id) === id ? { ...s, ...updated } : s))
+      setSliders((previous) =>
+        previous.map((slide) => (slide.id === id || slide._id === id ? { ...slide, ...updated } : slide))
       );
       showToast('اسلاید ویرایش شد.', 'success');
     } catch {
@@ -126,7 +116,7 @@ export default function Admin() {
   const handleDeleteSlide = async (id) => {
     try {
       await slidesApi.delete(id);
-      setSliders((prev) => prev.filter((s) => (s.id || s._id) !== id));
+      setSliders((previous) => previous.filter((slide) => slide.id !== id && slide._id !== id));
       showToast('اسلاید حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف اسلاید', 'error');
@@ -138,7 +128,7 @@ export default function Admin() {
     try {
       const phoneNorm = normalizePhone(userData.phone);
       const created = await adminApi.createUser({ ...userData, phone: phoneNorm });
-      setAdminUsers((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+      setAdminUsers((previous) => [created, ...(Array.isArray(previous) ? previous : [])]);
       showToast('کاربر جدید با موفقیت ثبت شد.', 'success');
     } catch {
       showToast('خطا در ثبت کاربر', 'error');
@@ -148,7 +138,7 @@ export default function Admin() {
   const handleDeleteUser = async (id) => {
     try {
       await adminApi.deleteUser(id);
-      setAdminUsers((prev) => prev.filter((u) => (u.id || u._id) !== id));
+      setAdminUsers((previous) => previous.filter((user) => user.id !== id && user._id !== id));
       showToast('کاربر با موفقیت حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف کاربر', 'error');
@@ -159,8 +149,8 @@ export default function Admin() {
     try {
       const nextRole = currentRole === 'admin' ? 'user' : 'admin';
       await adminApi.updateUserRole(id, nextRole);
-      setAdminUsers((prev) =>
-        prev.map((u) => ((u.id || u._id) === id ? { ...u, role: nextRole } : u))
+      setAdminUsers((previous) =>
+        previous.map((user) => (user.id === id || user._id === id ? { ...user, role: nextRole } : user))
       );
       showToast('نقش کاربر به‌روزرسانی شد.', 'success');
     } catch {
@@ -172,8 +162,8 @@ export default function Admin() {
   const handleUpdateOrderStatus = async (id, status) => {
     try {
       await ordersApi.updateStatus(id, status);
-      setAdminOrders((prev) =>
-        prev.map((o) => ((o.id || o._id) === id ? { ...o, status } : o))
+      setAdminOrders((previous) =>
+        previous.map((order) => (order.id === id || order._id === id ? { ...order, status } : order))
       );
       showToast('وضعیت سفارش تغییر کرد.', 'success');
     } catch {
@@ -184,7 +174,7 @@ export default function Admin() {
   const handleDeleteOrder = async (id) => {
     try {
       await ordersApi.delete(id);
-      setAdminOrders((prev) => prev.filter((o) => (o.id || o._id) !== id));
+      setAdminOrders((previous) => previous.filter((order) => order.id !== id && order._id !== id));
       showToast('سفارش حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف سفارش', 'error');
@@ -195,9 +185,9 @@ export default function Admin() {
   const handleAddDeal = async (dealData) => {
     try {
       await amazingProductsApi.add(dealData);
-      const selected = products.find((p) => (p.id || p._id) === dealData.productId);
+      const selected = products.find((product) => product.id === dealData.productId || product._id === dealData.productId);
       if (selected) {
-        setAmazingProducts((prev) => [...prev, { ...selected, ...dealData }]);
+        setAmazingProducts((previous) => [...previous, { ...selected, ...dealData }]);
       }
       showToast('محصول به شگفت‌انگیز اضافه شد.', 'success');
     } catch {
@@ -208,7 +198,7 @@ export default function Admin() {
   const handleRemoveDeal = async (id) => {
     try {
       await amazingProductsApi.remove(id);
-      setAmazingProducts((prev) => prev.filter((p) => (p.id || p._id) !== id));
+      setAmazingProducts((previous) => previous.filter((product) => product.id !== id && product._id !== id));
       showToast('محصول از شگفت‌انگیز حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف از شگفت‌انگیز', 'error');
@@ -219,7 +209,7 @@ export default function Admin() {
   const handleDeleteReview = async (id) => {
     try {
       await reviewsApi.delete(id);
-      setReviews((prev) => prev.filter((r) => (r.id || r._id) !== id));
+      setReviews((previous) => previous.filter((review) => review.id !== id && review._id !== id));
       showToast('نظر با موفقیت حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف نظر', 'error');
@@ -238,7 +228,7 @@ export default function Admin() {
           className={styles.secondaryBtn}
           onClick={() => navigate('/')}
         >
-          <ArrowRight size={16} />
+          <i className="fa-solid fa-arrow-right" />
           <span>بازگشت به فروشگاه</span>
         </button>
       </header>
@@ -250,7 +240,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'overview' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('overview')}
         >
-          <TrendingUp size={16} />
+          <i className="fa-solid fa-chart-line" />
           <span>گزارش کلی</span>
         </button>
         <button
@@ -258,7 +248,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'products' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('products')}
         >
-          <Package size={16} />
+          <i className="fa-solid fa-box" />
           <span>محصولات</span>
         </button>
         <button
@@ -266,7 +256,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'orders' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('orders')}
         >
-          <ShoppingBag size={16} />
+          <i className="fa-solid fa-bag-shopping" />
           <span>سفارشات</span>
         </button>
         <button
@@ -274,7 +264,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'slides' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('slides')}
         >
-          <Layers size={16} />
+          <i className="fa-solid fa-layer-group" />
           <span>اسلایدر</span>
         </button>
         <button
@@ -282,7 +272,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'users' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('users')}
         >
-          <Users size={16} />
+          <i className="fa-solid fa-users" />
           <span>کاربران</span>
         </button>
         <button
@@ -290,7 +280,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'deals' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('deals')}
         >
-          <Sparkles size={16} />
+          <i className="fa-solid fa-wand-magic-sparkles" />
           <span>شگفت‌انگیزها</span>
         </button>
         <button
@@ -298,7 +288,7 @@ export default function Admin() {
           className={`${styles.tabBtn} ${activeTab === 'reviews' ? styles.tabBtnActive : ''}`}
           onClick={() => setActiveTab('reviews')}
         >
-          <MessageSquare size={16} />
+          <i className="fa-solid fa-comment-dots" />
           <span>نظرات</span>
         </button>
       </nav>

@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { ShoppingBag, RefreshCw, CheckCircle2, XCircle, Truck, Eye, Trash2, X } from 'lucide-react';
 import styles from '../admin.module.css';
 
 export function AdminOrders({
@@ -7,31 +6,36 @@ export function AdminOrders({
   isLoadingOrders = false,
   onRefreshOrders,
   onUpdateStatus,
-  onDeleteOrder,
-  getOrderStatusInfo
+  onDeleteOrder
 }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [orderToDelete, setOrderToDelete] = useState(null);
   const [previewReceipt, setPreviewReceipt] = useState(null);
 
-  const filteredOrders = adminOrders.filter((o) => {
-    const q = searchQuery.trim().toLowerCase();
-    const matchSearch =
-      !q ||
-      String(o.trackingCode || '').includes(q) ||
-      String(o.postTrackingCode || '').includes(q) ||
-      String(o.customerName || o.name || '').toLowerCase().includes(q) ||
-      String(o.customerPhone || o.phone || '').includes(q);
+  const queryText = searchQuery.trim().toLowerCase();
 
-    const statusNorm = String(o.status || '').trim();
+  const filteredOrders = adminOrders.filter((order) => {
+    const tracking = order.trackingCode || '';
+    const postTracking = order.postTrackingCode || '';
+    const customer = order.customerName || order.name || '';
+    const phone = order.customerPhone || order.phone || '';
+
+    const matchSearch =
+      !queryText ||
+      tracking.includes(queryText) ||
+      postTracking.includes(queryText) ||
+      customer.toLowerCase().includes(queryText) ||
+      phone.includes(queryText);
+
+    const statusText = order.status || '';
     const matchStatus =
       statusFilter === 'all' ||
-      statusNorm === statusFilter ||
-      (statusFilter === 'processing' && (statusNorm === 'در حال پردازش' || statusNorm === 'pending')) ||
-      (statusFilter === 'shipped' && (statusNorm === 'ارسال شده' || statusNorm === 'shipped')) ||
-      (statusFilter === 'delivered' && (statusNorm === 'تحویل شده' || statusNorm === 'delivered')) ||
-      (statusFilter === 'cancelled' && (statusNorm === 'لغو شده' || statusNorm === 'cancelled'));
+      statusText === statusFilter ||
+      (statusFilter === 'processing' && (statusText === 'در حال پردازش' || statusText === 'pending')) ||
+      (statusFilter === 'shipped' && (statusText === 'ارسال شده' || statusText === 'shipped')) ||
+      (statusFilter === 'delivered' && (statusText === 'تحویل شده' || statusText === 'delivered')) ||
+      (statusFilter === 'cancelled' && (statusText === 'لغو شده' || statusText === 'cancelled'));
 
     return matchSearch && matchStatus;
   });
@@ -49,7 +53,7 @@ export function AdminOrders({
           onClick={onRefreshOrders}
           disabled={isLoadingOrders}
         >
-          <RefreshCw size={14} />
+          <i className={`fa-solid fa-arrows-rotate ${isLoadingOrders ? 'fa-spin' : ''}`} />
           <span>{isLoadingOrders ? 'در حال بارگذاری...' : 'تازه‌سازی'}</span>
         </button>
       </div>
@@ -60,12 +64,12 @@ export function AdminOrders({
           className={styles.searchInput}
           placeholder="جستجو با کد رهگیری، نام مشتری یا تلفن..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(event) => setSearchQuery(event.target.value)}
         />
         <select
           className={styles.select}
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(event) => setStatusFilter(event.target.value)}
         >
           <option value="all">همه وضعیت‌ها</option>
           <option value="processing">در حال پردازش</option>
@@ -78,59 +82,59 @@ export function AdminOrders({
       <div className={styles.itemsList}>
         {filteredOrders.length === 0 ? (
           <div className={styles.emptyState}>
-            <ShoppingBag size={32} />
+            <i className="fa-solid fa-bag-shopping" style={{ fontSize: '2rem' }} />
             <p>هیچ سفارشی یافت نشد.</p>
           </div>
         ) : (
-          filteredOrders.map((o) => {
-            const oid = o.id || o._id;
-            const items = Array.isArray(o.items) ? o.items : [];
-            const amount = Number(o.finalAmount || o.totalPrice || 0);
+          filteredOrders.map((order) => {
+            const orderId = order.id || order._id;
+            const items = Array.isArray(order.items) ? order.items : [];
+            const amount = Number(order.finalAmount || order.totalPrice || 0);
 
             return (
-              <div key={oid} className={styles.itemRow}>
+              <div key={orderId} className={styles.itemRow}>
                 <div className={styles.itemDetails}>
                   <div className={styles.rowCenterWrap}>
                     <h3 className={styles.itemName}>
-                      {o.customerName || o.name || 'مشتری بدون نام'}
+                      {order.customerName || order.name || 'مشتری بدون نام'}
                     </h3>
                     <span className={`${styles.badge} ${styles.badgeWarning}`}>
-                      {o.status || 'در حال پردازش'}
+                      {order.status || 'در حال پردازش'}
                     </span>
                   </div>
 
                   <p className={styles.itemMeta}>
-                    <span>کد سفارش: {o.trackingCode || oid?.slice(-6)}</span>
+                    <span>کد سفارش: {order.trackingCode || orderId?.slice(-6)}</span>
                     <span>|</span>
                     <span>مبلغ: {amount.toLocaleString('fa-IR')} تومان</span>
                     <span>|</span>
-                    <span>تلفن: {o.customerPhone || o.phone || 'ثبت نشده'}</span>
+                    <span>تلفن: {order.customerPhone || order.phone || 'ثبت نشده'}</span>
                   </p>
 
                   {items.length > 0 && (
                     <p className={styles.itemMeta}>
-                      <span>اقلام: {items.map((it) => `${it.name || 'محصول'} (${it.quantity} کیسه)`).join('، ')}</span>
+                      <span>اقلام: {items.map((item) => `${item.name || 'محصول'} (${item.quantity} کیسه)`).join('، ')}</span>
                     </p>
                   )}
                 </div>
 
                 <div className={styles.itemActions}>
-                  {o.paymentReceipt && (
+                  {order.paymentReceipt && (
                     <button
                       type="button"
                       className={styles.secondaryBtn}
-                      onClick={() => setPreviewReceipt(o.paymentReceipt)}
+                      onClick={() => setPreviewReceipt(order.paymentReceipt)}
                       title="مشاهده فیش واریزی"
                     >
-                      <Eye size={14} />
+                      <i className="fa-solid fa-eye" />
                       <span>فیش واریز</span>
                     </button>
                   )}
 
                   <select
                     className={styles.select}
-                    value={o.status || 'processing'}
-                    onChange={(e) => onUpdateStatus && onUpdateStatus(oid, e.target.value)}
+                    value={order.status || 'در حال پردازش'}
+                    onChange={(event) => onUpdateStatus && onUpdateStatus(orderId, event.target.value)}
                   >
                     <option value="در حال پردازش">در حال پردازش</option>
                     <option value="ارسال شده">ارسال شده</option>
@@ -141,9 +145,9 @@ export function AdminOrders({
                   <button
                     type="button"
                     className={styles.dangerBtn}
-                    onClick={() => setOrderToDelete(o)}
+                    onClick={() => setOrderToDelete(order)}
                   >
-                    <Trash2 size={14} />
+                    <i className="fa-solid fa-trash-can" />
                     <span>حذف</span>
                   </button>
                 </div>
@@ -153,7 +157,6 @@ export function AdminOrders({
         )}
       </div>
 
-      {/* Delete Confirmation Modal */}
       {orderToDelete && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -164,7 +167,7 @@ export function AdminOrders({
                 className={styles.closeBtn}
                 onClick={() => setOrderToDelete(null)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
             <p className={styles.confirmText}>
@@ -194,7 +197,6 @@ export function AdminOrders({
         </div>
       )}
 
-      {/* Receipt Preview Modal */}
       {previewReceipt && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -205,7 +207,7 @@ export function AdminOrders({
                 className={styles.closeBtn}
                 onClick={() => setPreviewReceipt(null)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
             <img

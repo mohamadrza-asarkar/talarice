@@ -1,11 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  AlertTriangle,
-  Check,
-  Info,
-  X,
-  AlertCircle
-} from 'lucide-react';
 import styles from './style.module.css';
 
 function ToastItem({ toast, onDismiss }) {
@@ -56,17 +49,17 @@ function ToastItem({ toast, onDismiss }) {
   const type = toast.type || 'info';
 
   let typeClass = styles.toastInfo;
-  let Icon = Info;
+  let iconClass = 'fa-solid fa-circle-info';
 
   if (type === 'success') {
     typeClass = styles.toastSuccess;
-    Icon = Check;
+    iconClass = 'fa-solid fa-check';
   } else if (type === 'error') {
     typeClass = styles.toastError;
-    Icon = AlertCircle;
+    iconClass = 'fa-solid fa-circle-exclamation';
   } else if (type === 'warning') {
     typeClass = styles.toastWarning;
-    Icon = AlertTriangle;
+    iconClass = 'fa-solid fa-triangle-exclamation';
   }
 
   return (
@@ -77,7 +70,7 @@ function ToastItem({ toast, onDismiss }) {
       onMouseLeave={handleMouseLeave}
     >
       <div className={styles.iconCircle}>
-        <Icon size={18} strokeWidth={2.4} />
+        <i className={iconClass} />
       </div>
 
       <div className={styles.toastContent}>
@@ -93,7 +86,7 @@ function ToastItem({ toast, onDismiss }) {
           aria-label="بستن اعلان"
           title="بستن"
         >
-          <X size={15} />
+          <i className="fa-solid fa-xmark" />
         </button>
       )}
 

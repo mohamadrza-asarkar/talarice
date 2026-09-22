@@ -11,16 +11,14 @@ export function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.topRow}>
-        {/* برند و لوگوی طلا رایس در سمت راست */}
         <Link to="/" className={styles.logoLink} aria-label="صفحه اصلی طلا رایس">
           <Logo showText={true} variant="dark" />
         </Link>
 
-        {/* دکمه حساب کاربری / ورود و پنل مدیریت در سمت چپ */}
-        <div className={styles.userActionWrapper}>
+        <nav className={styles.userActionWrapper} aria-label="منوی کاربری">
           {isAdmin && (
             <Link to="/admin" className={styles.adminBadgeLink} title="ورود به پنل مدیریت فروشگاه">
-              <i className="fa-solid fa-crown" style={{ color: '#fbbf24' }} />
+              <i className={`fa-solid fa-crown ${styles.crownIcon}`} />
               <span>پنل مدیریت</span>
             </Link>
           )}
@@ -29,18 +27,15 @@ export function Header() {
             to={isAuthenticated ? '/profile' : '/auth'}
             className={styles.userBtn}
             title={isAuthenticated ? `پنل کاربری ${currentUser?.name || ''}` : 'ورود به حساب کاربری'}
-            aria-label={isAuthenticated ? 'پنل کاربری' : 'ورود به حساب'}
           >
-            {isAuthenticated ? (
-              <i className="fa-solid fa-user-circle" />
-            ) : (
-              <i className="fa-solid fa-arrow-right-to-bracket" />
-            )}
-            <span className={styles.userBtnText}>
-              {isAuthenticated ? (currentUser?.name ? `پنل کاربری (${currentUser.name.split(' ')[0]})` : 'پنل کاربری') : 'ورود به حساب'}
+            {isAuthenticated ? <i className="fa-solid fa-user" /> : <i className="fa-solid fa-right-to-bracket" />}
+            <span>
+              {isAuthenticated
+                ? (currentUser?.name ? `پنل کاربری (${currentUser.name.split(' ')[0]})` : 'پنل کاربری')
+                : 'ورود به حساب'}
             </span>
           </Link>
-        </div>
+        </nav>
       </div>
       <SearchBar />
     </header>

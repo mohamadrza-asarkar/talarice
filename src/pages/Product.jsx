@@ -1,22 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context';
-import {
-  ArrowRight,
-  ShoppingBag,
-  Star,
-  ShieldCheck,
-  Truck,
-  Plus,
-  Minus,
-  CheckCircle2,
-  Flame,
-  ChefHat,
-  Sparkles,
-  Share2
-} from 'lucide-react';
 import { productsApi, reviewsApi } from '../api';
-import styles from './pages.module.css';
+import styles from '../assets/styles/pages.module.css';
 
 export default function Product() {
   const { id } = useParams();
@@ -126,7 +112,7 @@ export default function Product() {
       {/* نوار بالای صفحه */}
       <header className={styles.productTopNav}>
         <button type="button" className={styles.backButton} onClick={() => navigate(-1)}>
-          <ArrowRight size={16} />
+          <i className="fa-solid fa-arrow-right" />
           <span>بازگشت</span>
         </button>
 
@@ -137,7 +123,7 @@ export default function Product() {
             onClick={handleShare}
             title="اشتراک‌گذاری"
           >
-            <Share2 size={16} />
+            <i className="fa-solid fa-share-nodes" />
           </button>
           <span className={styles.badge}>{product.categoryName || 'برنج اصیل کامفیروز'}</span>
         </div>
@@ -153,7 +139,7 @@ export default function Product() {
             </span>
           )}
           <div className={styles.productOriginTag}>
-            <Sparkles size={12} />
+            <i className="fa-solid fa-wand-magic-sparkles text-xs" />
             <span>محصول اختصاصی کامفیروز فارس</span>
           </div>
         </div>
@@ -163,10 +149,9 @@ export default function Product() {
           <div className={styles.productRatingRow}>
             <div className={styles.starsWrapper}>
               {[...Array(5)].map((_, i) => (
-                <Star
+                <i
                   key={i}
-                  size={14}
-                  className="fill-current text-yellow-400"
+                  className="fa-solid fa-star text-yellow-400 text-sm"
                 />
               ))}
             </div>
@@ -210,7 +195,7 @@ export default function Product() {
               onClick={handleDecrease}
               aria-label="کاهش تعداد"
             >
-              <Minus size={16} />
+              <i className="fa-solid fa-minus" />
             </button>
             <span className={styles.counterValue}>{quantity.toLocaleString('fa-IR')}</span>
             <button
@@ -219,7 +204,7 @@ export default function Product() {
               onClick={handleIncrease}
               aria-label="افزایش تعداد"
             >
-              <Plus size={16} />
+              <i className="fa-solid fa-plus" />
             </button>
           </div>
 
@@ -228,7 +213,7 @@ export default function Product() {
             className={styles.btnPrimaryAddToCart}
             onClick={handleAddToCart}
           >
-            <ShoppingBag size={18} />
+            <i className="fa-solid fa-bag-shopping" />
             <span>افزودن به سبد خرید</span>
           </button>
         </div>
@@ -298,7 +283,7 @@ export default function Product() {
         {activeTab === 'cooking' && (
           <div className={styles.productTabContent}>
             <div className={styles.cookingHeader}>
-              <ChefHat size={22} className="text-yellow-400" />
+              <i className="fa-solid fa-kitchen-set text-yellow-400 text-xl" />
               <h3 className={styles.cookingTitle}>نکات طلایی پخت برنج معطر کامفیروزی</h3>
             </div>
             <p className={styles.cookingIntro}>
@@ -307,7 +292,7 @@ export default function Product() {
 
             <ul className={styles.cookingSteps}>
               <li>
-                <strong>روش آبکش مجلسی:</strong> برنج را با آب ولرم ۲ بار به آرامی بشویید و حداکثر ۱ ساعت در آب و نمک کم بخیسانید. هنگام جوشیدن در آب، به محض بلند شدن قد برنج (حدود ۸ تا ۱۰ دقیقه) آبکش کنید و با شعله ملایم به مدت ۴۰ دقیقه دم بگذارید.
+                 <strong>روش آبکش مجلسی:</strong> برنج را با آب ولرم ۲ بار به آرامی بشویید و حداکثر ۱ ساعت در آب و نمک کم بخیسانید. هنگام جوشیدن در آب، به محض بلند شدن قد برنج (حدود ۸ تا ۱۰ دقیقه) آبکش کنید و با شعله ملایم به مدت ۴۰ دقیقه دم بگذارید.
               </li>
               <li>
                 <strong>روش کته اصیل سنتی:</strong> به ازای هر پیمانه برنج، ۱٫۲۵ پیمانه آب و کمی روغن یا کره محلی بیفزایید. این روش بیشترین عطر و طعم طبیعی برنج شالیزار را حفظ می‌کند.
@@ -322,7 +307,7 @@ export default function Product() {
             <div className={styles.reviewsHeaderRow}>
               <h3 className={styles.reviewsTitle}>تجربه خریداران این رقم برنج</h3>
               <span className={styles.verifiedBuyersBadge}>
-                <CheckCircle2 size={14} /> خریداران تأییدشده
+                <i className="fa-solid fa-circle-check" /> خریداران تأییدشده
               </span>
             </div>
 
@@ -443,7 +428,7 @@ export default function Product() {
                         </div>
                         <div className={styles.starsSmall}>
                           {[...Array(rev.rating || 5)].map((_, idx) => (
-                            <Star key={idx} size={12} className="fill-current text-yellow-400" />
+                            <i key={idx} className="fa-solid fa-star text-yellow-400 text-xs" />
                           ))}
                         </div>
                       </div>
@@ -475,11 +460,11 @@ export default function Product() {
       {/* ضمانت و اطمینان خرید */}
       <section className={styles.productTrustBox}>
         <div className={styles.trustItemRow}>
-          <ShieldCheck size={20} className="text-yellow-400" />
+          <i className="fa-solid fa-shield-halved text-yellow-400 text-lg" />
           <span>ضمانت بی‌قید و شرط پخت و عطر (امکان برگشت تا ۷ روز)</span>
         </div>
         <div className={styles.trustItemRow}>
-          <Truck size={20} className="text-yellow-400" />
+          <i className="fa-solid fa-truck-fast text-yellow-400 text-lg" />
           <span>ارسال مستقیم از انبار شالیزارهای کامفیروز به سراسر کشور</span>
         </div>
       </section>

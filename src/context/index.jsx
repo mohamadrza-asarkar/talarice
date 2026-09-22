@@ -7,16 +7,11 @@ import {
   amazingProductsApi,
   ordersApi,
   slidesApi,
-  cartApi,
-  reviewsApi,
   storeApi,
   getStoredToken,
   setStoredToken,
   normalizeUser,
-  normalizeProduct,
-  normalizeAmazingProduct,
-  normalizeOrder,
-  normalizeSlide
+  normalizeOrder
 } from '../api';
 
 const AppContext = createContext();
@@ -26,30 +21,14 @@ const STORAGE_KEYS = {
   CART: 'tala_rice_cart_cache'
 };
 
-export function getOrderStatusInfo(status) {
-  const norm = String(status || '').toLowerCase().trim();
-  switch (norm) {
-    case 'تحویل شده':
-    case 'delivered':
-      return { label: 'تحویل شده', color: '#16a34a', bg: '#f0fdf4', border: '#bbf7d0' };
-    case 'ارسال شده':
-    case 'در حال ارسال':
-    case 'shipped':
-      return { label: 'در حال ارسال', color: '#0284c7', bg: '#f0f9ff', border: '#bae6fd' };
-    case 'لغو شده':
-    case 'cancelled':
-      return { label: 'لغو شده', color: '#dc2626', bg: '#fef2f2', border: '#fecaca' };
-    default:
-      return { label: 'در حال پردازش', color: '#d97706', bg: '#fffbeb', border: '#fde68a' };
-  }
-}
-
 export function AppProvider({ children }) {
   const navigate = useNavigate();
 
-  // Unified States
+  // Authentication State
   const [currentUser, setCurrentUser] = useState(null);
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
+
+  // Cart & Order State
   const [cart, setCart] = useState(() => {
     try {
       const cached = localStorage.getItem(STORAGE_KEYS.CART);
@@ -59,6 +38,8 @@ export function AppProvider({ children }) {
     }
   });
   const [orders, setOrders] = useState([]);
+
+  // Catalog & Store State
   const [products, setProducts] = useState([]);
   const [slides, setSlides] = useState([]);
   const [amazingProducts, setAmazingProducts] = useState([]);
@@ -66,13 +47,11 @@ export function AppProvider({ children }) {
   const [brandStory, setBrandStory] = useState({});
   const [trustItems, setTrustItems] = useState([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
-
-  // Catalog Filters & Categories
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [apiError, setApiError] = useState(null);
 
   const categories = useMemo(() => {
-    const defaultCats = [
+    const defaultCategories = [
       { id: 'tarom', name: 'برنج طارم' },
       { id: 'hashemi', name: 'برنج هاشمی' },
       { id: 'sadri', name: 'برنج صدری' },
@@ -80,30 +59,30 @@ export function AppProvider({ children }) {
       { id: 'kamfirooz', name: 'برنج کامفیروز' },
       { id: 'smoked', name: 'برنج دودی' }
     ];
-    
-    const productCats = new Set();
-    products.forEach(p => {
-      if (p.category) {
-        productCats.add(p.category);
+
+    const productCategories = new Set();
+    products.forEach((product) => {
+      if (product.category) {
+        productCategories.add(product.category);
       }
     });
-    
-    const result = [...defaultCats];
-    productCats.forEach(catId => {
-      if (!result.some(c => c.id === catId)) {
-        let name = catId;
-        if (catId === 'hashemi') name = 'برنج هاشمی';
-        else if (catId === 'tarom') name = 'برنج طارم';
-        else if (catId === 'sadri') name = 'برنج صدری';
-        else if (catId === 'fajr') name = 'برنج فجر';
-        else if (catId === 'kamfirooz') name = 'برنج کامفیروز';
-        else if (catId === 'smoked') name = 'برنج دودی';
-        else if (catId === 'all') return;
-        
-        result.push({ id: catId, name });
+
+    const result = [...defaultCategories];
+    productCategories.forEach((categoryId) => {
+      if (!result.some((category) => category.id === categoryId)) {
+        let name = categoryId;
+        if (categoryId === 'hashemi') name = 'برنج هاشمی';
+        else if (categoryId === 'tarom') name = 'برنج طارم';
+        else if (categoryId === 'sadri') name = 'برنج صدری';
+        else if (categoryId === 'fajr') name = 'برنج فجر';
+        else if (categoryId === 'kamfirooz') name = 'برنج کامفیروز';
+        else if (categoryId === 'smoked') name = 'برنج دودی';
+        else if (categoryId === 'all') return;
+
+        result.push({ id: categoryId, name });
       }
     });
-    
+
     return result;
   }, [products]);
 
@@ -111,69 +90,69 @@ export function AppProvider({ children }) {
     setIsLoadingData(true);
     setApiError(null);
     try {
-      const [prodRes, slideRes, amazingRes] = await Promise.allSettled([
+      const [productResponse, slideResponse, amazingResponse] = await Promise.allSettled([
         productsApi.getAll(),
         slidesApi.getAll(),
         amazingProductsApi.getAll()
       ]);
-      if (prodRes.status === 'fulfilled' && prodRes.value) {
-        setProducts(Array.isArray(prodRes.value) ? prodRes.value : (prodRes.value.products || []));
-      } else if (prodRes.status === 'rejected') {
+
+      if (productResponse.status === 'fulfilled' && productResponse.value) {
+        setProducts(Array.isArray(productResponse.value) ? productResponse.value : (productResponse.value.products || []));
+      } else if (productResponse.status === 'rejected') {
         setApiError('خطا در بارگذاری محصولات');
       }
-      if (slideRes.status === 'fulfilled' && slideRes.value) {
-        setSlides(Array.isArray(slideRes.value) ? slideRes.value : []);
+
+      if (slideResponse.status === 'fulfilled' && slideResponse.value) {
+        setSlides(Array.isArray(slideResponse.value) ? slideResponse.value : []);
       }
-      if (amazingRes.status === 'fulfilled' && amazingRes.value) {
-        setAmazingProducts(Array.isArray(amazingRes.value) ? amazingRes.value : []);
+
+      if (amazingResponse.status === 'fulfilled' && amazingResponse.value) {
+        setAmazingProducts(Array.isArray(amazingResponse.value) ? amazingResponse.value : []);
       }
-    } catch (err) {
-      setApiError(err.message || 'خطا در بارگذاری اطلاعات');
+    } catch (error) {
+      setApiError(error.message || 'خطا در بارگذاری اطلاعات');
     } finally {
       setIsLoadingData(false);
     }
   }, []);
 
-  // Notification trigger
   const triggerNotification = useCallback((message, type = 'info') => {
     window.dispatchEvent(new CustomEvent('tala-toast', { detail: { message, type } }));
   }, []);
 
-  // Save cart cache locally
+  // Save cart to local storage
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(cart));
-    } catch (e) {
-      console.debug('Failed to save cart cache', e);
+    } catch (error) {
+      console.debug('Failed to save cart cache', error);
     }
   }, [cart]);
 
-  // Initial Load: Token, User Profile, Products, Slides, Store Info
+  // Initial load
   useEffect(() => {
     let isMounted = true;
     const token = getStoredToken();
-    const storedUserId = localStorage.getItem(STORAGE_KEYS.USER_ID);
 
     async function initializeAppData() {
       setIsLoadingData(true);
 
-      // 1. Fetch Auth User if token exists
       if (token) {
         try {
-          const res = await authApi.getMe();
+          const response = await authApi.getMe();
           if (isMounted) {
-            const normalized = res?.user || normalizeUser(res);
+            const normalized = response?.user || normalizeUser(response);
             if (normalized) {
               setCurrentUser(normalized);
-              const uid = normalized.id || normalized._id;
-              if (uid) {
-                localStorage.setItem(STORAGE_KEYS.USER_ID, String(uid));
+              const userId = normalized.id || normalized._id;
+              if (userId) {
+                localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
               }
             }
           }
-        } catch (err) {
-          console.debug('Auth sync failed on mount:', err.message);
-          if (err.status === 401 || err.status === 403) {
+        } catch (error) {
+          console.debug('Auth sync failed on mount:', error.message);
+          if (error.status === 401 || error.status === 403) {
             setStoredToken(null);
             localStorage.removeItem(STORAGE_KEYS.USER_ID);
           }
@@ -188,9 +167,8 @@ export function AppProvider({ children }) {
         }
       }
 
-      // 2. Fetch Products, Slides, Store Info
       try {
-        const [prodRes, slideRes, infoRes, storyRes, trustRes, amazingRes] = await Promise.allSettled([
+        const [productResponse, slideResponse, infoResponse, storyResponse, trustResponse, amazingResponse] = await Promise.allSettled([
           productsApi.getAll(),
           slidesApi.getAll(),
           storeApi.getStoreInfo(),
@@ -200,27 +178,27 @@ export function AppProvider({ children }) {
         ]);
 
         if (isMounted) {
-          if (prodRes.status === 'fulfilled' && prodRes.value) {
-            setProducts(Array.isArray(prodRes.value) ? prodRes.value : (prodRes.value.products || []));
+          if (productResponse.status === 'fulfilled' && productResponse.value) {
+            setProducts(Array.isArray(productResponse.value) ? productResponse.value : (productResponse.value.products || []));
           }
-          if (slideRes.status === 'fulfilled' && slideRes.value) {
-            setSlides(Array.isArray(slideRes.value) ? slideRes.value : []);
+          if (slideResponse.status === 'fulfilled' && slideResponse.value) {
+            setSlides(Array.isArray(slideResponse.value) ? slideResponse.value : []);
           }
-          if (infoRes.status === 'fulfilled' && infoRes.value) {
-            setStoreInfo(infoRes.value);
+          if (infoResponse.status === 'fulfilled' && infoResponse.value) {
+            setStoreInfo(infoResponse.value);
           }
-          if (storyRes.status === 'fulfilled' && storyRes.value) {
-            setBrandStory(storyRes.value);
+          if (storyResponse.status === 'fulfilled' && storyResponse.value) {
+            setBrandStory(storyResponse.value);
           }
-          if (trustRes.status === 'fulfilled' && trustRes.value) {
-            setTrustItems(trustRes.value);
+          if (trustResponse.status === 'fulfilled' && trustResponse.value) {
+            setTrustItems(trustResponse.value);
           }
-          if (amazingRes.status === 'fulfilled' && amazingRes.value) {
-            setAmazingProducts(Array.isArray(amazingRes.value) ? amazingRes.value : []);
+          if (amazingResponse.status === 'fulfilled' && amazingResponse.value) {
+            setAmazingProducts(Array.isArray(amazingResponse.value) ? amazingResponse.value : []);
           }
         }
-      } catch (fetchErr) {
-        console.debug('Failed to load catalog/store data:', fetchErr);
+      } catch (fetchError) {
+        console.debug('Failed to load catalog/store data:', fetchError);
       } finally {
         if (isMounted) {
           setIsLoadingData(false);
@@ -235,7 +213,6 @@ export function AppProvider({ children }) {
     };
   }, []);
 
-  // Listen for global 401 unauthorized events to gracefully notify user
   useEffect(() => {
     const handleUnauthorized = () => {
       setCurrentUser(null);
@@ -248,7 +225,6 @@ export function AppProvider({ children }) {
     };
   }, [triggerNotification]);
 
-  // Auth actions
   const loginUser = useCallback(async (phone, password) => {
     const cleanPhone = (phone || '').trim();
     const cleanPassword = (password || '').trim();
@@ -259,23 +235,23 @@ export function AppProvider({ children }) {
 
     setIsLoadingAuth(true);
     try {
-      const res = await authApi.login({ phone: cleanPhone, password: cleanPassword });
-      const userObj = res?.user || normalizeUser(res);
-      if (!userObj) throw new Error(res?.message || 'پاسخ نامعتبر از سرور.');
+      const response = await authApi.login({ phone: cleanPhone, password: cleanPassword });
+      const userObject = response?.user || normalizeUser(response);
+      if (!userObject) throw new Error(response?.message || 'پاسخ نامعتبر از سرور.');
 
-      const token = res?.token || res?.data?.token;
+      const token = response?.token || response?.data?.token;
       if (token) setStoredToken(token);
-      const uid = userObj.id || userObj._id;
-      if (uid) localStorage.setItem(STORAGE_KEYS.USER_ID, String(uid));
+      const userId = userObject.id || userObject._id;
+      if (userId) localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
 
-      setCurrentUser(userObj);
-      triggerNotification(`خوش آمدید، ${userObj.name || 'کاربر گرامی'}`, 'success');
+      setCurrentUser(userObject);
+      triggerNotification(`خوش آمدید، ${userObject.name || 'کاربر گرامی'}`, 'success');
       setIsLoadingAuth(false);
-      return { success: true, user: userObj };
-    } catch (err) {
+      return { success: true, user: userObject };
+    } catch (error) {
       setIsLoadingAuth(false);
-      triggerNotification(err.message, 'error');
-      return { success: false, message: err.message };
+      triggerNotification(error.message, 'error');
+      return { success: false, message: error.message };
     }
   }, [triggerNotification]);
 
@@ -290,40 +266,40 @@ export function AppProvider({ children }) {
 
     setIsLoadingAuth(true);
     try {
-      const res = await authApi.register({
+      const response = await authApi.register({
         name: cleanName || `کاربر ${cleanPhone.slice(-4)}`,
         phone: cleanPhone,
         password: cleanPassword
       });
-      const userObj = res?.user || normalizeUser(res);
-      if (!userObj) throw new Error(res?.message || 'پاسخ نامعتبر از سرور.');
+      const userObject = response?.user || normalizeUser(response);
+      if (!userObject) throw new Error(response?.message || 'پاسخ نامعتبر از سرور.');
 
-      const token = res?.token || res?.data?.token;
+      const token = response?.token || response?.data?.token;
       if (token) setStoredToken(token);
-      const uid = userObj.id || userObj._id;
-      if (uid) localStorage.setItem(STORAGE_KEYS.USER_ID, String(uid));
+      const userId = userObject.id || userObject._id;
+      if (userId) localStorage.setItem(STORAGE_KEYS.USER_ID, userId);
 
-      setCurrentUser(userObj);
-      triggerNotification(`ثبت‌نام با موفقیت انجام شد: ${userObj.name}`, 'success');
+      setCurrentUser(userObject);
+      triggerNotification(`ثبت‌نام با موفقیت انجام شد: ${userObject.name}`, 'success');
       setIsLoadingAuth(false);
-      return { success: true, user: userObj };
-    } catch (err) {
+      return { success: true, user: userObject };
+    } catch (error) {
       setIsLoadingAuth(false);
-      triggerNotification(err.message, 'error');
-      return { success: false, message: err.message };
+      triggerNotification(error.message, 'error');
+      return { success: false, message: error.message };
     }
   }, [triggerNotification]);
 
   const updateProfile = useCallback(async (profileData) => {
     try {
-      const res = await authApi.updateProfile(profileData);
-      const updated = res?.user || normalizeUser(res) || { ...currentUser, ...profileData };
+      const response = await authApi.updateProfile(profileData);
+      const updated = response?.user || normalizeUser(response) || { ...currentUser, ...profileData };
       setCurrentUser(updated);
       triggerNotification('پروفایل با موفقیت به‌روزرسانی شد.', 'success');
       return { success: true, user: updated };
-    } catch (err) {
-      triggerNotification(err.message, 'error');
-      return { success: false, message: err.message };
+    } catch (error) {
+      triggerNotification(error.message, 'error');
+      return { success: false, message: error.message };
     }
   }, [currentUser, triggerNotification]);
 
@@ -332,9 +308,9 @@ export function AppProvider({ children }) {
       await authApi.changePassword({ oldPassword, newPassword });
       triggerNotification('رمز عبور با موفقیت تغییر یافت.', 'success');
       return { success: true };
-    } catch (err) {
-      triggerNotification(err.message, 'error');
-      return { success: false, message: err.message };
+    } catch (error) {
+      triggerNotification(error.message, 'error');
+      return { success: false, message: error.message };
     }
   }, [triggerNotification]);
 
@@ -347,34 +323,35 @@ export function AppProvider({ children }) {
   }, [triggerNotification]);
 
   // Cart actions
-  const addToCart = useCallback((product, qty = 1) => {
-    setCart((prev) => {
-      const existingIndex = prev.findIndex((item) => String(item.id || item._id) === String(product.id || product._id));
+  const addToCart = useCallback((product, quantity = 1) => {
+    const targetId = product.id || product._id;
+    setCart((previous) => {
+      const existingIndex = previous.findIndex((item) => (item.id || item._id) === targetId);
       if (existingIndex > -1) {
-        const updated = [...prev];
-        const newQty = updated[existingIndex].quantity + qty;
-        updated[existingIndex] = { ...updated[existingIndex], quantity: newQty };
+        const updated = [...previous];
+        const newQuantity = updated[existingIndex].quantity + quantity;
+        updated[existingIndex] = { ...updated[existingIndex], quantity: newQuantity };
         triggerNotification('تعداد محصول در سبد خرید افزایش یافت.', 'success');
         return updated;
       } else {
         triggerNotification('محصول به سبد خرید اضافه شد.', 'success');
-        return [...prev, { ...product, quantity: qty }];
+        return [...previous, { ...product, quantity }];
       }
     });
   }, [triggerNotification]);
 
   const removeFromCart = useCallback((productId) => {
-    setCart((prev) => prev.filter((item) => String(item.id || item._id) !== String(productId)));
+    setCart((previous) => previous.filter((item) => (item.id || item._id) !== productId));
     triggerNotification('محصول از سبد خرید حذف شد.', 'info');
   }, [triggerNotification]);
 
-  const updateCartQuantity = useCallback((productId, qty) => {
-    if (qty <= 0) {
+  const updateCartQuantity = useCallback((productId, quantity) => {
+    if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
-    setCart((prev) =>
-      prev.map((item) => (String(item.id || item._id) === String(productId) ? { ...item, quantity: qty } : item))
+    setCart((previous) =>
+      previous.map((item) => ((item.id || item._id) === productId ? { ...item, quantity } : item))
     );
   }, [removeFromCart]);
 
@@ -397,15 +374,15 @@ export function AppProvider({ children }) {
         products: cart,
         totalPrice: cartTotal
       };
-      const res = await ordersApi.create(payload);
-      const newOrd = normalizeOrder(res);
-      setOrders((prev) => [newOrd, ...prev]);
+      const response = await ordersApi.create(payload);
+      const newOrder = normalizeOrder(response);
+      setOrders((previous) => [newOrder, ...previous]);
       clearCart();
       triggerNotification('سفارش شما با موفقیت ثبت شد!', 'success');
-      return { success: true, order: newOrd };
-    } catch (err) {
-      triggerNotification(err.message || 'خطا در ثبت سفارش', 'error');
-      return { success: false, message: err.message };
+      return { success: true, order: newOrder };
+    } catch (error) {
+      triggerNotification(error.message || 'خطا در ثبت سفارش', 'error');
+      return { success: false, message: error.message };
     }
   }, [cart, cartTotal, clearCart, triggerNotification]);
 
@@ -462,11 +439,10 @@ export function AppProvider({ children }) {
     setSelectedCategory,
 
     // Helpers
-    getOrderStatusInfo,
     goBack: () => navigate(-1),
     showToast: triggerNotification,
-    showSuccess: (msg) => triggerNotification(msg, 'success'),
-    showError: (msg) => triggerNotification(msg, 'error'),
+    showSuccess: (message) => triggerNotification(message, 'success'),
+    showError: (message) => triggerNotification(message, 'error'),
     sliders: slides,
     setSliders: setSlides
   };

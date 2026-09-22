@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useApp } from '../context';
 import { normalizePhone } from '../api/auth.api';
-import styles from './auth.module.css';
+import styles from '../assets/styles/auth.module.css';
 import logoImg from '../assets/logo.png';
 
 export default function Auth() {

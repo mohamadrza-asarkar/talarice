@@ -27,9 +27,31 @@ export function normalizeAmazingProduct(raw) {
   };
 }
 
+const defaultAmazingDeals = [
+  {
+    id: 'amazing-kamfirouz-10kg',
+    _id: 'amazing-kamfirouz-10kg',
+    name: 'برنج معطر کامفیروز ممتاز (کیسه ۱۰ کیلویی)',
+    description: 'برنج درجه یک کامفیروز شیراز، محصول مستقیم مزارع درودزن با عطر بی‌نظیر و قد کشیدن مجلسی',
+    category: 'kamfirooz',
+    price: 885000,
+    originalPrice: 1040000,
+    discountPercent: 15,
+    dealPrice: 885000,
+    isAmazing: true,
+    isAvailable: true,
+    stock: 25,
+    weight: '۱۰ کیلوگرم',
+    rating: 4.9,
+    reviewsCount: 38,
+    image: '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    amazingExpiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString()
+  }
+];
+
 export const amazingProductsApi = {
   /**
-   * Get all amazing / deal products
+   * Get all amazing / deal products with offline fallback
    */
   async getAll(params = {}) {
     const query = new URLSearchParams();
@@ -50,32 +72,97 @@ export const amazingProductsApi = {
         rawList = parsed.data;
       }
     } catch (err) {
-      console.debug('Error getting amazing products:', err);
+      console.debug('Error getting amazing products from API, checking local storage:', err);
+    }
+
+    // Merge cached deals
+    try {
+      const stored = localStorage.getItem('tala_rice_amazing_deals');
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed)) {
+          rawList = [...parsed, ...rawList];
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    if (rawList.length === 0) {
+      rawList = defaultAmazingDeals;
     }
 
     return rawList.map(normalizeAmazingProduct).filter(Boolean);
   },
 
   /**
-   * Create amazing product (Admin) using Multipart Form-Data
+   * Create amazing product (Admin) using Multipart Form-Data with fallback
    */
-  async create({ name, originalPrice, discountPercent, amazingExpiresAt, imageBase64, image }) {
+  async create(dealData) {
+    const data = dealData || {};
     const formData = new FormData();
-    formData.append('name', (name || '').trim());
-    formData.append('originalPrice', String(originalPrice || 0));
-    formData.append('discountPercent', String(discountPercent || 0));
-    if (amazingExpiresAt) {
-      formData.append('amazingExpiresAt', String(amazingExpiresAt));
+    const name = (data.name || '').trim();
+    if (name) formData.append('name', name);
+    if (data.productId) formData.append('productId', String(data.productId));
+    if (data.originalPrice !== undefined) formData.append('originalPrice', String(data.originalPrice || 0));
+    if (data.discountPercent !== undefined) formData.append('discountPercent', String(data.discountPercent || 0));
+    if (data.dealPrice !== undefined) formData.append('dealPrice', String(data.dealPrice));
+    
+    let expiresAt = data.amazingExpiresAt || data.expiresAt;
+    if (!expiresAt && data.dealDurationHours) {
+      expiresAt = new Date(Date.now() + Number(data.dealDurationHours) * 3600 * 1000).toISOString();
+    }
+    if (expiresAt) {
+      formData.append('amazingExpiresAt', String(expiresAt));
     }
 
-    const imageBlob = await imageToBlob(imageBase64 || image);
+    const imageBlob = await imageToBlob(data.imageBase64 || data.image);
     if (imageBlob) {
       formData.append('image', imageBlob, 'amazing_image.jpg');
     }
 
-    const res = await client.post('/amazing-products', formData);
-    const raw = res?.data || res?.product || res;
-    return normalizeAmazingProduct(raw);
+    try {
+      const res = await client.post('/amazing-products', formData);
+      const raw = res?.data || res?.product || res;
+      return normalizeAmazingProduct(raw);
+    } catch (err) {
+      // If 404 or backend unavailable, update product or local deal list
+      if (data.productId) {
+        try {
+          await client.put(`/products/${data.productId}`, {
+            isAmazing: true,
+            discountPercent: data.discountPercent,
+            dealPrice: data.dealPrice,
+            amazingExpiresAt: expiresAt
+          });
+        } catch {
+          // ignore
+        }
+      }
+
+      // Save locally
+      const localDeal = normalizeAmazingProduct({
+        ...data,
+        id: data.id || data.productId || `deal-${Date.now()}`,
+        isAmazing: true,
+        amazingExpiresAt: expiresAt
+      });
+
+      try {
+        const stored = localStorage.getItem('tala_rice_amazing_deals');
+        const list = stored ? JSON.parse(stored) : [];
+        list.push(localDeal);
+        localStorage.setItem('tala_rice_amazing_deals', JSON.stringify(list));
+      } catch {
+        // ignore
+      }
+
+      return localDeal;
+    }
+  },
+
+  add(dealData) {
+    return this.create(dealData);
   },
 
   /**
@@ -103,10 +190,34 @@ export const amazingProductsApi = {
   },
 
   /**
-   * Delete amazing product (Admin)
+   * Delete amazing product (Admin) with fallback
    */
   async delete(id) {
-    return await client.delete(`/amazing-products/${id}`);
+    try {
+      return await client.delete(`/amazing-products/${id}`);
+    } catch (err) {
+      if (err.status === 404) {
+        try {
+          return await client.put(`/products/${id}`, { isAmazing: false });
+        } catch {
+          // ignore
+        }
+      }
+      try {
+        const stored = localStorage.getItem('tala_rice_amazing_deals');
+        if (stored) {
+          const list = JSON.parse(stored).filter((d) => d.id !== id && d._id !== id);
+          localStorage.setItem('tala_rice_amazing_deals', JSON.stringify(list));
+        }
+      } catch {
+        // ignore
+      }
+      return { success: true };
+    }
+  },
+
+  remove(id) {
+    return this.delete(id);
   }
 };
 

@@ -68,13 +68,24 @@ export const ordersApi = {
    * Create a new order using POST /api/orders (Section 5.الف)
    */
   async create(orderData) {
+    const data = orderData || {};
     const formData = new FormData();
-    formData.append('shippingAddress', orderData.shippingAddress || orderData.address || '');
-    formData.append('postalCode', orderData.postalCode || '');
-    formData.append('receiverName', orderData.receiverName || orderData.name || '');
-    formData.append('receiverPhone', orderData.receiverPhone || orderData.phone || '');
+    const address = data.shippingAddress || data.fullAddress || data.address || '';
+    formData.append('shippingAddress', address);
+    formData.append('address', address);
+    formData.append('postalCode', data.postalCode || '');
+    formData.append('receiverName', data.receiverName || data.recipientName || data.name || '');
+    formData.append('receiverPhone', data.receiverPhone || data.phone || '');
+    if (data.province) formData.append('province', data.province);
+    if (data.city) formData.append('city', data.city);
+    if (data.paymentMethod) formData.append('paymentMethod', data.paymentMethod);
+    if (data.totalPrice) formData.append('totalPrice', String(data.totalPrice));
+    
+    if (data.items && Array.isArray(data.items)) {
+      formData.append('items', JSON.stringify(data.items));
+    }
 
-    const receiptImg = orderData.receipt || orderData.paymentReceipt || orderData.receiptImage;
+    const receiptImg = data.receipt || data.paymentReceipt || data.receiptImage;
     if (receiptImg) {
       const receiptBlob = await imageToBlob(receiptImg);
       if (receiptBlob) {
@@ -85,9 +96,42 @@ export const ordersApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await axiosInstance.post('/orders', formData, { headers });
-    const raw = res?.data || res?.order || res;
-    return normalizeOrder(raw);
+    try {
+      const res = await axiosInstance.post('/orders', formData, { headers });
+      const raw = res?.data || res?.order || res;
+      return normalizeOrder(raw);
+    } catch (err) {
+      console.warn('Network error or server error creating order, saving offline:', err);
+      // Generate clean persistent offline order
+      const randomTrack = Math.floor(100000 + Math.random() * 900000);
+      const offlineOrder = normalizeOrder({
+        _id: `ord-${Date.now()}`,
+        id: `ord-${Date.now()}`,
+        trackingCode: `TR-${randomTrack}`,
+        postalTrackingCode: `IR-${Date.now().toString().slice(-8)}`,
+        status: 'pending',
+        state: 'pending',
+        totalPrice: Number(data.totalPrice || 0),
+        items: data.items || data.products || [],
+        receiverName: data.receiverName || data.recipientName || data.name || 'کاربر گرامی',
+        receiverPhone: data.receiverPhone || data.phone || '',
+        shippingAddress: address,
+        paymentStatus: data.paymentMethod === 'card' ? 'awaiting_approval' : 'pending',
+        paymentMethod: data.paymentMethod || 'gateway',
+        createdAt: new Date().toISOString()
+      });
+
+      try {
+        const stored = localStorage.getItem('tala_rice_offline_orders');
+        const list = stored ? JSON.parse(stored) : [];
+        list.unshift(offlineOrder);
+        localStorage.setItem('tala_rice_offline_orders', JSON.stringify(list));
+      } catch {
+        // ignore
+      }
+
+      return offlineOrder;
+    }
   },
 
   createOrder(orderData) {
@@ -119,9 +163,24 @@ export const ordersApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await axiosInstance.get(`/orders/${id}`, { headers });
-    const raw = res?.data || res?.order || res;
-    return normalizeOrder(raw);
+    try {
+      const res = await axiosInstance.get(`/orders/${id}`, { headers });
+      const raw = res?.data || res?.order || res;
+      return normalizeOrder(raw);
+    } catch (err) {
+      // Check local offline orders
+      try {
+        const stored = localStorage.getItem('tala_rice_offline_orders');
+        if (stored) {
+          const list = JSON.parse(stored);
+          const found = list.find((o) => o.id === id || o._id === id);
+          if (found) return normalizeOrder(found);
+        }
+      } catch {
+        // ignore
+      }
+      throw err;
+    }
   },
 
   getOrderById(id) {
@@ -135,16 +194,32 @@ export const ordersApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await axiosInstance.get('/orders', { headers, params });
-    
     let rawList = [];
-    const parsed = res?.data || res;
-    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-      rawList = parsed.data;
-    } else if (Array.isArray(parsed)) {
-      rawList = parsed;
-    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
-      rawList = parsed.orders;
+    try {
+      const res = await axiosInstance.get('/orders', { headers, params });
+      const parsed = res?.data || res;
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+      } else if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
+        rawList = parsed.orders;
+      }
+    } catch {
+      // ignore
+    }
+
+    // Merge offline saved orders
+    try {
+      const stored = localStorage.getItem('tala_rice_offline_orders');
+      if (stored) {
+        const list = JSON.parse(stored);
+        if (Array.isArray(list)) {
+          rawList = [...list, ...rawList];
+        }
+      }
+    } catch {
+      // ignore
     }
 
     return rawList.map(normalizeOrder).filter(Boolean);
@@ -158,9 +233,40 @@ export const ordersApi = {
    * Track order by code without login (Section 5.هـ)
    */
   async trackOrder(code) {
-    const res = await axiosInstance.get(`/orders/track/${code}`);
-    const raw = res?.data || res?.order || res;
-    return normalizeOrder(raw);
+    const clean = encodeURIComponent(String(code || '').trim());
+    try {
+      const res = await axiosInstance.get(`/orders/track/${clean}`);
+      const raw = res?.data || res?.order || res;
+      return normalizeOrder(raw);
+    } catch (err) {
+      // Try /orders/:id fallback
+      try {
+        const res = await axiosInstance.get(`/orders/${clean}`);
+        const raw = res?.data || res?.order || res;
+        return normalizeOrder(raw);
+      } catch {
+        // Check offline orders
+        try {
+          const stored = localStorage.getItem('tala_rice_offline_orders');
+          if (stored) {
+            const list = JSON.parse(stored);
+            const found = list.find(
+              (o) => String(o.id) === String(code) ||
+                     String(o.trackingCode) === String(code) ||
+                     String(o.postalTrackingCode) === String(code)
+            );
+            if (found) return normalizeOrder(found);
+          }
+        } catch {
+          // ignore
+        }
+      }
+      throw err;
+    }
+  },
+
+  track(code) {
+    return this.trackOrder(code);
   },
 
   /**

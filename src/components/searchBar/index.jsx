@@ -12,10 +12,11 @@ export function SearchBar() {
     }
   };
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (query.trim()) {
-      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+  const handleSearch = (event) => {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (trimmed) {
+      navigate(`/search?q=${encodeURIComponent(trimmed)}`);
     } else {
       navigate('/search');
     }
@@ -29,7 +30,7 @@ export function SearchBar() {
           type="text"
           dir="rtl"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(event) => setQuery(event.target.value)}
           onFocus={handleInputClick}
           placeholder="جستجوی ارقام برنج کامفیروز، طارم، دودی..."
           className={styles.searchInput}
@@ -55,5 +56,3 @@ export function SearchBar() {
 }
 
 export default SearchBar;
-
-

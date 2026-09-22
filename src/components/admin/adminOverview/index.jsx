@@ -1,10 +1,9 @@
 import React from 'react';
-import { TrendingUp, Package, ShoppingBag, Users, Layers, ShieldCheck, RefreshCw } from 'lucide-react';
-import styles from '../../../pages/pages.module.css';
+import styles from '../admin.module.css';
 
 export function AdminOverview({ stats, adminOrders, products, sliders, adminUsers, isLoadingOrders, onRefreshOrders, onTabChange }) {
   const totalRevenue = stats?.totalRevenue ?? adminOrders.reduce(
-    (sum, o) => sum + (Number(o.finalAmount || o.totalPrice) || 0),
+    (sum, order) => sum + (Number(order.finalAmount || order.totalPrice) || 0),
     0
   );
   const totalOrdersCount = stats?.totalOrders ?? adminOrders.length;

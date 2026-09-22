@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Package, Plus, Edit, Trash2, X, Star } from 'lucide-react';
 import { getImageUrl } from '../../../api/client';
 import styles from '../admin.module.css';
 
@@ -7,10 +6,10 @@ const defaultProductForm = {
   name: '',
   price: '',
   originalPrice: '',
-  discount: '0',
+  discount: 0,
   category: 'kamfirouz',
   weight: '۱۰ کیلوگرم',
-  stock: '30',
+  stock: 30,
   description: '',
   isAmazing: false,
   image: ''
@@ -29,10 +28,12 @@ export function AdminProducts({
   const [productToDelete, setProductToDelete] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredProducts = products.filter((p) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase().trim();
-    return String(p.name || '').toLowerCase().includes(q);
+  const queryText = searchQuery.trim().toLowerCase();
+
+  const filteredProducts = products.filter((product) => {
+    if (!queryText) return true;
+    const name = product.name || '';
+    return name.toLowerCase().includes(queryText);
   });
 
   const openAddModal = () => {
@@ -44,14 +45,14 @@ export function AdminProducts({
     setActiveProduct(product);
     setForm({
       name: product.name || '',
-      price: String(product.price || ''),
-      originalPrice: String(product.originalPrice || product.price || ''),
-      discount: String(product.discount || '0'),
+      price: product.price || '',
+      originalPrice: product.originalPrice || product.price || '',
+      discount: product.discount || 0,
       category: product.category || 'kamfirouz',
       weight: product.weight || '۱۰ کیلوگرم',
-      stock: String(product.stock ?? '30'),
+      stock: product.stock ?? 30,
       description: product.description || '',
-      isAmazing: Boolean(product.isAmazing),
+      isAmazing: !!product.isAmazing,
       image: product.image || ''
     });
     setModalMode('edit');
@@ -63,32 +64,31 @@ export function AdminProducts({
   };
 
   const handleFieldChange = (key, value) => {
-    setForm((prev) => {
-      const updated = { ...prev, [key]: value };
-      // Auto compute discount when original price and current price change
+    setForm((previous) => {
+      const updated = { ...previous, [key]: value };
       if (key === 'originalPrice' || key === 'price') {
-        const orig = Number(key === 'originalPrice' ? value : updated.originalPrice);
-        const cur = Number(key === 'price' ? value : updated.price);
-        if (orig > 0 && cur > 0 && orig > cur) {
-          updated.discount = String(Math.round(((orig - cur) / orig) * 100));
+        const original = Number(key === 'originalPrice' ? value : updated.originalPrice);
+        const current = Number(key === 'price' ? value : updated.price);
+        if (original > 0 && current > 0 && original > current) {
+          updated.discount = Math.round(((original - current) / original) * 100);
         }
       }
       return updated;
     });
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
+  const handleImageUpload = (event) => {
+    const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      handleFieldChange('image', event.target?.result || '');
+    reader.onload = (loadEvent) => {
+      handleFieldChange('image', loadEvent.target?.result || '');
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!form.name.trim() || !form.price) return;
     setIsSubmitting(true);
     try {
@@ -103,8 +103,8 @@ export function AdminProducts({
       if (modalMode === 'add' && onAddProduct) {
         await onAddProduct(payload);
       } else if (modalMode === 'edit' && onUpdateProduct && activeProduct) {
-        const id = activeProduct.id || activeProduct._id;
-        await onUpdateProduct(id, payload);
+        const productId = activeProduct.id || activeProduct._id;
+        await onUpdateProduct(productId, payload);
       }
       closeModal();
     } finally {
@@ -124,7 +124,7 @@ export function AdminProducts({
           className={styles.primaryBtn}
           onClick={openAddModal}
         >
-          <Plus size={16} />
+          <i className="fa-solid fa-plus" />
           <span>افزودن محصول جدید</span>
         </button>
       </div>
@@ -135,47 +135,47 @@ export function AdminProducts({
           className={styles.searchInput}
           placeholder="جستجوی محصول با نام..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(event) => setSearchQuery(event.target.value)}
         />
       </div>
 
       <div className={styles.itemsList}>
         {filteredProducts.length === 0 ? (
           <div className={styles.emptyState}>
-            <Package size={32} />
+            <i className="fa-solid fa-box" style={{ fontSize: '2rem' }} />
             <p>محصولی یافت نشد.</p>
           </div>
         ) : (
-          filteredProducts.map((p) => {
-            const pid = p.id || p._id;
+          filteredProducts.map((product) => {
+            const productId = product.id || product._id;
             return (
-              <div key={pid} className={styles.itemRow}>
+              <div key={productId} className={styles.itemRow}>
                 <div className={styles.itemInfo}>
                   <img
-                    src={getImageUrl(p.image)}
-                    alt={p.name}
+                    src={getImageUrl(product.image)}
+                    alt={product.name}
                     className={styles.thumbnail}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
                     }}
                   />
                   <div className={styles.itemDetails}>
                     <div className={styles.rowCenter}>
-                      <h3 className={styles.itemName}>{p.name}</h3>
-                      {p.isAmazing && (
+                      <h3 className={styles.itemName}>{product.name}</h3>
+                      {product.isAmazing && (
                         <span className={`${styles.badge} ${styles.badgeWarning}`}>
-                          <Star size={11} />
+                          <i className="fa-solid fa-star" />
                           <span>شگفت‌انگیز</span>
                         </span>
                       )}
                     </div>
                     <p className={styles.itemMeta}>
-                      <span>{Number(p.price || 0).toLocaleString('fa-IR')} تومان</span>
+                      <span>{Number(product.price || 0).toLocaleString('fa-IR')} تومان</span>
                       <span>|</span>
-                      <span>وزن: {p.weight || '۱۰ کیلو'}</span>
+                      <span>وزن: {product.weight || '۱۰ کیلو'}</span>
                       <span>|</span>
-                      <span>موجودی: {p.stock ?? 30} کیسه</span>
+                      <span>موجودی: {product.stock ?? 30} کیسه</span>
                     </p>
                   </div>
                 </div>
@@ -184,17 +184,17 @@ export function AdminProducts({
                   <button
                     type="button"
                     className={styles.secondaryBtn}
-                    onClick={() => openEditModal(p)}
+                    onClick={() => openEditModal(product)}
                   >
-                    <Edit size={14} />
+                    <i className="fa-solid fa-pen-to-square" />
                     <span>ویرایش</span>
                   </button>
                   <button
                     type="button"
                     className={styles.dangerBtn}
-                    onClick={() => setProductToDelete(p)}
+                    onClick={() => setProductToDelete(product)}
                   >
-                    <Trash2 size={14} />
+                    <i className="fa-solid fa-trash-can" />
                     <span>حذف</span>
                   </button>
                 </div>
@@ -204,7 +204,6 @@ export function AdminProducts({
         )}
       </div>
 
-      {/* Delete confirmation modal */}
       {productToDelete && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -215,7 +214,7 @@ export function AdminProducts({
                 className={styles.closeBtn}
                 onClick={() => setProductToDelete(null)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
             <p className={styles.confirmText}>
@@ -233,9 +232,9 @@ export function AdminProducts({
                 type="button"
                 className={styles.dangerBtn}
                 onClick={() => {
-                  const pid = productToDelete.id || productToDelete._id;
+                  const productId = productToDelete.id || productToDelete._id;
                   setProductToDelete(null);
-                  if (onDeleteProduct) onDeleteProduct(pid);
+                  if (onDeleteProduct) onDeleteProduct(productId);
                 }}
               >
                 حذف قطعی
@@ -245,7 +244,6 @@ export function AdminProducts({
         </div>
       )}
 
-      {/* Add / Edit Product Modal */}
       {modalMode && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -258,7 +256,7 @@ export function AdminProducts({
                 className={styles.closeBtn}
                 onClick={closeModal}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
 
@@ -270,7 +268,7 @@ export function AdminProducts({
                   className={styles.input}
                   placeholder="مثال: برنج معطر کامفیروز اصل"
                   value={form.name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  onChange={(event) => handleFieldChange('name', event.target.value)}
                   required
                 />
               </div>
@@ -283,7 +281,7 @@ export function AdminProducts({
                     className={styles.input}
                     placeholder="مثال: ۴۸۰۰۰۰"
                     value={form.originalPrice}
-                    onChange={(e) => handleFieldChange('originalPrice', e.target.value)}
+                    onChange={(event) => handleFieldChange('originalPrice', event.target.value)}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -293,7 +291,7 @@ export function AdminProducts({
                     className={styles.input}
                     placeholder="مثال: ۴۳۰۰۰۰"
                     value={form.price}
-                    onChange={(e) => handleFieldChange('price', e.target.value)}
+                    onChange={(event) => handleFieldChange('price', event.target.value)}
                     required
                   />
                 </div>
@@ -307,7 +305,7 @@ export function AdminProducts({
                     className={styles.input}
                     placeholder="مثال: ۱۰"
                     value={form.discount}
-                    onChange={(e) => handleFieldChange('discount', e.target.value)}
+                    onChange={(event) => handleFieldChange('discount', event.target.value)}
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -317,7 +315,7 @@ export function AdminProducts({
                     className={styles.input}
                     placeholder="مثال: ۵۰"
                     value={form.stock}
-                    onChange={(e) => handleFieldChange('stock', e.target.value)}
+                    onChange={(event) => handleFieldChange('stock', event.target.value)}
                   />
                 </div>
               </div>
@@ -328,7 +326,7 @@ export function AdminProducts({
                   <select
                     className={styles.select}
                     value={form.category}
-                    onChange={(e) => handleFieldChange('category', e.target.value)}
+                    onChange={(event) => handleFieldChange('category', event.target.value)}
                   >
                     <option value="kamfirouz">برنج کامفیروز</option>
                     <option value="tarom">برنج طارم</option>
@@ -344,7 +342,7 @@ export function AdminProducts({
                     className={styles.input}
                     placeholder="مثال: ۱۰ کیلوگرم"
                     value={form.weight}
-                    onChange={(e) => handleFieldChange('weight', e.target.value)}
+                    onChange={(event) => handleFieldChange('weight', event.target.value)}
                   />
                 </div>
               </div>
@@ -355,7 +353,7 @@ export function AdminProducts({
                   className={styles.textarea}
                   placeholder="مشخصات عطر، پخت و ری‌دهی..."
                   value={form.description}
-                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  onChange={(event) => handleFieldChange('description', event.target.value)}
                 />
               </div>
 

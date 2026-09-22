@@ -1,26 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  AlertCircle,
-  CheckCircle2,
-  MapPin,
-  Mail,
-  Phone,
-  User,
-  Truck,
-  CreditCard,
-  Building2,
-  X,
-  ArrowRight,
-  ArrowLeft,
-  ShoppingBag,
-  ShieldCheck,
-  Upload,
-  Image as ImageIcon,
-  Copy,
-  Check,
-  Loader2
-} from 'lucide-react';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
@@ -240,7 +219,7 @@ export function CheckoutModal() {
       <section className={styles.modal}>
         <header className={styles.header}>
           <h3 className={styles.headerTitle}>
-            <Truck size={20} className={styles.headerIcon} />
+            <i className={`fa-solid fa-truck-fast ${styles.headerIcon}`} />
             <span>تکمیل خرید و ارسال سفارش</span>
           </h3>
           {step !== 4 && (
@@ -250,7 +229,7 @@ export function CheckoutModal() {
               aria-label="بستن پنجره خرید"
               disabled={isSubmitting}
             >
-              <X size={20} />
+              <i className="fa-solid fa-xmark" />
             </button>
           )}
         </header>
@@ -278,7 +257,7 @@ export function CheckoutModal() {
           {step === 1 && (
             <form onSubmit={handleStep1Submit} noValidate className={styles.form}>
               <h4 className={styles.sectionTitle}>
-                <MapPin size={18} />
+                <i className="fa-solid fa-location-dot" />
                 <span>اطلاعات گیرنده و آدرس ارسال:</span>
               </h4>
 
@@ -287,19 +266,19 @@ export function CheckoutModal() {
                 <div className={styles.loggedUserCard}>
                   <div className={styles.loggedUserHeader}>
                     <div className={styles.loggedUserTitle}>
-                      <CheckCircle2 size={16} className={styles.verifiedIcon} />
+                      <i className={`fa-solid fa-circle-check ${styles.verifiedIcon}`} />
                       <span>مشخصات تحویل‌گیرنده (از حساب کاربری شما):</span>
                     </div>
                     <span className={styles.verifiedBadge}>تأیید شده</span>
                   </div>
                   <div className={styles.loggedUserDetails}>
                     <div className={styles.loggedUserItem}>
-                      <User size={15} className={styles.userItemIcon} />
+                      <i className={`fa-solid fa-user ${styles.userItemIcon}`} />
                       <span className={styles.userItemLabel}>نام و نام خانوادگی:</span>
                       <strong className={styles.userItemValue}>{currentUser?.name || formData.recipientName}</strong>
                     </div>
                     <div className={styles.loggedUserItem}>
-                      <Phone size={15} className={styles.userItemIcon} />
+                      <i className={`fa-solid fa-phone ${styles.userItemIcon}`} />
                       <span className={styles.userItemLabel}>شماره تماس:</span>
                       <strong dir="ltr" className={styles.userItemValue}>{currentUser?.phone || formData.phone}</strong>
                     </div>
@@ -343,12 +322,12 @@ export function CheckoutModal() {
                         autoComplete="name"
                       />
                       <span className={styles.inputIcon}>
-                        <User size={17} />
+                        <i className="fa-solid fa-user" />
                       </span>
                     </div>
                     {errors.recipientName && (
                       <div className={styles.fieldError} id="checkout-recipient-error">
-                        <AlertCircle size={14} className={styles.fieldErrorIcon} />
+                        <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
                         <span>{errors.recipientName}</span>
                       </div>
                     )}
@@ -373,12 +352,12 @@ export function CheckoutModal() {
                         autoComplete="tel"
                       />
                       <span className={styles.inputIcon}>
-                        <Phone size={17} />
+                        <i className="fa-solid fa-phone" />
                       </span>
                     </div>
                     {errors.phone && (
                       <div className={styles.fieldError} id="checkout-phone-error">
-                        <AlertCircle size={14} className={styles.fieldErrorIcon} />
+                        <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
                         <span>{errors.phone}</span>
                       </div>
                     )}
@@ -451,12 +430,12 @@ export function CheckoutModal() {
                     autoComplete="postal-code"
                   />
                   <span className={styles.inputIcon}>
-                    <Mail size={17} />
+                    <i className="fa-solid fa-envelope" />
                   </span>
                 </div>
                 {errors.postalCode && (
                   <div className={styles.fieldError} id="checkout-postal-error">
-                    <AlertCircle size={14} className={styles.fieldErrorIcon} />
+                    <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
                     <span>{errors.postalCode}</span>
                   </div>
                 )}
@@ -483,7 +462,7 @@ export function CheckoutModal() {
                 </div>
                 {errors.fullAddress && (
                   <div className={styles.fieldError} id="checkout-address-error">
-                    <AlertCircle size={14} className={styles.fieldErrorIcon} />
+                    <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
                     <span>{errors.fullAddress}</span>
                   </div>
                 )}
@@ -502,7 +481,7 @@ export function CheckoutModal() {
                 </button>
                 <button type="submit" className={styles.primaryBtn} id="checkout-step1-btn">
                   <span>مرحله بعد: بررسی اقلام</span>
-                  <ArrowLeft size={16} />
+                  <i className="fa-solid fa-arrow-left" />
                 </button>
               </div>
             </form>
@@ -511,7 +490,7 @@ export function CheckoutModal() {
           {step === 2 && (
             <div className={styles.form}>
               <h4 className={styles.sectionTitle}>
-                <ShoppingBag size={18} />
+                <i className="fa-solid fa-bag-shopping" />
                 <span>بررسی اقلام انتخابی:</span>
               </h4>
 
@@ -536,7 +515,7 @@ export function CheckoutModal() {
 
               <div className={styles.addressSummary}>
                 <div className={styles.addressSummaryTitle}>
-                  <ShieldCheck size={16} />
+                  <i className="fa-solid fa-shield-halved" />
                   <strong>خلاصه اطلاعات تحویل و نشانی:</strong>
                 </div>
                 <div>
@@ -559,7 +538,7 @@ export function CheckoutModal() {
                 </button>
                 <button type="button" onClick={function () { setStep(3); }} className={styles.primaryBtn}>
                   <span>تایید و مرحله پرداخت</span>
-                  <ArrowLeft size={16} />
+                  <i className="fa-solid fa-arrow-left" />
                 </button>
               </div>
             </div>
@@ -568,7 +547,7 @@ export function CheckoutModal() {
           {step === 3 && (
             <div className={styles.form}>
               <h4 className={styles.sectionTitle}>
-                <CreditCard size={18} />
+                <i className="fa-solid fa-credit-card" />
                 <span>انتخاب روش پرداخت و ثبت نهایی:</span>
               </h4>
 
@@ -577,7 +556,7 @@ export function CheckoutModal() {
                   onClick={function () { setFormData({ ...formData, paymentMethod: 'gateway' }); }}
                   className={`${styles.paymentOption} ${formData.paymentMethod === 'gateway' ? styles.paymentOptionActive : ''}`}
                 >
-                  <CreditCard size={22} className={styles.paymentMethodIcon} />
+                  <i className={`fa-solid fa-credit-card ${styles.paymentMethodIcon}`} />
                   <div className={styles.paymentInfo}>
                     <strong>درگاه پرداخت آنلاین شتاب</strong>
                     <small>پرداخت امن بانکی با تمامی کارت‌های عضو شتاب</small>
@@ -594,7 +573,7 @@ export function CheckoutModal() {
                   onClick={function () { setFormData({ ...formData, paymentMethod: 'card' }); }}
                   className={`${styles.paymentOption} ${formData.paymentMethod === 'card' ? styles.paymentOptionActive : ''}`}
                 >
-                  <Building2 size={22} className={styles.paymentMethodIcon} />
+                  <i className={`fa-solid fa-building-columns ${styles.paymentMethodIcon}`} />
                   <div className={styles.paymentInfo}>
                     <strong>کارت به کارت حساب طلا رایس</strong>
                     <small>واریز به کارت و ثبت تصویر فیش پرداخت بانکی</small>
@@ -612,7 +591,7 @@ export function CheckoutModal() {
               {formData.paymentMethod === 'card' && (
                 <div className={styles.cardTransferBox}>
                   <div className={styles.bankCardHeader}>
-                    <Building2 size={16} />
+                    <i className="fa-solid fa-building-columns" />
                     <span>اطلاعات کارت جهت واریز وجه:</span>
                   </div>
                   <div className={styles.cardInfoRow}>
@@ -627,7 +606,7 @@ export function CheckoutModal() {
                   {/* Receipt Uploader */}
                   <div className={styles.receiptUploadContainer}>
                     <label className={styles.receiptUploadLabel}>
-                      <ImageIcon size={16} />
+                      <i className="fa-solid fa-image" />
                       <span>تصویر فیش واریزی (اختیاری):</span>
                     </label>
                     <input
@@ -658,7 +637,7 @@ export function CheckoutModal() {
                         onClick={function () { fileInputRef.current?.click(); }}
                         className={styles.uploadBtn}
                       >
-                        <Upload size={16} />
+                        <i className="fa-solid fa-upload" />
                         <span>انتخاب و بارگذاری تصویر فیش</span>
                       </button>
                     )}
@@ -694,7 +673,7 @@ export function CheckoutModal() {
                   alignItems: 'center',
                   gap: '8px'
                 }}>
-                  <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                  <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0 }} />
                   <span>{submitError}</span>
                 </div>
               )}
@@ -717,13 +696,13 @@ export function CheckoutModal() {
                 >
                   {isSubmitting ? (
                     <>
-                      <Loader2 size={16} className={styles.spinner} />
+                      <i className={`fa-solid fa-spinner fa-spin ${styles.spinner}`} />
                       <span>در حال ثبت سفارش...</span>
                     </>
                   ) : (
                     <>
                       <span>پرداخت و ثبت نهایی</span>
-                      <CheckCircle2 size={16} />
+                      <i className="fa-solid fa-circle-check" />
                     </>
                   )}
                 </button>
@@ -733,7 +712,7 @@ export function CheckoutModal() {
 
           {step === 4 && createdOrder && (
             <div className={styles.successBox}>
-              <CheckCircle2 size={56} className={styles.successIcon} />
+              <i className={`fa-solid fa-circle-check ${styles.successIcon}`} style={{ fontSize: '3.5rem' }} />
               <h3>سفارش شما با موفقیت در سیستم ثبت گردید!</h3>
               <p>کیسه‌های برنج معطر کامفیروزی در حال آماده‌سازی و ارسال به نشانی شما می‌باشند.</p>
 
@@ -748,7 +727,7 @@ export function CheckoutModal() {
                       className={styles.copyBtn}
                       title="کپی شناسه"
                     >
-                      {copiedId ? <Check size={14} color="#16a34a" /> : <Copy size={14} />}
+                      {copiedId ? <i className="fa-solid fa-check" style={{ color: '#16a34a' }} /> : <i className="fa-solid fa-copy" />}
                     </button>
                   </div>
                 </div>
@@ -805,7 +784,7 @@ export function CheckoutModal() {
                 </button>
                 <button onClick={handleFinish} className={styles.primaryBtn}>
                   <span>مشاهده در پنل سفارش‌ها</span>
-                  <ArrowLeft size={16} />
+                  <i className="fa-solid fa-arrow-left" />
                 </button>
               </div>
             </div>

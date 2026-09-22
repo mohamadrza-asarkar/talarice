@@ -98,9 +98,8 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
 }
 
-.userBtn i {
-  color: #D4AF37;
-  font-size: 0.9rem;
+.crownIcon {
+  color: #fbbf24;
 }
 
 .userBtnText {

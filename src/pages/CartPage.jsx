@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context';
-import styles from './cartPage.module.css';
+import styles from '../assets/styles/cartPage.module.css';
 
 export default function CartPage() {
   const navigate = useNavigate();

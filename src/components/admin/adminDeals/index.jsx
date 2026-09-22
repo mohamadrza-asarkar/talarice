@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
-import { Sparkles, Plus, Trash2, X, Star } from 'lucide-react';
 import { getImageUrl } from '../../../api/client';
 import styles from '../admin.module.css';
 
 const defaultDealForm = {
   productId: '',
-  discountPercent: '15',
+  discountPercent: 15,
   dealPrice: '',
-  dealDurationHours: '24'
+  dealDurationHours: 24
 };
 
 export function AdminDeals({
@@ -21,33 +20,33 @@ export function AdminDeals({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleProductSelect = (productId) => {
-    const selected = allProducts.find((p) => (p.id || p._id) === productId);
-    const regPrice = Number(selected?.price || 0);
-    const disc = Number(form.discountPercent || 15);
-    const computedDeal = regPrice > 0 ? Math.round(regPrice * (1 - disc / 100)) : '';
+    const selected = allProducts.find((product) => (product.id || product._id) === productId);
+    const regularPrice = Number(selected?.price || 0);
+    const discount = Number(form.discountPercent || 15);
+    const computedDeal = regularPrice > 0 ? Math.round(regularPrice * (1 - discount / 100)) : '';
 
-    setForm((prev) => ({
-      ...prev,
+    setForm((previous) => ({
+      ...previous,
       productId,
-      dealPrice: String(computedDeal)
+      dealPrice: computedDeal
     }));
   };
 
-  const handleDiscountChange = (discVal) => {
-    const disc = Number(discVal);
-    const selected = allProducts.find((p) => (p.id || p._id) === form.productId);
-    const regPrice = Number(selected?.price || 0);
-    const computedDeal = regPrice > 0 && disc >= 0 ? Math.round(regPrice * (1 - disc / 100)) : '';
+  const handleDiscountChange = (discountValue) => {
+    const discount = Number(discountValue);
+    const selected = allProducts.find((product) => (product.id || product._id) === form.productId);
+    const regularPrice = Number(selected?.price || 0);
+    const computedDeal = regularPrice > 0 && discount >= 0 ? Math.round(regularPrice * (1 - discount / 100)) : '';
 
-    setForm((prev) => ({
-      ...prev,
-      discountPercent: discVal,
-      dealPrice: String(computedDeal)
+    setForm((previous) => ({
+      ...previous,
+      discountPercent: discountValue,
+      dealPrice: computedDeal
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!form.productId) return;
     setIsSubmitting(true);
     try {
@@ -73,7 +72,7 @@ export function AdminDeals({
           className={styles.primaryBtn}
           onClick={() => setShowModal(true)}
         >
-          <Plus size={16} />
+          <i className="fa-solid fa-plus" />
           <span>افزودن محصول شگفت‌انگیز</span>
         </button>
       </div>
@@ -81,37 +80,37 @@ export function AdminDeals({
       <div className={styles.itemsList}>
         {amazingProducts.length === 0 ? (
           <div className={styles.emptyState}>
-            <Sparkles size={32} />
+            <i className="fa-solid fa-wand-magic-sparkles" style={{ fontSize: '2rem' }} />
             <p>در حال حاضر هیچ محصولی در پیشنهاد شگفت‌انگیز قرار ندارد.</p>
           </div>
         ) : (
-          amazingProducts.map((p) => {
-            const pid = p.id || p._id;
-            const regPrice = Number(p.price || 0);
-            const dealPrice = Number(p.dealPrice || Math.round(regPrice * (1 - (p.discountPercent || 15) / 100)));
+          amazingProducts.map((product) => {
+            const productId = product.id || product._id;
+            const regularPrice = Number(product.price || 0);
+            const dealPrice = Number(product.dealPrice || Math.round(regularPrice * (1 - (product.discountPercent || 15) / 100)));
             return (
-              <div key={pid} className={styles.itemRow}>
+              <div key={productId} className={styles.itemRow}>
                 <div className={styles.itemInfo}>
                   <img
-                    src={getImageUrl(p.image)}
-                    alt={p.name}
+                    src={getImageUrl(product.image)}
+                    alt={product.name}
                     className={styles.thumbnail}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
                     }}
                   />
                   <div className={styles.itemDetails}>
                     <div className={styles.rowCenter}>
-                      <h3 className={styles.itemName}>{p.name}</h3>
+                      <h3 className={styles.itemName}>{product.name}</h3>
                       <span className={`${styles.badge} ${styles.badgeWarning}`}>
-                        <Star size={11} />
-                        <span>{p.discountPercent || 15}٪ تخفیف</span>
+                        <i className="fa-solid fa-star" />
+                        <span>{product.discountPercent || 15}٪ تخفیف</span>
                       </span>
                     </div>
                     <p className={styles.itemMeta}>
                       <span>قیمت شگفت‌انگیز: {dealPrice.toLocaleString('fa-IR')} تومان</span>
-                      <span>(قیمت قبل: {regPrice.toLocaleString('fa-IR')})</span>
+                      <span>(قیمت قبل: {regularPrice.toLocaleString('fa-IR')})</span>
                     </p>
                   </div>
                 </div>
@@ -120,9 +119,9 @@ export function AdminDeals({
                   <button
                     type="button"
                     className={styles.dangerBtn}
-                    onClick={() => onRemoveDeal && onRemoveDeal(pid)}
+                    onClick={() => onRemoveDeal && onRemoveDeal(productId)}
                   >
-                    <Trash2 size={14} />
+                    <i className="fa-solid fa-trash-can" />
                     <span>حذف از شگفت‌انگیز</span>
                   </button>
                 </div>
@@ -132,7 +131,6 @@ export function AdminDeals({
         )}
       </div>
 
-      {/* Add Deal Modal */}
       {showModal && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -143,7 +141,7 @@ export function AdminDeals({
                 className={styles.closeBtn}
                 onClick={() => setShowModal(false)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
 
@@ -153,15 +151,15 @@ export function AdminDeals({
                 <select
                   className={styles.select}
                   value={form.productId}
-                  onChange={(e) => handleProductSelect(e.target.value)}
+                  onChange={(event) => handleProductSelect(event.target.value)}
                   required
                 >
                   <option value="">-- یک محصول انتخاب کنید --</option>
-                  {allProducts.map((p) => {
-                    const id = p.id || p._id;
+                  {allProducts.map((product) => {
+                    const productId = product.id || product._id;
                     return (
-                      <option key={id} value={id}>
-                        {p.name} ({Number(p.price || 0).toLocaleString('fa-IR')} تومان)
+                      <option key={productId} value={productId}>
+                        {product.name} ({Number(product.price || 0).toLocaleString('fa-IR')} تومان)
                       </option>
                     );
                   })}
@@ -177,7 +175,7 @@ export function AdminDeals({
                     min="1"
                     max="90"
                     value={form.discountPercent}
-                    onChange={(e) => handleDiscountChange(e.target.value)}
+                    onChange={(event) => handleDiscountChange(event.target.value)}
                     required
                   />
                 </div>
@@ -187,7 +185,7 @@ export function AdminDeals({
                     type="number"
                     className={styles.input}
                     value={form.dealPrice}
-                    onChange={(e) => setForm((prev) => ({ ...prev, dealPrice: e.target.value }))}
+                    onChange={(event) => setForm((previous) => ({ ...previous, dealPrice: event.target.value }))}
                     required
                   />
                 </div>
@@ -199,7 +197,7 @@ export function AdminDeals({
                   type="number"
                   className={styles.input}
                   value={form.dealDurationHours}
-                  onChange={(e) => setForm((prev) => ({ ...prev, dealDurationHours: e.target.value }))}
+                  onChange={(event) => setForm((previous) => ({ ...previous, dealDurationHours: event.target.value }))}
                 />
               </div>
 

@@ -2,26 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context';
 import { ordersApi } from '../api';
-import {
-  Package,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  Truck,
-  User,
-  Crown,
-  Search,
-  Copy,
-  LogOut,
-  Headphones,
-  Lock,
-  MapPin,
-  Phone,
-  ArrowRight,
-  ShieldCheck,
-  ShoppingBag
-} from 'lucide-react';
-import styles from './profile.module.css';
+import styles from '../assets/styles/profile.module.css';
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -176,7 +157,7 @@ export default function Profile() {
       case 'تحویل شده':
         return (
           <span className={`${styles.orderStatusBadge} ${styles.statusCompleted}`}>
-            <CheckCircle2 size={14} />
+            <i className="fa-solid fa-circle-check" />
             تحویل شده
           </span>
         );
@@ -184,14 +165,14 @@ export default function Profile() {
       case 'ارسال شده':
         return (
           <span className={`${styles.orderStatusBadge} ${styles.statusShipped}`}>
-            <Truck size={14} />
+            <i className="fa-solid fa-truck-fast" />
             ارسال شده (پست پیشتاز)
           </span>
         );
       default:
         return (
           <span className={`${styles.orderStatusBadge} ${styles.statusPending}`}>
-            <Clock size={14} />
+            <i className="fa-solid fa-clock" />
             در حال پردازش در شالیزار
           </span>
         );
@@ -213,7 +194,7 @@ export default function Profile() {
         <div className={styles.heroMainRow}>
           <div className={styles.userInfoGroup}>
             <div className={styles.avatarCircle}>
-              {currentUser?.name ? currentUser.name.charAt(0) : <User size={28} />}
+              {currentUser?.name ? currentUser.name.charAt(0) : <i className="fa-solid fa-user" style={{ fontSize: '1.75rem' }} />}
             </div>
 
             <div className={styles.userMeta}>
@@ -221,18 +202,18 @@ export default function Profile() {
                 <h1 className={styles.userName}>{currentUser?.name || 'کاربر گرامی'}</h1>
                 {isAdmin ? (
                   <span className={styles.roleBadgeAdmin}>
-                    <Crown size={12} />
+                    <i className="fa-solid fa-crown" />
                     مدیر فروشگاه
                   </span>
                 ) : (
                   <span className={styles.roleBadgeCustomer}>
-                    <ShieldCheck size={12} />
+                    <i className="fa-solid fa-shield-halved" />
                     مشتری وفادار طلا رایس
                   </span>
                 )}
               </div>
               <span className={styles.userPhone}>
-                <Phone size={13} />
+                <i className="fa-solid fa-phone" />
                 {currentUser?.phone || 'بدون شماره تلفن'}
               </span>
             </div>
@@ -241,7 +222,7 @@ export default function Profile() {
           <div className={styles.heroActions}>
             {isAdmin && (
               <Link to="/admin" className={styles.adminPanelBtn} title="ورود به داشبورد مدیریتی">
-                <Crown size={16} />
+                <i className="fa-solid fa-crown" />
                 <span>پنل مدیریت فروشگاه</span>
               </Link>
             )}
@@ -255,7 +236,7 @@ export default function Profile() {
               className={styles.logoutBtn}
               title="خروج از حساب"
             >
-              <LogOut size={15} />
+              <i className="fa-solid fa-right-from-bracket" />
               <span>خروج</span>
             </button>
           </div>
@@ -266,7 +247,7 @@ export default function Profile() {
       <section className={styles.statsGrid}>
         <div className={styles.statCard}>
           <div className={`${styles.statIconBox} ${styles.statIconGreen}`}>
-            <Package size={22} />
+            <i className="fa-solid fa-box" />
           </div>
           <div className={styles.statTextGroup}>
             <span className={styles.statValue}>{userOrders.length.toLocaleString('fa-IR')}</span>
@@ -276,7 +257,7 @@ export default function Profile() {
 
         <div className={styles.statCard}>
           <div className={`${styles.statIconBox} ${styles.statIconAmber}`}>
-            <Clock size={22} />
+            <i className="fa-solid fa-clock" />
           </div>
           <div className={styles.statTextGroup}>
             <span className={styles.statValue}>{activeOrdersCount.toLocaleString('fa-IR')}</span>
@@ -286,7 +267,7 @@ export default function Profile() {
 
         <div className={styles.statCard}>
           <div className={`${styles.statIconBox} ${styles.statIconBlue}`}>
-            <Truck size={22} />
+            <i className="fa-solid fa-truck-fast" />
           </div>
           <div className={styles.statTextGroup}>
             <span className={styles.statValue}>{deliveredOrdersCount.toLocaleString('fa-IR')}</span>
@@ -296,7 +277,7 @@ export default function Profile() {
 
         <div className={styles.statCard}>
           <div className={`${styles.statIconBox} ${styles.statIconGold}`}>
-            <ShoppingBag size={22} />
+            <i className="fa-solid fa-bag-shopping" />
           </div>
           <div className={styles.statTextGroup}>
             <span className={styles.statValue}>{cartCount.toLocaleString('fa-IR')}</span>
@@ -312,7 +293,7 @@ export default function Profile() {
           className={`${styles.tabItem} ${activeTab === 'orders' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('orders')}
         >
-          <Package size={17} />
+          <i className="fa-solid fa-box" />
           <span>سفارش‌های من</span>
         </button>
 
@@ -321,7 +302,7 @@ export default function Profile() {
           className={`${styles.tabItem} ${activeTab === 'tracking' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('tracking')}
         >
-          <Search size={17} />
+          <i className="fa-solid fa-magnifying-glass" />
           <span>رهگیری مرسوله</span>
         </button>
 
@@ -330,7 +311,7 @@ export default function Profile() {
           className={`${styles.tabItem} ${activeTab === 'info' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('info')}
         >
-          <User size={17} />
+          <i className="fa-solid fa-user" />
           <span>مشخصات و آدرس</span>
         </button>
 
@@ -339,7 +320,7 @@ export default function Profile() {
           className={`${styles.tabItem} ${activeTab === 'security' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('security')}
         >
-          <Lock size={17} />
+          <i className="fa-solid fa-lock" />
           <span>امنیت و رمز عبور</span>
         </button>
 
@@ -348,7 +329,7 @@ export default function Profile() {
           className={`${styles.tabItem} ${activeTab === 'support' ? styles.tabItemActive : ''}`}
           onClick={() => setActiveTab('support')}
         >
-          <Headphones size={17} />
+          <i className="fa-solid fa-headset" />
           <span>پشتیبانی</span>
         </button>
       </nav>
@@ -360,7 +341,7 @@ export default function Profile() {
           <>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>
-                <Package size={20} />
+                <i className="fa-solid fa-box" />
                 تاریخچه و وضعیت سفارش‌ها
               </h2>
               <span className={styles.sectionBadge}>
@@ -370,13 +351,13 @@ export default function Profile() {
 
             {isLoadingOrders ? (
               <div className={styles.emptyState}>
-                <Clock size={32} className="animate-spin text-emerald-700" />
+                <i className="fa-solid fa-clock fa-spin text-emerald-700" style={{ fontSize: '2rem' }} />
                 <p>در حال دریافت اطلاعات سفارش‌ها از سرور...</p>
               </div>
             ) : userOrders.length === 0 ? (
               <div className={styles.emptyState}>
                 <div className={styles.emptyStateIcon}>
-                  <ShoppingBag size={28} />
+                  <i className="fa-solid fa-bag-shopping" style={{ fontSize: '1.75rem' }} />
                 </div>
                 <p>شما هنوز سفارشی در طلا رایس ثبت نکرده‌اید.</p>
                 <Link to="/products" className={styles.primaryBtn}>
@@ -436,7 +417,7 @@ export default function Profile() {
                             className={styles.copyCodeBtn}
                             title="کپی کد رهگیری"
                           >
-                            <Copy size={13} />
+                            <i className="fa-solid fa-copy" />
                           </button>
                         </div>
                       )}
@@ -453,7 +434,7 @@ export default function Profile() {
           <>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>
-                <Search size={20} />
+                <i className="fa-solid fa-magnifying-glass" />
                 سامانه رهگیری ارسال مستقیم از شالیزار
               </h2>
             </div>
@@ -461,7 +442,7 @@ export default function Profile() {
             <form onSubmit={handleTrackingSearch} className={styles.formGrid}>
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  <Search size={15} />
+                  <i className="fa-solid fa-magnifying-glass" />
                   شماره سفارش یا کد ۲۴ رقمی پست پیشتاز
                 </label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -524,7 +505,7 @@ export default function Profile() {
           <>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>
-                <User size={20} />
+                <i className="fa-solid fa-user" />
                 مشخصات کاربری و آدرس ارسال
               </h2>
             </div>
@@ -557,7 +538,7 @@ export default function Profile() {
 
               <div className={styles.formGroup}>
                 <label className={styles.formLabel}>
-                  <MapPin size={15} />
+                  <i className="fa-solid fa-location-dot" />
                   آدرس دقیق پستی جهت تحویل سفارش
                 </label>
                 <textarea
@@ -594,7 +575,7 @@ export default function Profile() {
           <>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>
-                <Lock size={20} />
+                <i className="fa-solid fa-lock" />
                 تغییر رمز عبور حساب کاربری
               </h2>
             </div>
@@ -652,7 +633,7 @@ export default function Profile() {
           <>
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>
-                <Headphones size={20} />
+                <i className="fa-solid fa-headset" />
                 ارتباط با واحد مشتریان طلا رایس
               </h2>
             </div>
@@ -660,7 +641,7 @@ export default function Profile() {
             <div className={styles.supportChannelsGrid}>
               <div className={styles.supportChannelCard}>
                 <div className={styles.supportIconCircle}>
-                  <Phone size={20} />
+                  <i className="fa-solid fa-phone" />
                 </div>
                 <div className={styles.supportChannelInfo}>
                   <span className={styles.supportTitle}>تماس تلفنی با دفتر شالیزار</span>
@@ -672,7 +653,7 @@ export default function Profile() {
 
               <div className={styles.supportChannelCard}>
                 <div className={styles.supportIconCircle}>
-                  <Truck size={20} />
+                  <i className="fa-solid fa-truck-fast" />
                 </div>
                 <div className={styles.supportChannelInfo}>
                   <span className={styles.supportTitle}>ارسال مستقیم و ضمانت پخت</span>

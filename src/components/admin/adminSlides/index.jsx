@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Layers, Plus, Trash2, Edit, X, Image as ImageIcon } from 'lucide-react';
 import { getImageUrl } from '../../../api/client';
 import styles from '../admin.module.css';
 
@@ -48,29 +47,29 @@ export function AdminSlides({
   };
 
   const handleFieldChange = (key, value) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
+    setForm((previous) => ({ ...previous, [key]: value }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files?.[0];
+  const handleImageUpload = (event) => {
+    const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      handleFieldChange('image', event.target?.result || '');
+    reader.onload = (loadEvent) => {
+      handleFieldChange('image', loadEvent.target?.result || '');
     };
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!form.title.trim()) return;
     setIsSubmitting(true);
     try {
       if (modalMode === 'add' && onAddSlide) {
         await onAddSlide(form);
       } else if (modalMode === 'edit' && onUpdateSlide && activeSlide) {
-        const id = activeSlide.id || activeSlide._id;
-        await onUpdateSlide(id, form);
+        const slideId = activeSlide.id || activeSlide._id;
+        await onUpdateSlide(slideId, form);
       }
       closeModal();
     } finally {
@@ -90,7 +89,7 @@ export function AdminSlides({
           className={styles.primaryBtn}
           onClick={openAddModal}
         >
-          <Plus size={16} />
+          <i className="fa-solid fa-plus" />
           <span>افزودن اسلاید جدید</span>
         </button>
       </div>
@@ -98,30 +97,30 @@ export function AdminSlides({
       <div className={styles.itemsList}>
         {sliders.length === 0 ? (
           <div className={styles.emptyState}>
-            <Layers size={32} />
+            <i className="fa-solid fa-layer-group" style={{ fontSize: '2rem' }} />
             <p>هیچ اسلایدی یافت نشد.</p>
           </div>
         ) : (
-          sliders.map((s) => {
-            const sid = s.id || s._id;
+          sliders.map((slide) => {
+            const slideId = slide.id || slide._id;
             return (
-              <div key={sid} className={styles.itemRow}>
+              <div key={slideId} className={styles.itemRow}>
                 <div className={styles.itemInfo}>
                   <img
-                    src={getImageUrl(s.image)}
-                    alt={s.title}
+                    src={getImageUrl(slide.image)}
+                    alt={slide.title}
                     className={styles.thumbnail}
-                    onError={(e) => {
-                      e.currentTarget.onerror = null;
-                      e.currentTarget.src = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
                     }}
                   />
                   <div className={styles.itemDetails}>
-                    <h3 className={styles.itemName}>{s.title}</h3>
+                    <h3 className={styles.itemName}>{slide.title}</h3>
                     <p className={styles.itemMeta}>
-                      <span>{s.subtitle || 'بدون زیرعنوان'}</span>
+                      <span>{slide.subtitle || 'بدون زیرعنوان'}</span>
                       <span>|</span>
-                      <span>دکمه: {s.ctaText || 'مشاهده'}</span>
+                      <span>دکمه: {slide.ctaText || 'مشاهده'}</span>
                     </p>
                   </div>
                 </div>
@@ -130,17 +129,17 @@ export function AdminSlides({
                   <button
                     type="button"
                     className={styles.secondaryBtn}
-                    onClick={() => openEditModal(s)}
+                    onClick={() => openEditModal(slide)}
                   >
-                    <Edit size={14} />
+                    <i className="fa-solid fa-pen-to-square" />
                     <span>ویرایش</span>
                   </button>
                   <button
                     type="button"
                     className={styles.dangerBtn}
-                    onClick={() => setSlideToDelete(s)}
+                    onClick={() => setSlideToDelete(slide)}
                   >
-                    <Trash2 size={14} />
+                    <i className="fa-solid fa-trash-can" />
                     <span>حذف</span>
                   </button>
                 </div>
@@ -150,7 +149,6 @@ export function AdminSlides({
         )}
       </div>
 
-      {/* Delete confirmation modal */}
       {slideToDelete && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -161,7 +159,7 @@ export function AdminSlides({
                 className={styles.closeBtn}
                 onClick={() => setSlideToDelete(null)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
             <p className={styles.confirmText}>
@@ -179,9 +177,9 @@ export function AdminSlides({
                 type="button"
                 className={styles.dangerBtn}
                 onClick={() => {
-                  const sid = slideToDelete.id || slideToDelete._id;
+                  const slideId = slideToDelete.id || slideToDelete._id;
                   setSlideToDelete(null);
-                  if (onDeleteSlide) onDeleteSlide(sid);
+                  if (onDeleteSlide) onDeleteSlide(slideId);
                 }}
               >
                 حذف قطعی
@@ -191,7 +189,6 @@ export function AdminSlides({
         </div>
       )}
 
-      {/* Add / Edit Slide Modal */}
       {modalMode && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -204,7 +201,7 @@ export function AdminSlides({
                 className={styles.closeBtn}
                 onClick={closeModal}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
 
@@ -216,7 +213,7 @@ export function AdminSlides({
                   className={styles.input}
                   placeholder="مثال: برنج معطر کامفیروز اصل"
                   value={form.title}
-                  onChange={(e) => handleFieldChange('title', e.target.value)}
+                  onChange={(event) => handleFieldChange('title', event.target.value)}
                   required
                 />
               </div>
@@ -228,7 +225,7 @@ export function AdminSlides({
                   className={styles.input}
                   placeholder="مثال: برداشت تازه سال از بهترین شالیزارها"
                   value={form.subtitle}
-                  onChange={(e) => handleFieldChange('subtitle', e.target.value)}
+                  onChange={(event) => handleFieldChange('subtitle', event.target.value)}
                 />
               </div>
 
@@ -238,7 +235,7 @@ export function AdminSlides({
                   className={styles.textarea}
                   placeholder="متن کوتاه معرفی اسلاید..."
                   value={form.description}
-                  onChange={(e) => handleFieldChange('description', e.target.value)}
+                  onChange={(event) => handleFieldChange('description', event.target.value)}
                 />
               </div>
 
@@ -249,7 +246,7 @@ export function AdminSlides({
                   className={styles.input}
                   placeholder="مشاهده و خرید"
                   value={form.ctaText}
-                  onChange={(e) => handleFieldChange('ctaText', e.target.value)}
+                  onChange={(event) => handleFieldChange('ctaText', event.target.value)}
                 />
               </div>
 

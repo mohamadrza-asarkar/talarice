@@ -1,24 +1,11 @@
 // -------------------------------------------------------------
-// Native Fetch API Client (No Axios / No XHR)
-// Base URL: https://talarice.ir/api
+// Base Backend URL - Change this single URL to sync all APIs
 // -------------------------------------------------------------
+export const BACKEND_URL = 'http://localhost:5000'; 
 
-let rawEnv = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
-  ? String(import.meta.env.VITE_API_BASE_URL).trim()
-  : '';
-
-if (rawEnv.startsWith('httsp://')) {
-  rawEnv = rawEnv.replace('httsp://', 'https://');
-}
-
-// If container environment injected localhost:5000, fallback to live backend at https://talarice.ir/api
-let DEFAULT_DOCS_BASE_URL = (rawEnv && !rawEnv.includes('localhost') && !rawEnv.includes('127.0.0.1'))
-  ? rawEnv
-  : 'https://talarice.ir/api';
-
-DEFAULT_DOCS_BASE_URL = DEFAULT_DOCS_BASE_URL.replace(/\/+$/, '');
-
-export const API_BASE_URL = DEFAULT_DOCS_BASE_URL;
+// Automatically derive API base path
+const cleanBackend = BACKEND_URL.replace(/\/+$/, '');
+export const API_BASE_URL = cleanBackend.endsWith('/api') ? cleanBackend : `${cleanBackend}/api`;
 
 export function getImageUrl(imgPath) {
   if (!imgPath || typeof imgPath !== 'string') {
@@ -28,13 +15,10 @@ export function getImageUrl(imgPath) {
   if (!trimmed) {
     return '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   }
-  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
-  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-    return trimmed;
-  }
-  const baseUrl = (API_BASE_URL || 'https://talarice.ir/api').replace(/\/api\/?$/, '');
+  const baseUrl = cleanBackend.endsWith('/api') ? cleanBackend.slice(0, -4) : cleanBackend;
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${baseUrl}${cleanPath}`;
 }
@@ -66,9 +50,23 @@ export function setStoredToken(token) {
  * Modern native fetch wrapper with automatic token injection & error handling
  */
 export async function request(endpoint, options = {}) {
-  const url = endpoint.startsWith('http')
+  let url = endpoint.startsWith('http')
     ? endpoint
     : `${API_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+
+  // Automatically serialize options.params if provided (Axios compatibility)
+  if (options.params && typeof options.params === 'object') {
+    const query = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        query.append(key, String(val));
+      }
+    });
+    const qs = query.toString();
+    if (qs) {
+      url += (url.includes('?') ? '&' : '?') + qs;
+    }
+  }
 
   const token = getStoredToken();
   const rawBody = options.body !== undefined ? options.body : options.data;
@@ -76,7 +74,12 @@ export async function request(endpoint, options = {}) {
   const isAuthPublicRoute = endpoint.includes('/auth/login') || endpoint.includes('/auth/register');
 
   // Preserve Content-Type and Accept headers properly without options.headers overwriting Content-Type
-  const customHeaders = options.headers || {};
+  const customHeaders = { ...(options.headers || {}) };
+  if (isFormData) {
+    delete customHeaders['Content-Type'];
+    delete customHeaders['content-type'];
+  }
+
   const headers = {
     'Accept': 'application/json',
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),

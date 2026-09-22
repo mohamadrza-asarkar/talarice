@@ -1,9 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context';
-import { Search as SearchIcon, ArrowRight, X } from 'lucide-react';
 import { ProductCard } from '../components/productCard';
-import styles from './pages.module.css';
+import styles from '../assets/styles/pages.module.css';
 
 export default function Search() {
   const navigate = useNavigate();
@@ -31,7 +30,7 @@ export default function Search() {
       {/* هدر صفحه جستجو */}
       <header className={styles.pageHeader}>
         <button type="button" className={styles.backButton} onClick={() => navigate(-1)}>
-          <ArrowRight size={16} />
+          <i className="fa-solid fa-arrow-right" />
           <span>بازگشت</span>
         </button>
         <h1 className={styles.pageTitle}>جستجوی ارقام برنج</h1>
@@ -40,7 +39,7 @@ export default function Search() {
       {/* نوار جستجوی پیشرفته */}
       <div className={styles.searchBarWrapper}>
         <form onSubmit={(e) => e.preventDefault()} className={styles.searchBar}>
-          <SearchIcon size={20} className={styles.searchIconGold} />
+          <i className={`fa-solid fa-magnifying-glass ${styles.searchIconGold}`} />
           <input
             type="text"
             className={styles.searchInput}
@@ -51,7 +50,7 @@ export default function Search() {
           />
           {query && (
             <button type="button" className={styles.clearSearchBtn} onClick={handleClear} aria-label="پاک کردن">
-              <X size={15} />
+              <i className="fa-solid fa-xmark" />
             </button>
           )}
         </form>

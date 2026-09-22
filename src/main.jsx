@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { AppProvider } from './context';
 import App from './App.jsx';
-import './index.css';
+import './assets/index.css';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {

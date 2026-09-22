@@ -165,7 +165,7 @@ export const adminApi = {
 
   /**
    * Get all store orders for admin processing (Section 8)
-   * GET /api/admin/orders
+   * GET /api/admin/orders with fallback to /orders
    */
   async getAdminOrders(params = {}) {
     const query = new URLSearchParams();
@@ -186,10 +186,40 @@ export const adminApi = {
         rawList = parsed.orders;
       }
     } catch (err) {
-      console.warn('Error getting admin orders:', err);
+      console.warn('Error getting admin orders, checking /orders fallback:', err);
+      try {
+        const fallbackRes = await client.get(`/orders${qs ? `?${qs}` : ''}`);
+        const parsed = fallbackRes?.data || fallbackRes;
+        if (Array.isArray(parsed)) {
+          rawList = parsed;
+        } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+          rawList = parsed.data;
+        } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
+          rawList = parsed.orders;
+        }
+      } catch (fallbackErr) {
+        console.debug('Fallback to offline orders storage:', fallbackErr);
+      }
+    }
+
+    // Merge any locally cached offline orders
+    try {
+      const offline = localStorage.getItem('tala_rice_offline_orders');
+      if (offline) {
+        const parsedOffline = JSON.parse(offline);
+        if (Array.isArray(parsedOffline)) {
+          rawList = [...parsedOffline, ...rawList];
+        }
+      }
+    } catch {
+      // ignore
     }
 
     return rawList.map(normalizeOrder).filter(Boolean);
+  },
+
+  getOrders(params = {}) {
+    return this.getAdminOrders(params);
   }
 };
 

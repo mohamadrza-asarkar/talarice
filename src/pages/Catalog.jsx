@@ -1,8 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context';
-import { Filter, SlidersHorizontal, ShieldCheck, Sparkles, Check, AlertCircle, RefreshCw } from 'lucide-react';
 import { ProductCard } from '../components/productCard';
-import styles from './pages.module.css';
+import styles from '../assets/styles/pages.module.css';
 
 export default function Catalog() {
   const {
@@ -48,7 +47,7 @@ export default function Catalog() {
       <header className={styles.catalogHeader}>
         <div className={styles.catalogHeaderInfo}>
           <div className={styles.catalogBadge}>
-            <Sparkles size={13} className="text-yellow-400" />
+            <i className="fa-solid fa-wand-magic-sparkles text-yellow-400 text-xs" />
             <span>محصولات اصیل شالیزار کامفیروز</span>
           </div>
           <h1 className={styles.catalogMainTitle}>ویترین محصولات طلا رایس</h1>
@@ -60,7 +59,7 @@ export default function Catalog() {
 
       {/* بنر تضمین کیفیت */}
       <section className={styles.guaranteeBanner}>
-        <ShieldCheck size={24} className={styles.guaranteeIcon} />
+        <i className={`fa-solid fa-shield-halved ${styles.guaranteeIcon}`} style={{ fontSize: '1.5rem' }} />
         <div>
           <strong className={styles.guaranteeTitle}>ضمانت بی‌قید و شرط پخت و عطر</strong>
           <p className={styles.guaranteeText}>
@@ -84,7 +83,7 @@ export default function Catalog() {
           fontSize: '0.9rem'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <i className="fa-solid fa-circle-exclamation" style={{ flexShrink: 0, fontSize: '1.1rem' }} />
             <span>{apiError}</span>
           </div>
           <button
@@ -105,7 +104,7 @@ export default function Catalog() {
               gap: '6px'
             }}
           >
-            <RefreshCw size={14} className={isLoadingApi ? 'animate-spin' : ''} />
+            <i className={`fa-solid fa-arrows-rotate ${isLoadingApi ? 'fa-spin' : ''}`} />
             <span>{isLoadingApi ? 'در حال تلاش...' : 'تلاش مجدد'}</span>
           </button>
         </div>
@@ -138,7 +137,7 @@ export default function Catalog() {
         {/* فیلتر سریع وزن و مرتب‌سازی */}
         <div className={styles.sortBar}>
           <div className={styles.sortOptions}>
-            <SlidersHorizontal size={14} className="text-yellow-500" />
+            <i className="fa-solid fa-sliders text-yellow-500" />
             <span className={styles.sortLabel}>مرتب‌سازی:</span>
             <button
               type="button"

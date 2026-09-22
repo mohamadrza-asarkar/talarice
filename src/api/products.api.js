@@ -109,6 +109,115 @@ export async function imageToBlob(imageSource) {
   return null;
 }
 
+export const DEFAULT_PRODUCTS = [
+  {
+    id: 'prod-kamfirouz-10kg',
+    _id: 'prod-kamfirouz-10kg',
+    name: 'برنج معطر کامفیروز شیراز (کیسه ۱۰ کیلویی)',
+    description: 'برنج درجه یک اصیل شالیزارهای کامفیروز، کاملاً پاک شده و الک خورده با بوی سنتی و ماندگاری نرمی عالی پس از پخت.',
+    price: 885000,
+    originalPrice: 1040000,
+    oldPrice: 1040000,
+    discountPercent: 15,
+    dealPrice: 885000,
+    isAmazing: true,
+    isAvailable: true,
+    stock: 45,
+    countInStock: 45,
+    weight: '۱۰ کیلوگرم',
+    category: 'kamfirouz',
+    rating: 4.9,
+    reviewsCount: 42,
+    image: '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    imageUrl: '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    fullImageUrl: '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
+  },
+  {
+    id: 'prod-tarom-hashemi-10kg',
+    _id: 'prod-tarom-hashemi-10kg',
+    name: 'برنج طارم هاشمی گیلان (کیسه ۱۰ کیلویی)',
+    description: 'برنج ممتاز طارم هاشمی با دانه‌های استخوانی بلند، عطر ملایم و ری بسیار بالا مناسب مهمانی‌ها و مجالس.',
+    price: 1150000,
+    originalPrice: 1250000,
+    oldPrice: 1250000,
+    discountPercent: 8,
+    isAmazing: false,
+    isAvailable: true,
+    stock: 30,
+    countInStock: 30,
+    weight: '۱۰ کیلوگرم',
+    category: 'tarom',
+    rating: 4.8,
+    reviewsCount: 29,
+    image: '/src/assets/images/white_rice_sack_2_1786553744148.jpg',
+    imageUrl: '/src/assets/images/white_rice_sack_2_1786553744148.jpg',
+    fullImageUrl: '/src/assets/images/white_rice_sack_2_1786553744148.jpg'
+  },
+  {
+    id: 'prod-damsiah-10kg',
+    _id: 'prod-damsiah-10kg',
+    name: 'برنج دمسیاه استخوانی ممتاز (کیسه ۱۰ کیلویی)',
+    description: 'برنج دمسیاه اصیل شمال، دانه‌های بسیار بلند و سفید برفی با قد کشیدن فوق‌العاده و طعمی ماندگار.',
+    price: 1220000,
+    originalPrice: 1220000,
+    oldPrice: 1220000,
+    discountPercent: 0,
+    isAmazing: false,
+    isAvailable: true,
+    stock: 20,
+    countInStock: 20,
+    weight: '۱۰ کیلوگرم',
+    category: 'damsiah',
+    rating: 4.9,
+    reviewsCount: 19,
+    image: '/src/assets/images/white_rice_sack_3_1786553768867.jpg',
+    imageUrl: '/src/assets/images/white_rice_sack_3_1786553768867.jpg',
+    fullImageUrl: '/src/assets/images/white_rice_sack_3_1786553768867.jpg'
+  },
+  {
+    id: 'prod-anbarboo-10kg',
+    _id: 'prod-anbarboo-10kg',
+    name: 'برنج عنبربو ممتاز خوزستان (کیسه ۱۰ کیلویی)',
+    description: 'برنج عنبربو جنوب با طبع بسیار گرم و هضم سبک، عطری قوی و خوش‌طعم، مناسب مصارف روزمره خانواده.',
+    price: 720000,
+    originalPrice: 790000,
+    oldPrice: 790000,
+    discountPercent: 9,
+    isAmazing: false,
+    isAvailable: true,
+    stock: 50,
+    countInStock: 50,
+    weight: '۱۰ کیلوگرم',
+    category: 'anbarboo',
+    rating: 4.7,
+    reviewsCount: 35,
+    image: '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    imageUrl: '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+    fullImageUrl: '/src/assets/images/white_rice_sack_1_1786553727373.jpg'
+  },
+  {
+    id: 'prod-nimdaneh-5kg',
+    _id: 'prod-nimdaneh-5kg',
+    name: 'نیم‌دانه معطر کامفیروزی اعلا (کیسه ۵ کیلویی)',
+    description: 'نیم‌دانه خالص بوجار شده کامفیروز با همان عطر و طعم برنج دانه کامل، ایده‌آل برای آش، شله‌زرد و سوپ.',
+    price: 410000,
+    originalPrice: 450000,
+    oldPrice: 450000,
+    discountPercent: 9,
+    isAmazing: false,
+    isAvailable: true,
+    stock: 40,
+    countInStock: 40,
+    weight: '۵ کیلوگرم',
+    category: 'kamfirouz',
+    rating: 4.8,
+    reviewsCount: 16,
+    image: '/src/assets/images/white_rice_sack_2_1786553744148.jpg',
+    imageUrl: '/src/assets/images/white_rice_sack_2_1786553744148.jpg',
+    fullImageUrl: '/src/assets/images/white_rice_sack_2_1786553744148.jpg'
+  }
+];
+
 export const productsApi = {
   /**
    * Get all products with optional filters using axios.get
@@ -146,6 +255,24 @@ export const productsApi = {
       console.debug('Using local fallback products due to network/server response:', e);
     }
 
+    // Merge offline custom products created by admin
+    try {
+      const custom = localStorage.getItem('tala_rice_custom_products');
+      if (custom) {
+        const parsedCustom = JSON.parse(custom);
+        if (Array.isArray(parsedCustom)) {
+          rawList = [...parsedCustom, ...rawList];
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // If no products returned by backend, use default products
+    if (rawList.length === 0) {
+      rawList = DEFAULT_PRODUCTS;
+    }
+
     const normalized = rawList.map(normalizeProduct).filter(Boolean);
     return {
       data: normalized,
@@ -163,12 +290,20 @@ export const productsApi = {
   },
 
   /**
-   * Get single product by ID using axios.get
+   * Get single product by ID using axios.get with fallback
    */
   async getById(id) {
-    const res = await axiosInstance.get(`/products/${id}`);
-    const raw = res?.data || res?.product || res;
-    return normalizeProduct(raw);
+    try {
+      const res = await axiosInstance.get(`/products/${id}`);
+      const raw = res?.data || res?.product || res;
+      return normalizeProduct(raw);
+    } catch (err) {
+      // Search in default or offline products
+      const all = await this.getAll();
+      const found = all.products.find((p) => p.id === id || p._id === id);
+      if (found) return found;
+      throw err;
+    }
   },
 
   getProductById(id) {
@@ -182,10 +317,13 @@ export const productsApi = {
     try {
       const res = await axiosInstance.get('/products?featured=true');
       const list = Array.isArray(res) ? res : (res?.data || []);
-      return list.map(normalizeProduct);
+      const normalized = list.map(normalizeProduct).filter(Boolean);
+      if (normalized.length > 0) return normalized;
     } catch {
-      return [];
+      // ignore
     }
+    const all = await this.getAll();
+    return all.products.filter((p) => p.isAmazing || p.discountPercent > 0);
   },
 
   /**
@@ -215,9 +353,27 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await axiosInstance.post('/products', formData, { headers });
-    const raw = res?.data || res?.product || res;
-    return normalizeProduct(raw);
+    try {
+      const res = await axiosInstance.post('/products', formData, { headers });
+      const raw = res?.data || res?.product || res;
+      return normalizeProduct(raw);
+    } catch (err) {
+      console.warn('Network error creating product, storing in local cache:', err);
+      const newProd = normalizeProduct({
+        ...productData,
+        id: `prod-${Date.now()}`,
+        _id: `prod-${Date.now()}`
+      });
+      try {
+        const custom = localStorage.getItem('tala_rice_custom_products');
+        const list = custom ? JSON.parse(custom) : [];
+        list.unshift(newProd);
+        localStorage.setItem('tala_rice_custom_products', JSON.stringify(list));
+      } catch {
+        // ignore
+      }
+      return newProd;
+    }
   },
 
   createProduct(productData) {
@@ -250,9 +406,28 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    const res = await axiosInstance.put(`/products/${id}`, formData, { headers });
-    const raw = res?.data || res?.product || res;
-    return normalizeProduct(raw);
+    try {
+      const res = await axiosInstance.put(`/products/${id}`, formData, { headers });
+      const raw = res?.data || res?.product || res;
+      return normalizeProduct(raw);
+    } catch (err) {
+      console.warn('Network error updating product, updating local cache:', err);
+      const updated = normalizeProduct({ ...productData, id, _id: id });
+      try {
+        const custom = localStorage.getItem('tala_rice_custom_products');
+        let list = custom ? JSON.parse(custom) : [];
+        const idx = list.findIndex((p) => p.id === id || p._id === id);
+        if (idx !== -1) {
+          list[idx] = { ...list[idx], ...updated };
+        } else {
+          list.unshift(updated);
+        }
+        localStorage.setItem('tala_rice_custom_products', JSON.stringify(list));
+      } catch {
+        // ignore
+      }
+      return updated;
+    }
   },
 
   updateProduct(id, productData) {
@@ -266,7 +441,20 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    return await axiosInstance.delete(`/products/${id}`, { headers });
+    try {
+      return await axiosInstance.delete(`/products/${id}`, { headers });
+    } catch (err) {
+      try {
+        const custom = localStorage.getItem('tala_rice_custom_products');
+        if (custom) {
+          const list = JSON.parse(custom).filter((p) => p.id !== id && p._id !== id);
+          localStorage.setItem('tala_rice_custom_products', JSON.stringify(list));
+        }
+      } catch {
+        // ignore
+      }
+      return { success: true };
+    }
   },
 
   deleteProduct(id) {

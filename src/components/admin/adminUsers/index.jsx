@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { Users, UserPlus, ShieldCheck, Trash2, X, AlertCircle } from 'lucide-react';
 import styles from '../admin.module.css';
 
 const initialForm = {
@@ -22,13 +21,17 @@ export function AdminUsers({
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const filteredUsers = adminUsers.filter((u) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase().trim();
+  const queryText = searchQuery.trim().toLowerCase();
+
+  const filteredUsers = adminUsers.filter((user) => {
+    if (!queryText) return true;
+    const name = user.name || '';
+    const phone = user.phone || '';
+    const email = user.email || '';
     return (
-      String(u.name || '').toLowerCase().includes(q) ||
-      String(u.phone || '').includes(q) ||
-      String(u.email || '').toLowerCase().includes(q)
+      name.toLowerCase().includes(queryText) ||
+      phone.includes(queryText) ||
+      email.toLowerCase().includes(queryText)
     );
   });
 
@@ -36,8 +39,8 @@ export function AdminUsers({
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
     if (!form.phone.trim()) return;
     setIsSubmitting(true);
     try {
@@ -63,7 +66,7 @@ export function AdminUsers({
           className={styles.primaryBtn}
           onClick={() => setShowModal(true)}
         >
-          <UserPlus size={16} />
+          <i className="fa-solid fa-user-plus" />
           <span>افزودن کاربر جدید</span>
         </button>
       </div>
@@ -74,36 +77,36 @@ export function AdminUsers({
           className={styles.searchInput}
           placeholder="جستجو با نام، شماره تماس یا ایمیل..."
           value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          onChange={(event) => setSearchQuery(event.target.value)}
         />
       </div>
 
       <div className={styles.itemsList}>
         {filteredUsers.length === 0 ? (
           <div className={styles.emptyState}>
-            <Users size={32} />
+            <i className="fa-solid fa-users" style={{ fontSize: '2rem' }} />
             <p>کاربری با این مشخصات یافت نشد.</p>
           </div>
         ) : (
-          filteredUsers.map((u) => {
-            const uid = u.id || u._id;
-            const isAdmin = u.role === 'admin' || u.isAdmin;
+          filteredUsers.map((user) => {
+            const userId = user.id || user._id;
+            const isAdmin = user.role === 'admin' || user.isAdmin;
             return (
-              <div key={uid} className={styles.itemRow}>
+              <div key={userId} className={styles.itemRow}>
                 <div className={styles.itemDetails}>
                   <div className={styles.rowCenter}>
-                    <h3 className={styles.itemName}>{u.name || 'کاربر بدون نام'}</h3>
+                    <h3 className={styles.itemName}>{user.name || 'کاربر بدون نام'}</h3>
                     {isAdmin && (
                       <span className={`${styles.badge} ${styles.badgeWarning}`}>
-                        <ShieldCheck size={12} />
+                        <i className="fa-solid fa-shield-halved" />
                         <span>مدیر سیستم</span>
                       </span>
                     )}
                   </div>
                   <p className={styles.itemMeta}>
-                    <span>تلفن: {u.phone || 'ثبت نشده'}</span>
+                    <span>تلفن: {user.phone || 'ثبت نشده'}</span>
                     <span>|</span>
-                    <span>ایمیل: {u.email || 'ثبت نشده'}</span>
+                    <span>ایمیل: {user.email || 'ثبت نشده'}</span>
                   </p>
                 </div>
 
@@ -111,16 +114,16 @@ export function AdminUsers({
                   <button
                     type="button"
                     className={styles.secondaryBtn}
-                    onClick={() => onUpdateRole && onUpdateRole(uid, isAdmin ? 'user' : 'admin')}
+                    onClick={() => onUpdateRole && onUpdateRole(userId, isAdmin ? 'user' : 'admin')}
                   >
                     {isAdmin ? 'تنظیم به کاربر عادی' : 'ارتقا به مدیر'}
                   </button>
                   <button
                     type="button"
                     className={styles.dangerBtn}
-                    onClick={() => setUserToDelete(u)}
+                    onClick={() => setUserToDelete(user)}
                   >
-                    <Trash2 size={14} />
+                    <i className="fa-solid fa-trash-can" />
                     <span>حذف</span>
                   </button>
                 </div>
@@ -130,7 +133,6 @@ export function AdminUsers({
         )}
       </div>
 
-      {/* Delete confirmation modal */}
       {userToDelete && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -141,7 +143,7 @@ export function AdminUsers({
                 className={styles.closeBtn}
                 onClick={() => setUserToDelete(null)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
             <p className={styles.confirmText}>
@@ -159,9 +161,9 @@ export function AdminUsers({
                 type="button"
                 className={styles.dangerBtn}
                 onClick={() => {
-                  const uid = userToDelete.id || userToDelete._id;
+                  const userId = userToDelete.id || userToDelete._id;
                   setUserToDelete(null);
-                  if (onDeleteUser) onDeleteUser(uid);
+                  if (onDeleteUser) onDeleteUser(userId);
                 }}
               >
                 حذف قطعی
@@ -171,7 +173,6 @@ export function AdminUsers({
         </div>
       )}
 
-      {/* Add User Modal */}
       {showModal && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -182,7 +183,7 @@ export function AdminUsers({
                 className={styles.closeBtn}
                 onClick={() => setShowModal(false)}
               >
-                <X size={18} />
+                <i className="fa-solid fa-xmark" />
               </button>
             </div>
 
@@ -194,7 +195,7 @@ export function AdminUsers({
                   className={styles.input}
                   placeholder="مثال: علی احمدی"
                   value={form.name}
-                  onChange={(e) => handleFieldChange('name', e.target.value)}
+                  onChange={(event) => handleFieldChange('name', event.target.value)}
                 />
               </div>
 
@@ -205,7 +206,7 @@ export function AdminUsers({
                   className={styles.input}
                   placeholder="۰۹۱۲۳۴۵۶۷۸۹"
                   value={form.phone}
-                  onChange={(e) => handleFieldChange('phone', e.target.value)}
+                  onChange={(event) => handleFieldChange('phone', event.target.value)}
                   required
                 />
               </div>
@@ -217,7 +218,7 @@ export function AdminUsers({
                   className={styles.input}
                   placeholder="حداقل ۶ کاراکتر"
                   value={form.password}
-                  onChange={(e) => handleFieldChange('password', e.target.value)}
+                  onChange={(event) => handleFieldChange('password', event.target.value)}
                   required
                 />
               </div>
@@ -229,7 +230,7 @@ export function AdminUsers({
                   className={styles.input}
                   placeholder="user@example.com"
                   value={form.email}
-                  onChange={(e) => handleFieldChange('email', e.target.value)}
+                  onChange={(event) => handleFieldChange('email', event.target.value)}
                 />
               </div>
 
@@ -238,7 +239,7 @@ export function AdminUsers({
                 <select
                   className={styles.select}
                   value={form.role}
-                  onChange={(e) => handleFieldChange('role', e.target.value)}
+                  onChange={(event) => handleFieldChange('role', event.target.value)}
                 >
                   <option value="user">کاربر عادی / خریدار</option>
                   <option value="admin">مدیر سیستم (دسترسی کامل)</option>
