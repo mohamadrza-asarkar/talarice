@@ -22,27 +22,10 @@ export function getImageUrl(imgPath) {
   if (!trimmed) {
     return '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   }
-
-  const baseUrl = API_BASE_URL.startsWith('/')
-    ? (typeof window !== 'undefined' ? window.location.origin : '') + API_BASE_URL.replace(/\/api\/?$/, '')
-    : API_BASE_URL.replace(/\/api\/?$/, '');
-
-  // If backend returns a hardcoded localhost:5000 path but the app is hosted elsewhere, replace it with the real baseUrl
-  if (
-    trimmed.startsWith('http://localhost:5000') ||
-    trimmed.startsWith('https://localhost:5000') ||
-    trimmed.startsWith('http://127.0.0.1:5000') ||
-    trimmed.startsWith('https://127.0.0.1:5000')
-  ) {
-    const relativePart = trimmed.replace(/^(https?:\/\/(localhost|127\.0\.0\.1):5000)/, '');
-    const cleanPath = relativePart.startsWith('/') ? relativePart : `/${relativePart}`;
-    return `${baseUrl}${cleanPath}`;
-  }
-
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
-
+  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '');
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${baseUrl}${cleanPath}`;
 }
