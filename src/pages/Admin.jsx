@@ -26,7 +26,8 @@ export default function Admin() {
     setSliders,
     amazingProducts,
     setAmazingProducts,
-    showToast
+    showToast,
+    refreshProductsFromApi
   } = useApp();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -61,7 +62,10 @@ export default function Admin() {
 
   useEffect(() => {
     loadInitialData();
-  }, [loadInitialData]);
+    if (refreshProductsFromApi) {
+      refreshProductsFromApi();
+    }
+  }, [loadInitialData, refreshProductsFromApi]);
 
   // Product Actions
   const handleAddProduct = async (productData) => {

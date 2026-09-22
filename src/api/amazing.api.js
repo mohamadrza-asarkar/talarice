@@ -41,12 +41,18 @@ export const amazingProductsApi = {
     const endpoint = `/amazing-products${qs ? `?${qs}` : ''}`;
 
     const res = await client.get(endpoint);
-    const parsed = res?.data || res;
+    const parsed = res;
     let rawList = [];
-    if (Array.isArray(parsed)) {
+    if (parsed && typeof parsed === 'object') {
+      if (Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+      } else if (Array.isArray(parsed.products)) {
+        rawList = parsed.products;
+      } else if (Array.isArray(parsed)) {
+        rawList = parsed;
+      }
+    } else if (Array.isArray(parsed)) {
       rawList = parsed;
-    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-      rawList = parsed.data;
     }
 
     return rawList.map(normalizeAmazingProduct).filter(Boolean);

@@ -20,7 +20,18 @@ export function AppProvider({ children }) {
   const navigate = useNavigate();
 
   // Authentication State
-  const [currentUser, setCurrentUser] = useState(null);
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const storedToken = localStorage.getItem('tala_rice_token');
+      if (storedToken) {
+        const cachedUser = localStorage.getItem('tala_rice_user');
+        return cachedUser ? JSON.parse(cachedUser) : null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  });
   const [isLoadingAuth, setIsLoadingAuth] = useState(true);
 
   // Cart & Order State
@@ -155,7 +166,13 @@ export function AppProvider({ children }) {
           console.debug('Auth sync failed on mount:', error.message);
           if (error.status === 401 || error.status === 403) {
             setStoredToken(null);
-            localStorage.removeItem(STORAGE_KEYS.USER_ID);
+            try {
+              localStorage.removeItem('tala_rice_user');
+              localStorage.removeItem(STORAGE_KEYS.USER_ID);
+            } catch {
+              // ignore
+            }
+            setCurrentUser(null);
           }
         } finally {
           if (isMounted) {

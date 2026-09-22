@@ -252,17 +252,27 @@ export const productsApi = {
     const endpoint = `/products${qs ? `?${qs}` : ''}`;
     const res = await axiosInstance.get(endpoint);
     
-    const parsed = res?.data || res;
+    const parsed = res;
     let rawList = [];
     let pagination = null;
     
-    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-      rawList = parsed.data;
-      pagination = res.pagination || parsed.pagination || null;
+    if (parsed && typeof parsed === 'object') {
+      if (Array.isArray(parsed.products)) {
+        rawList = parsed.products;
+      } else if (Array.isArray(parsed.data)) {
+        rawList = parsed.data;
+      } else if (parsed.data && typeof parsed.data === 'object' && Array.isArray(parsed.data.products)) {
+        rawList = parsed.data.products;
+      } else if (parsed.data && typeof parsed.data === 'object' && Array.isArray(parsed.data.data)) {
+        rawList = parsed.data.data;
+      } else if (Array.isArray(parsed)) {
+        rawList = parsed;
+      } else if (parsed.products && typeof parsed.products === 'object' && Array.isArray(parsed.products.data)) {
+        rawList = parsed.products.data;
+      }
+      pagination = parsed.pagination || parsed.data?.pagination || null;
     } else if (Array.isArray(parsed)) {
       rawList = parsed;
-    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.products)) {
-      rawList = parsed.products;
     }
     
     const normalized = rawList.map(normalizeProduct).filter(Boolean);
