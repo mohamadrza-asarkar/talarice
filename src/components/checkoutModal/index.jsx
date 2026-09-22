@@ -110,21 +110,18 @@ export function CheckoutModal() {
   function validateStep1() {
     const newErrors = {};
 
-    // When NOT logged in, require recipientName and phone
-    if (!isLoggedIn) {
-      const trimmedName = (formData.recipientName || '').trim();
-      if (!trimmedName) {
-        newErrors.recipientName = 'لطفاً نام و نام خانوادگی تحویل‌گیرنده را وارد کنید.';
-      } else if (trimmedName.length < 3) {
-        newErrors.recipientName = 'نام و نام خانوادگی باید حداقل ۳ حرف باشد.';
-      }
+    const trimmedName = (formData.recipientName || '').trim();
+    if (!trimmedName) {
+      newErrors.recipientName = 'لطفاً نام و نام خانوادگی تحویل‌گیرنده را وارد کنید.';
+    } else if (trimmedName.length < 3) {
+      newErrors.recipientName = 'نام و نام خانوادگی باید حداقل ۳ حرف باشد.';
+    }
 
-      const cleanPhone = toEnglishDigits(formData.phone || '').replace(/[\s-]/g, '');
-      if (!cleanPhone) {
-        newErrors.phone = 'لطفاً شماره موبایل تحویل‌گیرنده را وارد کنید.';
-      } else if (!/^09\d{9}$/.test(cleanPhone)) {
-        newErrors.phone = 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.';
-      }
+    const cleanPhone = toEnglishDigits(formData.phone || '').replace(/[\s-]/g, '');
+    if (!cleanPhone) {
+      newErrors.phone = 'لطفاً شماره موبایل تحویل‌گیرنده را وارد کنید.';
+    } else if (!/^09\d{9}$/.test(cleanPhone)) {
+      newErrors.phone = 'شماره موبایل باید ۱۱ رقم و با ۰۹ شروع شود.';
     }
 
     // Postal code is always required
@@ -162,8 +159,8 @@ export function CheckoutModal() {
     setSubmitError(null);
     try {
       const orderPayload = {
-        recipientName: isLoggedIn ? (currentUser?.name || formData.recipientName) : formData.recipientName,
-        phone: isLoggedIn ? (currentUser?.phone || formData.phone) : formData.phone,
+        recipientName: formData.recipientName,
+        phone: formData.phone,
         province: formData.province,
         city: formData.city,
         postalCode: formData.postalCode,
@@ -172,9 +169,13 @@ export function CheckoutModal() {
         paymentReceipt: formData.receiptImage
       };
 
-      const order = await createOrder(orderPayload);
-      setCreatedOrder(order);
-      setStep(4);
+      const result = await createOrder(orderPayload);
+      if (result && result.success) {
+        setCreatedOrder(result.order);
+        setStep(4);
+      } else {
+        setSubmitError(result?.message || 'خطا در ثبت نهایی سفارش در سرور.');
+      }
     } catch (err) {
       setSubmitError(err.message || 'خطا در ثبت نهایی سفارش در سرور.');
     } finally {
@@ -262,108 +263,95 @@ export function CheckoutModal() {
               </h4>
 
               {isLoggedIn ? (
-                /* When user is logged in, name & phone are read directly from server/account */
-                <div className={styles.loggedUserCard}>
+                <div className={styles.loggedUserCard} style={{ marginBottom: '16px' }}>
                   <div className={styles.loggedUserHeader}>
                     <div className={styles.loggedUserTitle}>
                       <i className={`fa-solid fa-circle-check ${styles.verifiedIcon}`} />
-                      <span>مشخصات تحویل‌گیرنده (از حساب کاربری شما):</span>
+                      <span>وارد شده با حساب کاربری ({currentUser?.email})</span>
                     </div>
                     <span className={styles.verifiedBadge}>تأیید شده</span>
                   </div>
-                  <div className={styles.loggedUserDetails}>
-                    <div className={styles.loggedUserItem}>
-                      <i className={`fa-solid fa-user ${styles.userItemIcon}`} />
-                      <span className={styles.userItemLabel}>نام و نام خانوادگی:</span>
-                      <strong className={styles.userItemValue}>{currentUser?.name || formData.recipientName}</strong>
-                    </div>
-                    <div className={styles.loggedUserItem}>
-                      <i className={`fa-solid fa-phone ${styles.userItemIcon}`} />
-                      <span className={styles.userItemLabel}>شماره تماس:</span>
-                      <strong dir="ltr" className={styles.userItemValue}>{currentUser?.phone || formData.phone}</strong>
-                    </div>
-                  </div>
+                  <p style={{ fontSize: '0.85rem', color: '#4b5563', margin: '4px 8px 0 0', lineHeight: 1.6 }}>
+                    مشخصات تحویل‌گیرنده پیش‌فرض از اطلاعات حساب شما بارگذاری شده است. در صورت تمایل به ارسال سفارش برای شخص دیگر، می‌توانید فیلدهای زیر را ویرایش نمایید.
+                  </p>
                 </div>
               ) : (
-                /* Guest mode with login redirect */
-                <>
-                  <div className={styles.guestNotice}>
-                    <div className={styles.guestNoticeText}>
-                      <strong>ورود برای ثبت و رهگیری سفارش</strong>
-                      <span>برای پیگیری آنلاین وضعیت مرسوله پستی، وارد حساب خود شوید.</span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={function () {
-                        setIsCheckoutOpen(false);
-                        navigate('/auth');
-                      }}
-                      className={styles.loginRedirectBtn}
-                    >
-                      ورود / عضویت
-                    </button>
+                <div className={styles.guestNotice}>
+                  <div className={styles.guestNoticeText}>
+                    <strong>ورود برای ثبت و رهگیری سفارش</strong>
+                    <span>برای پیگیری آنلاین وضعیت مرسوله پستی، وارد حساب خود شوید.</span>
                   </div>
-
-                  <div className={styles.formGroup}>
-                    <label
-                      htmlFor="checkout-recipient-name"
-                      className={`${styles.label} ${errors.recipientName ? styles.labelError : ''}`}
-                    >
-                      نام و نام خانوادگی تحویل‌گیرنده
-                    </label>
-                    <div className={styles.inputWrapper}>
-                      <input
-                        id="checkout-recipient-name"
-                        type="text"
-                        value={formData.recipientName}
-                        onChange={function (e) { handleInputChange('recipientName', e.target.value); }}
-                        placeholder="نام و نام خانوادگی خود را وارد کنید"
-                        className={`${styles.input} ${errors.recipientName ? styles.inputError : ''}`}
-                        autoComplete="name"
-                      />
-                      <span className={styles.inputIcon}>
-                        <i className="fa-solid fa-user" />
-                      </span>
-                    </div>
-                    {errors.recipientName && (
-                      <div className={styles.fieldError} id="checkout-recipient-error">
-                        <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
-                        <span>{errors.recipientName}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className={styles.formGroup}>
-                    <label
-                      htmlFor="checkout-phone"
-                      className={`${styles.label} ${errors.phone ? styles.labelError : ''}`}
-                    >
-                      شماره موبایل (جهت هماهنگی ارسال)
-                    </label>
-                    <div className={styles.inputWrapper}>
-                      <input
-                        id="checkout-phone"
-                        type="tel"
-                        dir="ltr"
-                        value={formData.phone}
-                        onChange={function (e) { handleInputChange('phone', e.target.value); }}
-                        placeholder="شماره موبایل خود را وارد کنید"
-                        className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
-                        autoComplete="tel"
-                      />
-                      <span className={styles.inputIcon}>
-                        <i className="fa-solid fa-phone" />
-                      </span>
-                    </div>
-                    {errors.phone && (
-                      <div className={styles.fieldError} id="checkout-phone-error">
-                        <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
-                        <span>{errors.phone}</span>
-                      </div>
-                    )}
-                  </div>
-                </>
+                  <button
+                    type="button"
+                    onClick={function () {
+                      setIsCheckoutOpen(false);
+                      navigate('/auth');
+                    }}
+                    className={styles.loginRedirectBtn}
+                  >
+                    ورود / عضویت
+                  </button>
+                </div>
               )}
+
+              <div className={styles.formGroup}>
+                <label
+                  htmlFor="checkout-recipient-name"
+                  className={`${styles.label} ${errors.recipientName ? styles.labelError : ''}`}
+                >
+                  نام و نام خانوادگی تحویل‌گیرنده
+                </label>
+                <div className={styles.inputWrapper}>
+                  <input
+                    id="checkout-recipient-name"
+                    type="text"
+                    value={formData.recipientName}
+                    onChange={function (e) { handleInputChange('recipientName', e.target.value); }}
+                    placeholder="نام و نام خانوادگی خود را وارد کنید"
+                    className={`${styles.input} ${errors.recipientName ? styles.inputError : ''}`}
+                    autoComplete="name"
+                  />
+                  <span className={styles.inputIcon}>
+                    <i className="fa-solid fa-user" />
+                  </span>
+                </div>
+                {errors.recipientName && (
+                  <div className={styles.fieldError} id="checkout-recipient-error">
+                    <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
+                    <span>{errors.recipientName}</span>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.formGroup}>
+                <label
+                  htmlFor="checkout-phone"
+                  className={`${styles.label} ${errors.phone ? styles.labelError : ''}`}
+                >
+                  شماره موبایل (جهت هماهنگی ارسال)
+                </label>
+                <div className={styles.inputWrapper}>
+                  <input
+                    id="checkout-phone"
+                    type="tel"
+                    dir="ltr"
+                    value={formData.phone}
+                    onChange={function (e) { handleInputChange('phone', e.target.value); }}
+                    placeholder="شماره موبایل خود را وارد کنید"
+                    className={`${styles.input} ${errors.phone ? styles.inputError : ''}`}
+                    autoComplete="tel"
+                  />
+                  <span className={styles.inputIcon}>
+                    <i className="fa-solid fa-phone" />
+                  </span>
+                </div>
+                {errors.phone && (
+                  <div className={styles.fieldError} id="checkout-phone-error">
+                    <i className={`fa-solid fa-circle-exclamation ${styles.fieldErrorIcon}`} />
+                    <span>{errors.phone}</span>
+                  </div>
+                )}
+              </div>
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>

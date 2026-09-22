@@ -5,14 +5,13 @@ import styles from '../admin.module.css';
 const defaultProductForm = {
   name: '',
   price: '',
-  originalPrice: '',
-  discount: 0,
+  discount: '',
   category: 'kamfirouz',
   weight: '۱۰ کیلوگرم',
   stock: 30,
   description: '',
   isAmazing: false,
-  amazingExpiresAt: '',
+  amazingDurationHours: 48,
   image: ''
 };
 
@@ -44,26 +43,22 @@ export function AdminProducts({
 
   const openEditModal = (product) => {
     setActiveProduct(product);
-    let initialExpires = '';
-    if (product.amazingExpiresAt) {
-      try {
-        initialExpires = new Date(product.amazingExpiresAt).toISOString().slice(0, 16);
-      } catch {
-        // ignore
-      }
-    }
-    const initialOriginalPrice = (product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? product.originalPrice : '';
+    
+    // Base price before discount is originalPrice (if greater than price) or just price
+    const basePrice = (product.originalPrice && Number(product.originalPrice) > Number(product.price))
+      ? product.originalPrice
+      : product.price;
+
     setForm({
       name: product.name || '',
-      price: product.price || '',
-      originalPrice: initialOriginalPrice,
-      discount: product.discountPercent || product.discount || 0,
+      price: basePrice || '',
+      discount: product.discountPercent || product.discount || '',
       category: product.category || 'kamfirouz',
       weight: product.weight || '۱۰ کیلوگرم',
       stock: product.countInStock ?? product.stock ?? 30,
       description: product.description || '',
       isAmazing: !!product.isAmazing,
-      amazingExpiresAt: initialExpires,
+      amazingDurationHours: 48,
       image: product.image || ''
     });
     setModalMode('edit');
@@ -75,19 +70,7 @@ export function AdminProducts({
   };
 
   const handleFieldChange = (key, value) => {
-    setForm((previous) => {
-      const updated = { ...previous, [key]: value };
-      if (key === 'originalPrice' || key === 'price') {
-        const original = Number(key === 'originalPrice' ? value : updated.originalPrice);
-        const current = Number(key === 'price' ? value : updated.price);
-        if (original > 0 && current > 0 && original > current) {
-          updated.discount = Math.round(((original - current) / original) * 100);
-        } else {
-          updated.discount = 0;
-        }
-      }
-      return updated;
-    });
+    setForm((previous) => ({ ...previous, [key]: value }));
   };
 
   const handleImageUpload = (event) => {
@@ -107,7 +90,7 @@ export function AdminProducts({
       return;
     }
     if (!form.price) {
-      alert('وارد کردن قیمت فروش محصول اجباری است.');
+      alert('وارد کردن قیمت اصلی محصول اجباری است.');
       return;
     }
     if (!form.description.trim()) {
@@ -121,18 +104,20 @@ export function AdminProducts({
 
     setIsSubmitting(true);
     try {
-      const origPrice = form.originalPrice ? Number(form.originalPrice) : Number(form.price);
-      const disc = origPrice > Number(form.price) ? Math.round(((origPrice - Number(form.price)) / origPrice) * 100) : 0;
+      const basePrice = Number(form.price);
+      const discPercent = form.discount ? Number(form.discount) : 0;
       
       const payload = {
         name: form.name.trim(),
         description: form.description.trim(),
-        price: Number(form.price),
-        originalPrice: origPrice,
-        discountPercent: disc,
-        discount: disc,
+        price: basePrice,
+        originalPrice: basePrice,
+        discountPercent: discPercent,
+        discount: discPercent,
         isAmazing: !!form.isAmazing,
-        amazingExpiresAt: form.isAmazing && form.amazingExpiresAt ? new Date(form.amazingExpiresAt).toISOString() : null,
+        amazingDurationHours: form.isAmazing ? Number(form.amazingDurationHours || 48) : null,
+        amazingDurationDays: form.isAmazing ? Math.ceil(Number(form.amazingDurationHours || 48) / 24) : null,
+        amazingExpiresAt: form.isAmazing ? new Date(Date.now() + Number(form.amazingDurationHours || 48) * 3600 * 1000).toISOString() : null,
         stock: Number(form.stock || 0),
         countInStock: Number(form.stock || 0),
         category: form.category,
@@ -319,41 +304,33 @@ export function AdminProducts({
 
               <div className={`${styles.formGrid} ${styles.formGrid2}`}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>قیمت اصلی (تومان)</label>
-                  <input
-                    type="number"
-                    className={styles.input}
-                    placeholder="مثال: ۴۸۰۰۰۰"
-                    value={form.originalPrice}
-                    onChange={(event) => handleFieldChange('originalPrice', event.target.value)}
-                  />
-                </div>
-                <div className={styles.formGroup}>
                   <label className={styles.label}>
-                    قیمت فروش / با تخفیف (تومان) <span style={{ color: '#ef4444' }}>*</span>
+                    قیمت محصول - بدون تخفیف (تومان) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
                     type="number"
                     className={styles.input}
-                    placeholder="مثال: ۴۳۰۰۰۰"
+                    placeholder="مثال: ۴۸۰۰۰۰"
                     value={form.price}
                     onChange={(event) => handleFieldChange('price', event.target.value)}
                     required
                   />
                 </div>
-              </div>
-
-              <div className={`${styles.formGrid} ${styles.formGrid2}`}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>درصد تخفیف</label>
+                  <label className={styles.label}>درصد تخفیف (بین ۱ تا ۹۹)</label>
                   <input
                     type="number"
                     className={styles.input}
-                    placeholder="خودکار محاسبه می‌شود یا دستی وارد کنید"
+                    placeholder="مثال: ۱۵ (اختیاری)"
+                    min="0"
+                    max="99"
                     value={form.discount}
                     onChange={(event) => handleFieldChange('discount', event.target.value)}
                   />
                 </div>
+              </div>
+
+              <div className={`${styles.formGrid} ${styles.formGrid2}`}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>
                     موجودی (کیسه) <span style={{ color: '#ef4444' }}>*</span>
@@ -367,9 +344,6 @@ export function AdminProducts({
                     required
                   />
                 </div>
-              </div>
-
-              <div className={`${styles.formGrid} ${styles.formGrid2}`}>
                 <div className={styles.formGroup}>
                   <label className={styles.label}>دسته‌بندی</label>
                   <select
@@ -384,16 +358,17 @@ export function AdminProducts({
                     <option value="nimdane">نیم دانه</option>
                   </select>
                 </div>
-                <div className={styles.formGroup}>
-                  <label className={styles.label}>وزن بسته</label>
-                  <input
-                    type="text"
-                    className={styles.input}
-                    placeholder="مثال: ۱۰ کیلوگرم"
-                    value={form.weight}
-                    onChange={(event) => handleFieldChange('weight', event.target.value)}
-                  />
-                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>وزن بسته</label>
+                <input
+                  type="text"
+                  className={styles.input}
+                  placeholder="مثال: ۱۰ کیلوگرم"
+                  value={form.weight}
+                  onChange={(event) => handleFieldChange('weight', event.target.value)}
+                />
               </div>
 
               {/* Amazing product settings */}
@@ -412,17 +387,18 @@ export function AdminProducts({
               {form.isAmazing && (
                 <div className={styles.formGroup} style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px', marginBottom: '12px' }}>
                   <label className={styles.label}>
-                    تاریخ و زمان انقضای پیشنهاد شگفت‌انگیز <span style={{ color: '#ef4444' }}>*</span>
+                    مدت زمان اعتبار پیشنهاد شگفت‌انگیز (ساعت) <span style={{ color: '#ef4444' }}>*</span>
                   </label>
                   <input
-                    type="datetime-local"
+                    type="number"
                     className={styles.input}
-                    value={form.amazingExpiresAt}
-                    onChange={(event) => handleFieldChange('amazingExpiresAt', event.target.value)}
+                    placeholder="مثال: ۴۸"
+                    value={form.amazingDurationHours}
+                    onChange={(event) => handleFieldChange('amazingDurationHours', event.target.value)}
                     required={form.isAmazing}
                   />
                   <span style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', display: 'block' }}>
-                    پس از پایان این زمان، پیشنهاد شگفت‌انگیز محصول به صورت خودکار غیرفعال خواهد شد.
+                    پس از پایان این بازه زمانی (به ساعت)، پیشنهاد شگفت‌انگیز محصول به صورت خودکار منقضی خواهد شد.
                   </span>
                 </div>
               )}

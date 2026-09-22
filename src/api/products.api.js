@@ -316,6 +316,8 @@ export const productsApi = {
     if (productData.originalPrice !== undefined) formData.append('originalPrice', String(productData.originalPrice));
     if (productData.discountPercent !== undefined) formData.append('discountPercent', String(productData.discountPercent));
     if (productData.isAmazing !== undefined) formData.append('isAmazing', productData.isAmazing ? 'true' : 'false');
+    if (productData.amazingDurationDays !== undefined) formData.append('amazingDurationDays', String(productData.amazingDurationDays));
+    if (productData.amazingDurationHours !== undefined) formData.append('amazingDurationHours', String(productData.amazingDurationHours));
     if (productData.amazingExpiresAt !== undefined && productData.amazingExpiresAt !== null) {
       formData.append('amazingExpiresAt', String(productData.amazingExpiresAt));
     }
@@ -359,6 +361,8 @@ export const productsApi = {
     if (productData.originalPrice !== undefined) formData.append('originalPrice', String(productData.originalPrice));
     if (productData.discountPercent !== undefined) formData.append('discountPercent', String(productData.discountPercent));
     if (productData.isAmazing !== undefined) formData.append('isAmazing', productData.isAmazing ? 'true' : 'false');
+    if (productData.amazingDurationDays !== undefined) formData.append('amazingDurationDays', String(productData.amazingDurationDays));
+    if (productData.amazingDurationHours !== undefined) formData.append('amazingDurationHours', String(productData.amazingDurationHours));
     if (productData.amazingExpiresAt !== undefined) {
       formData.append('amazingExpiresAt', productData.amazingExpiresAt ? String(productData.amazingExpiresAt) : '');
     }

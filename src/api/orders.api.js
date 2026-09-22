@@ -74,8 +74,12 @@ export const ordersApi = {
     formData.append('shippingAddress', address);
     formData.append('address', address);
     formData.append('postalCode', data.postalCode || '');
-    formData.append('receiverName', data.receiverName || data.recipientName || data.name || '');
-    formData.append('receiverPhone', data.receiverPhone || data.phone || '');
+    const recName = data.receiverName || data.recipientName || data.name || '';
+    formData.append('receiverName', recName);
+    formData.append('name', recName);
+    const recPhone = data.receiverPhone || data.phone || '';
+    formData.append('receiverPhone', recPhone);
+    formData.append('phone', recPhone);
     if (data.province) formData.append('province', data.province);
     if (data.city) formData.append('city', data.city);
     if (data.paymentMethod) formData.append('paymentMethod', data.paymentMethod);
@@ -83,6 +87,10 @@ export const ordersApi = {
     
     if (data.items && Array.isArray(data.items)) {
       formData.append('items', JSON.stringify(data.items));
+      formData.append('products', JSON.stringify(data.items));
+    } else if (data.products && Array.isArray(data.products)) {
+      formData.append('items', JSON.stringify(data.products));
+      formData.append('products', JSON.stringify(data.products));
     }
 
     const receiptImg = data.receipt || data.paymentReceipt || data.receiptImage;
