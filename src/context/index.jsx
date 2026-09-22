@@ -135,14 +135,8 @@ export function AppProvider({ children }) {
     }
   }, [cart]);
 
-  // Initial load gate to prevent duplicates
-  const initialLoadStarted = useRef(false);
-
   // Initial load
   useEffect(() => {
-    if (initialLoadStarted.current) return;
-    initialLoadStarted.current = true;
-
     let isMounted = true;
     const token = getStoredToken();
 
