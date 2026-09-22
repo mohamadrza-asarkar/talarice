@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import { truncateAtWord, toFaDigits } from '../../utils/textUtils';
 import styles from './style.module.css';
 
 export function AmazingDeals() {
   const { products, amazingProducts, addToCart } = useApp();
+  const navigate = useNavigate();
   
   // Use real amazing products from API first, then fall back to products filtered with deal attributes
   const dealProducts = (amazingProducts && amazingProducts.length > 0)
@@ -44,6 +45,7 @@ export function AmazingDeals() {
       ...product,
       price: dealPrice
     }, 1);
+    navigate('/cart');
   };
 
   return (

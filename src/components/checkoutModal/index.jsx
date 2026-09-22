@@ -211,8 +211,7 @@ export function CheckoutModal() {
   }
 
   return !isCheckoutOpen ? null : (
-    <dialog
-      open
+    <div
       className={styles.overlay}
       data-role="overlay-close"
       onClick={handleOverlayClick}
@@ -779,7 +778,7 @@ export function CheckoutModal() {
           )}
         </div>
       </section>
-    </dialog>
+    </div>
   );
 }
 

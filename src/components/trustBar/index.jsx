@@ -36,8 +36,7 @@ export function TrustBar() {
       </div>
 
       {selectedTrust && (
-        <dialog
-          open
+        <div
           className={styles.modalOverlay}
           data-role="overlay-close"
           onClick={handleOverlayClick}
@@ -58,7 +57,7 @@ export function TrustBar() {
               بستن
             </button>
           </div>
-        </dialog>
+        </div>
       )}
     </section>
   );
