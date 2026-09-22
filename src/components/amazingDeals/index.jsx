@@ -8,17 +8,32 @@ export function AmazingDeals() {
   const { products, amazingProducts, addToCart } = useApp();
   const navigate = useNavigate();
   
-  // Use real amazing products from API first, then fall back to products filtered with deal attributes
+  // 1. Use real amazing products from API if non-empty
+  // 2. Otherwise filter products with deal or discount flags
+  // 3. Otherwise fallback to first product in catalog so section is always present
+  const filteredFromProducts = (products || []).filter(function (p) {
+    return p.isAmazing || p.isDeal || p.isSpecialDeal || (p.discountPercent > 0) || (p.originalPrice && p.originalPrice > p.price) || (p.dealPrice && p.dealPrice < p.price);
+  });
+
   const dealProducts = (amazingProducts && amazingProducts.length > 0)
     ? amazingProducts
-    : (products || []).filter(function (p) {
-        return p.isDeal || p.isSpecialDeal || p.isAmazing || (p.dealPrice && p.dealPrice < p.price);
-      });
-  
+    : (filteredFromProducts.length > 0 ? filteredFromProducts : (products && products.length > 0 ? [products[0]] : []));
+
   // Choose the single featured amazing product
   const product = dealProducts[0];
 
   const [secondsLeft, setSecondsLeft] = useState(46785);
+
+  useEffect(function () {
+    if (product?.amazingExpiresAt || product?.expiresAt) {
+      const expStr = product.amazingExpiresAt || product.expiresAt;
+      const expTime = new Date(expStr).getTime();
+      const now = Date.now();
+      if (!isNaN(expTime) && expTime > now) {
+        setSecondsLeft(Math.floor((expTime - now) / 1000));
+      }
+    }
+  }, [product?.amazingExpiresAt, product?.expiresAt]);
 
   useEffect(function () {
     const timer = setInterval(function () {

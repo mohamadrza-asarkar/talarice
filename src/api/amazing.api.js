@@ -40,19 +40,44 @@ export const amazingProductsApi = {
     const qs = query.toString();
     const endpoint = `/amazing-products${qs ? `?${qs}` : ''}`;
 
-    const res = await client.get(endpoint);
-    const parsed = res;
     let rawList = [];
-    if (parsed && typeof parsed === 'object') {
-      if (Array.isArray(parsed.data)) {
-        rawList = parsed.data;
-      } else if (Array.isArray(parsed.products)) {
-        rawList = parsed.products;
+    try {
+      const res = await client.get(endpoint);
+      const parsed = res;
+      if (parsed && typeof parsed === 'object') {
+        if (Array.isArray(parsed.data)) {
+          rawList = parsed.data;
+        } else if (Array.isArray(parsed.products)) {
+          rawList = parsed.products;
+        } else if (Array.isArray(parsed)) {
+          rawList = parsed;
+        }
       } else if (Array.isArray(parsed)) {
         rawList = parsed;
       }
-    } else if (Array.isArray(parsed)) {
-      rawList = parsed;
+    } catch (err) {
+      console.warn('GET /amazing-products error:', err);
+    }
+
+    // Fallback: If /amazing-products returns empty array, try GET /products?isAmazing=true
+    if (!rawList || rawList.length === 0) {
+      try {
+        const altRes = await client.get('/products?isAmazing=true');
+        const parsedAlt = altRes;
+        if (parsedAlt && typeof parsedAlt === 'object') {
+          if (Array.isArray(parsedAlt.data)) {
+            rawList = parsedAlt.data;
+          } else if (Array.isArray(parsedAlt.products)) {
+            rawList = parsedAlt.products;
+          } else if (Array.isArray(parsedAlt)) {
+            rawList = parsedAlt;
+          }
+        } else if (Array.isArray(parsedAlt)) {
+          rawList = parsedAlt;
+        }
+      } catch (err) {
+        console.warn('GET /products?isAmazing=true error:', err);
+      }
     }
 
     return rawList.map(normalizeAmazingProduct).filter(Boolean);
