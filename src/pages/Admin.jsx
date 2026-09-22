@@ -1,7 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context';
-import { adminApi, ordersApi, productsApi, slidesApi, reviewsApi, amazingProductsApi, normalizePhone } from '../api';
+import { adminApi } from '../api/admin.api';
+import { ordersApi } from '../api/orders.api';
+import { productsApi } from '../api/products.api';
+import { slidesApi } from '../api/slides.api';
+import { reviewsApi } from '../api/reviews.api';
+import { amazingProductsApi } from '../api/amazing.api';
+import { normalizePhone } from '../api/auth.api';
 import { AdminOverview } from '../components/admin/adminOverview';
 import { AdminProducts } from '../components/admin/adminProducts';
 import { AdminOrders } from '../components/admin/adminOrders';

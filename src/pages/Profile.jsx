@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context';
-import { ordersApi } from '../api';
+import { ordersApi } from '../api/orders.api';
 import styles from '../assets/styles/profile.module.css';
 
 export default function Profile() {

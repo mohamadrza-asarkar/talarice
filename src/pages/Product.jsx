@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context';
-import { productsApi, reviewsApi } from '../api';
+import { productsApi } from '../api/products.api';
+import { reviewsApi } from '../api/reviews.api';
 import styles from '../assets/styles/pages.module.css';
 
 export default function Product() {

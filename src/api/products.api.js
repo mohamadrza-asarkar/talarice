@@ -223,56 +223,34 @@ export const productsApi = {
    * Get all products with optional filters using axios.get
    */
   async getAll(params = {}) {
+    const query = new URLSearchParams();
+    if (params.page) query.append('page', params.page);
+    if (params.limit) query.append('limit', params.limit);
+    if (params.search || params.q) query.append('search', params.search || params.q);
+    if (params.isAvailable !== undefined) query.append('isAvailable', params.isAvailable);
+    if (params.isAmazing !== undefined) query.append('isAmazing', params.isAmazing);
+    if (params.minPrice) query.append('minPrice', params.minPrice);
+    if (params.maxPrice) query.append('maxPrice', params.maxPrice);
+    if (params.sortBy || params.sort) query.append('sortBy', params.sortBy || params.sort);
+    if (params.category) query.append('category', params.category);
+    
+    const qs = query.toString();
+    const endpoint = `/products${qs ? `?${qs}` : ''}`;
+    const res = await axiosInstance.get(endpoint);
+    
+    const parsed = res?.data || res;
     let rawList = [];
     let pagination = null;
-
-    try {
-      const query = new URLSearchParams();
-      if (params.page) query.append('page', params.page);
-      if (params.limit) query.append('limit', params.limit);
-      if (params.search || params.q) query.append('search', params.search || params.q);
-      if (params.isAvailable !== undefined) query.append('isAvailable', params.isAvailable);
-      if (params.isAmazing !== undefined) query.append('isAmazing', params.isAmazing);
-      if (params.minPrice) query.append('minPrice', params.minPrice);
-      if (params.maxPrice) query.append('maxPrice', params.maxPrice);
-      if (params.sortBy || params.sort) query.append('sortBy', params.sortBy || params.sort);
-      if (params.category) query.append('category', params.category);
-      
-      const qs = query.toString();
-      const endpoint = `/products${qs ? `?${qs}` : ''}`;
-      const res = await axiosInstance.get(endpoint);
-      
-      const parsed = res?.data || res;
-      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-        rawList = parsed.data;
-        pagination = res.pagination || parsed.pagination || null;
-      } else if (Array.isArray(parsed)) {
-        rawList = parsed;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.products)) {
-        rawList = parsed.products;
-      }
-    } catch (e) {
-      console.debug('Using local fallback products due to network/server response:', e);
+    
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      rawList = parsed.data;
+      pagination = res.pagination || parsed.pagination || null;
+    } else if (Array.isArray(parsed)) {
+      rawList = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.products)) {
+      rawList = parsed.products;
     }
-
-    // Merge offline custom products created by admin
-    try {
-      const custom = localStorage.getItem('tala_rice_custom_products');
-      if (custom) {
-        const parsedCustom = JSON.parse(custom);
-        if (Array.isArray(parsedCustom)) {
-          rawList = [...parsedCustom, ...rawList];
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    // If no products returned by backend, use default products
-    if (rawList.length === 0) {
-      rawList = DEFAULT_PRODUCTS;
-    }
-
+    
     const normalized = rawList.map(normalizeProduct).filter(Boolean);
     return {
       data: normalized,
@@ -290,20 +268,12 @@ export const productsApi = {
   },
 
   /**
-   * Get single product by ID using axios.get with fallback
+   * Get single product by ID using axios.get
    */
   async getById(id) {
-    try {
-      const res = await axiosInstance.get(`/products/${id}`);
-      const raw = res?.data || res?.product || res;
-      return normalizeProduct(raw);
-    } catch (err) {
-      // Search in default or offline products
-      const all = await this.getAll();
-      const found = all.products.find((p) => p.id === id || p._id === id);
-      if (found) return found;
-      throw err;
-    }
+    const res = await axiosInstance.get(`/products/${id}`);
+    const raw = res?.data || res?.product || res;
+    return normalizeProduct(raw);
   },
 
   getProductById(id) {
@@ -314,16 +284,9 @@ export const productsApi = {
    * Get featured or amazing products using axios.get
    */
   async getFeatured() {
-    try {
-      const res = await axiosInstance.get('/products?featured=true');
-      const list = Array.isArray(res) ? res : (res?.data || []);
-      const normalized = list.map(normalizeProduct).filter(Boolean);
-      if (normalized.length > 0) return normalized;
-    } catch {
-      // ignore
-    }
-    const all = await this.getAll();
-    return all.products.filter((p) => p.isAmazing || p.discountPercent > 0);
+    const res = await axiosInstance.get('/products?featured=true');
+    const list = Array.isArray(res) ? res : (res?.data || []);
+    return list.map(normalizeProduct).filter(Boolean);
   },
 
   /**
@@ -362,27 +325,9 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      const res = await axiosInstance.post('/products', formData, { headers });
-      const raw = res?.data || res?.product || res;
-      return normalizeProduct(raw);
-    } catch (err) {
-      console.warn('Network error creating product, storing in local cache:', err);
-      const newProd = normalizeProduct({
-        ...productData,
-        id: `prod-${Date.now()}`,
-        _id: `prod-${Date.now()}`
-      });
-      try {
-        const custom = localStorage.getItem('tala_rice_custom_products');
-        const list = custom ? JSON.parse(custom) : [];
-        list.unshift(newProd);
-        localStorage.setItem('tala_rice_custom_products', JSON.stringify(list));
-      } catch {
-        // ignore
-      }
-      return newProd;
-    }
+    const res = await axiosInstance.post('/products', formData, { headers });
+    const raw = res?.data || res?.product || res;
+    return normalizeProduct(raw);
   },
 
   createProduct(productData) {
@@ -423,28 +368,9 @@ export const productsApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      const res = await axiosInstance.put(`/products/${id}`, formData, { headers });
-      const raw = res?.data || res?.product || res;
-      return normalizeProduct(raw);
-    } catch (err) {
-      console.warn('Network error updating product, updating local cache:', err);
-      const updated = normalizeProduct({ ...productData, id, _id: id });
-      try {
-        const custom = localStorage.getItem('tala_rice_custom_products');
-        let list = custom ? JSON.parse(custom) : [];
-        const idx = list.findIndex((p) => p.id === id || p._id === id);
-        if (idx !== -1) {
-          list[idx] = { ...list[idx], ...updated };
-        } else {
-          list.unshift(updated);
-        }
-        localStorage.setItem('tala_rice_custom_products', JSON.stringify(list));
-      } catch {
-        // ignore
-      }
-      return updated;
-    }
+    const res = await axiosInstance.put(`/products/${id}`, formData, { headers });
+    const raw = res?.data || res?.product || res;
+    return normalizeProduct(raw);
   },
 
   updateProduct(id, productData) {
@@ -457,21 +383,7 @@ export const productsApi = {
   async delete(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-    try {
-      return await axiosInstance.delete(`/products/${id}`, { headers });
-    } catch (err) {
-      try {
-        const custom = localStorage.getItem('tala_rice_custom_products');
-        if (custom) {
-          const list = JSON.parse(custom).filter((p) => p.id !== id && p._id !== id);
-          localStorage.setItem('tala_rice_custom_products', JSON.stringify(list));
-        }
-      } catch {
-        // ignore
-      }
-      return { success: true };
-    }
+    return await axiosInstance.delete(`/products/${id}`, { headers });
   },
 
   deleteProduct(id) {
@@ -479,8 +391,7 @@ export const productsApi = {
   },
 
   /**
-   * Add a review to a product (Section 6)
-   * POST /api/reviews with body { productId, rating, comment }
+   * Add a review to a product
    */
   async addReview(productId, reviewData) {
     const token = getStoredToken();

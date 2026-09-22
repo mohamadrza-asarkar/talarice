@@ -92,115 +92,61 @@ function extractAndSaveToken(resData) {
 
 export const authApi = {
   /**
-   * Register with name, phone, password using axios.post with offline resilience
+   * Register with name, phone, password using axios.post
    */
   async register({ name, phone, password }) {
     const cleanPhone = normalizePhone(phone);
     const cleanPassword = (password || '').trim();
     const cleanName = (name || '').trim();
 
-    try {
-      const res = await axiosInstance.post('/auth/register', {
-        name: cleanName,
-        phone: cleanPhone,
-        password: cleanPassword
-      });
+    const res = await axiosInstance.post('/auth/register', {
+      name: cleanName,
+      phone: cleanPhone,
+      password: cleanPassword
+    });
 
-      const token = extractAndSaveToken(res);
-      const user = normalizeUser(res);
-      if (user) {
-        try {
-          localStorage.setItem('tala_rice_user', JSON.stringify(user));
-        } catch {
-          // ignore
-        }
+    const token = extractAndSaveToken(res);
+    const user = normalizeUser(res);
+    if (user) {
+      try {
+        localStorage.setItem('tala_rice_user', JSON.stringify(user));
+      } catch {
+        // ignore
       }
-      return {
-        ...res,
-        token,
-        user
-      };
-    } catch (err) {
-      if (err.isNetworkError || (err.message && err.message.includes('وب‌سرویس'))) {
-        console.warn('Backend offline, creating local registered user session:', cleanPhone);
-        const token = `token-${Date.now()}`;
-        setStoredToken(token);
-        const localUser = normalizeUser({
-          id: `usr-${cleanPhone}`,
-          _id: `usr-${cleanPhone}`,
-          name: cleanName,
-          phone: cleanPhone,
-          role: cleanPhone === '09123456789' ? 'admin' : 'user',
-          isAdmin: cleanPhone === '09123456789'
-        });
-        try {
-          localStorage.setItem('tala_rice_user', JSON.stringify(localUser));
-        } catch {
-          // ignore
-        }
-        return {
-          success: true,
-          token,
-          user: localUser
-        };
-      }
-      throw err;
     }
+    return {
+      ...res,
+      token,
+      user
+    };
   },
 
   /**
-   * Login with phone and password using axios.post with offline resilience
+   * Login with phone and password using axios.post
    */
   async login({ phone, password }) {
     const cleanPhone = normalizePhone(phone);
     const cleanPassword = (password || '').trim();
 
-    try {
-      const res = await axiosInstance.post('/auth/login', {
-        phone: cleanPhone,
-        password: cleanPassword
-      });
+    const res = await axiosInstance.post('/auth/login', {
+      phone: cleanPhone,
+      password: cleanPassword
+    });
 
-      const token = extractAndSaveToken(res);
-      const user = normalizeUser(res);
-      if (user) {
-        try {
-          localStorage.setItem('tala_rice_user', JSON.stringify(user));
-        } catch {
-          // ignore
-        }
+    const token = extractAndSaveToken(res);
+    const user = normalizeUser(res);
+    if (user) {
+      try {
+        localStorage.setItem('tala_rice_user', JSON.stringify(user));
+      } catch {
+        // ignore
       }
-      return {
-        ...res,
-        token,
-        user
-      };
-    } catch (err) {
-      if (err.isNetworkError || (err.message && err.message.includes('وب‌سرویس'))) {
-        console.warn('Backend offline, creating local logged-in session:', cleanPhone);
-        const token = `token-${Date.now()}`;
-        setStoredToken(token);
-        const localUser = normalizeUser({
-          id: `usr-${cleanPhone}`,
-          _id: `usr-${cleanPhone}`,
-          name: cleanPhone === '09123456789' ? 'مدیر ارشد طلا رایس' : `کاربر گرامی (${cleanPhone.slice(-4)})`,
-          phone: cleanPhone,
-          role: cleanPhone === '09123456789' ? 'admin' : 'user',
-          isAdmin: cleanPhone === '09123456789'
-        });
-        try {
-          localStorage.setItem('tala_rice_user', JSON.stringify(localUser));
-        } catch {
-          // ignore
-        }
-        return {
-          success: true,
-          token,
-          user: localUser
-        };
-      }
-      throw err;
     }
+    return {
+      ...res,
+      token,
+      user
+    };
   },
 
   /**
@@ -210,32 +156,19 @@ export const authApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      const res = await axiosInstance.get('/auth/me', { headers });
-      const user = normalizeUser(res);
-      if (user) {
-        try {
-          localStorage.setItem('tala_rice_user', JSON.stringify(user));
-        } catch {
-          // ignore
-        }
-      }
-      return {
-        ...res,
-        user
-      };
-    } catch (err) {
+    const res = await axiosInstance.get('/auth/me', { headers });
+    const user = normalizeUser(res);
+    if (user) {
       try {
-        const stored = localStorage.getItem('tala_rice_user');
-        if (stored) {
-          const user = normalizeUser(JSON.parse(stored));
-          if (user) return { success: true, user };
-        }
+        localStorage.setItem('tala_rice_user', JSON.stringify(user));
       } catch {
         // ignore
       }
-      throw err;
     }
+    return {
+      ...res,
+      user
+    };
   },
 
   /**
@@ -245,44 +178,26 @@ export const authApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      const res = await axiosInstance.put('/auth/profile', {
-        name: name?.trim(),
-        phone: phone?.trim(),
-        address: address?.trim(),
-        postalCode: postalCode?.trim()
-      }, { headers });
+    const res = await axiosInstance.put('/auth/profile', {
+      name: name?.trim(),
+      phone: phone?.trim(),
+      address: address?.trim(),
+      postalCode: postalCode?.trim()
+    }, { headers });
 
-      const user = normalizeUser(res);
-      if (user) {
-        try {
-          localStorage.setItem('tala_rice_user', JSON.stringify(user));
-        } catch {
-          // ignore
-        }
-      }
-
-      return {
-        ...res,
-        user
-      };
-    } catch (err) {
-      const stored = localStorage.getItem('tala_rice_user');
-      const base = stored ? JSON.parse(stored) : {};
-      const updatedUser = normalizeUser({
-        ...base,
-        name: name?.trim() || base.name,
-        phone: phone?.trim() || base.phone,
-        address: address?.trim() || base.address,
-        postalCode: postalCode?.trim() || base.postalCode
-      });
+    const user = normalizeUser(res);
+    if (user) {
       try {
-        localStorage.setItem('tala_rice_user', JSON.stringify(updatedUser));
+        localStorage.setItem('tala_rice_user', JSON.stringify(user));
       } catch {
         // ignore
       }
-      return { success: true, user: updatedUser };
     }
+
+    return {
+      ...res,
+      user
+    };
   },
 
   /**
@@ -291,15 +206,11 @@ export const authApi = {
   async changePassword({ oldPassword, newPassword }) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    try {
-      const res = await axiosInstance.put('/auth/change-password', {
-        oldPassword: (oldPassword || '').trim(),
-        newPassword: (newPassword || '').trim()
-      }, { headers });
-      return res;
-    } catch (err) {
-      return { success: true, message: 'رمز عبور با موفقیت به‌روزرسانی شد.' };
-    }
+    const res = await axiosInstance.put('/auth/change-password', {
+      oldPassword: (oldPassword || '').trim(),
+      newPassword: (newPassword || '').trim()
+    }, { headers });
+    return res;
   },
 
   /**

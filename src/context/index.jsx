@@ -1,18 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ToastContainer from '../components/toast';
-import {
-  authApi,
-  productsApi,
-  amazingProductsApi,
-  ordersApi,
-  slidesApi,
-  storeApi,
-  getStoredToken,
-  setStoredToken,
-  normalizeUser,
-  normalizeOrder
-} from '../api';
+import { authApi, normalizeUser } from '../api/auth.api';
+import { productsApi } from '../api/products.api';
+import { amazingProductsApi } from '../api/amazing.api';
+import { ordersApi, normalizeOrder } from '../api/orders.api';
+import { slidesApi } from '../api/slides.api';
+import { storeApi } from '../api/store.api';
+import { getStoredToken, setStoredToken } from '../api/client';
 
 const AppContext = createContext();
 

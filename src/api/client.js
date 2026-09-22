@@ -1,11 +1,7 @@
 // -------------------------------------------------------------
-// Base Backend URL - Change this single URL to sync all APIs
+// Base API URL - Change this single URL to sync all APIs
 // -------------------------------------------------------------
-export const BACKEND_URL = 'http://localhost:5000'; 
-
-// Automatically derive API base path
-const cleanBackend = BACKEND_URL.replace(/\/+$/, '');
-export const API_BASE_URL = cleanBackend.endsWith('/api') ? cleanBackend : `${cleanBackend}/api`;
+export const API_BASE_URL = 'http://localhost:5000/api';
 
 export function getImageUrl(imgPath) {
   if (!imgPath || typeof imgPath !== 'string') {
@@ -18,7 +14,7 @@ export function getImageUrl(imgPath) {
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
-  const baseUrl = cleanBackend.endsWith('/api') ? cleanBackend.slice(0, -4) : cleanBackend;
+  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '');
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${baseUrl}${cleanPath}`;
 }

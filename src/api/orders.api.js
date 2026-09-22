@@ -65,7 +65,7 @@ export function normalizeOrder(raw) {
 
 export const ordersApi = {
   /**
-   * Create a new order using POST /api/orders (Section 5.الف)
+   * Create a new order using POST /api/orders
    */
   async create(orderData) {
     const data = orderData || {};
@@ -96,42 +96,9 @@ export const ordersApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      const res = await axiosInstance.post('/orders', formData, { headers });
-      const raw = res?.data || res?.order || res;
-      return normalizeOrder(raw);
-    } catch (err) {
-      console.warn('Network error or server error creating order, saving offline:', err);
-      // Generate clean persistent offline order
-      const randomTrack = Math.floor(100000 + Math.random() * 900000);
-      const offlineOrder = normalizeOrder({
-        _id: `ord-${Date.now()}`,
-        id: `ord-${Date.now()}`,
-        trackingCode: `TR-${randomTrack}`,
-        postalTrackingCode: `IR-${Date.now().toString().slice(-8)}`,
-        status: 'pending',
-        state: 'pending',
-        totalPrice: Number(data.totalPrice || 0),
-        items: data.items || data.products || [],
-        receiverName: data.receiverName || data.recipientName || data.name || 'کاربر گرامی',
-        receiverPhone: data.receiverPhone || data.phone || '',
-        shippingAddress: address,
-        paymentStatus: data.paymentMethod === 'card' ? 'awaiting_approval' : 'pending',
-        paymentMethod: data.paymentMethod || 'gateway',
-        createdAt: new Date().toISOString()
-      });
-
-      try {
-        const stored = localStorage.getItem('tala_rice_offline_orders');
-        const list = stored ? JSON.parse(stored) : [];
-        list.unshift(offlineOrder);
-        localStorage.setItem('tala_rice_offline_orders', JSON.stringify(list));
-      } catch {
-        // ignore
-      }
-
-      return offlineOrder;
-    }
+    const res = await axiosInstance.post('/orders', formData, { headers });
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
   },
 
   createOrder(orderData) {
@@ -139,7 +106,7 @@ export const ordersApi = {
   },
   
   /**
-   * Upload or set payment receipt using POST /api/orders/:id/receipt (Section 5.د)
+   * Upload or set payment receipt using POST /api/orders/:id/receipt
    */
   async uploadReceipt(id, receiptImage) {
     const formData = new FormData();
@@ -157,30 +124,15 @@ export const ordersApi = {
   },
 
   /**
-   * Get order by ID using GET /api/orders/:id (Section 5.ج)
+   * Get order by ID using GET /api/orders/:id
    */
   async getById(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-    try {
-      const res = await axiosInstance.get(`/orders/${id}`, { headers });
-      const raw = res?.data || res?.order || res;
-      return normalizeOrder(raw);
-    } catch (err) {
-      // Check local offline orders
-      try {
-        const stored = localStorage.getItem('tala_rice_offline_orders');
-        if (stored) {
-          const list = JSON.parse(stored);
-          const found = list.find((o) => o.id === id || o._id === id);
-          if (found) return normalizeOrder(found);
-        }
-      } catch {
-        // ignore
-      }
-      throw err;
-    }
+    const res = await axiosInstance.get(`/orders/${id}`, { headers });
+    const raw = res?.data || res?.order || res;
+    return normalizeOrder(raw);
   },
 
   getOrderById(id) {
@@ -188,38 +140,21 @@ export const ordersApi = {
   },
 
   /**
-   * Get all orders of logged in user (Section 5.ب)
+   * Get all orders of logged in user
    */
   async getAll(params = {}) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+    const res = await axiosInstance.get('/orders', { headers, params });
+    const parsed = res?.data || res;
     let rawList = [];
-    try {
-      const res = await axiosInstance.get('/orders', { headers, params });
-      const parsed = res?.data || res;
-      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-        rawList = parsed.data;
-      } else if (Array.isArray(parsed)) {
-        rawList = parsed;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
-        rawList = parsed.orders;
-      }
-    } catch {
-      // ignore
-    }
-
-    // Merge offline saved orders
-    try {
-      const stored = localStorage.getItem('tala_rice_offline_orders');
-      if (stored) {
-        const list = JSON.parse(stored);
-        if (Array.isArray(list)) {
-          rawList = [...list, ...rawList];
-        }
-      }
-    } catch {
-      // ignore
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      rawList = parsed.data;
+    } else if (Array.isArray(parsed)) {
+      rawList = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.orders)) {
+      rawList = parsed.orders;
     }
 
     return rawList.map(normalizeOrder).filter(Boolean);
@@ -230,7 +165,7 @@ export const ordersApi = {
   },
 
   /**
-   * Track order by code without login (Section 5.هـ)
+   * Track order by code without login
    */
   async trackOrder(code) {
     const clean = encodeURIComponent(String(code || '').trim());
@@ -239,29 +174,9 @@ export const ordersApi = {
       const raw = res?.data || res?.order || res;
       return normalizeOrder(raw);
     } catch (err) {
-      // Try /orders/:id fallback
-      try {
-        const res = await axiosInstance.get(`/orders/${clean}`);
-        const raw = res?.data || res?.order || res;
-        return normalizeOrder(raw);
-      } catch {
-        // Check offline orders
-        try {
-          const stored = localStorage.getItem('tala_rice_offline_orders');
-          if (stored) {
-            const list = JSON.parse(stored);
-            const found = list.find(
-              (o) => String(o.id) === String(code) ||
-                     String(o.trackingCode) === String(code) ||
-                     String(o.postalTrackingCode) === String(code)
-            );
-            if (found) return normalizeOrder(found);
-          }
-        } catch {
-          // ignore
-        }
-      }
-      throw err;
+      const res = await axiosInstance.get(`/orders/${clean}`);
+      const raw = res?.data || res?.order || res;
+      return normalizeOrder(raw);
     }
   },
 
@@ -270,8 +185,7 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Update order overall shipment status (Section 5.و)
-   * PUT /api/orders/:id/status with body { status, postTrackingCode }
+   * Admin: Update order overall shipment status
    */
   async updateStatus(id, status, postTrackingCode) {
     const token = getStoredToken();
@@ -305,8 +219,7 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Verify bank receipt payment (Section 5.و)
-   * PUT /api/orders/:id/verify-payment with body { isVerified }
+   * Admin: Verify bank receipt payment
    */
   async verifyPayment(id, payload = {}) {
     const token = getStoredToken();

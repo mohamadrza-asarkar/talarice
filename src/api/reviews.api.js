@@ -63,63 +63,20 @@ export function normalizeReview(raw) {
   };
 }
 
-const defaultReviews = [
-  {
-    id: 'rev-1',
-    _id: 'rev-1',
-    productId: 'prod-kamfirouz-10kg',
-    userName: 'حاج رضا کریمی',
-    comment: 'عطر و بوی این برنج واقعاً خاطره‌انگیزه. شبیه برنج‌های اصیل سی سال پیش هست و موقع دم کشیدن تمام خونه بوی عطر شالیزار گرفت.',
-    rating: 5,
-    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
-    reply: 'سلام و درود بر شما، خرسندیم که عطر برنج اصیل کامفیروز مورد پسند شما واقع شد.'
-  },
-  {
-    id: 'rev-2',
-    _id: 'rev-2',
-    productId: 'prod-kamfirouz-10kg',
-    userName: 'خانم دکتر صادقی',
-    comment: 'بسته‌بندی کیسه نخی خیلی تمیز و شکیل بود، برنج کاملاً یک‌دست و بدون شکستگی یا سنگ‌ریزه هست. تشکر از ارسال سریع.',
-    rating: 5,
-    createdAt: new Date(Date.now() - 5 * 86400000).toISOString(),
-    reply: null
-  }
-];
-
 export const reviewsApi = {
   /**
    * Get all reviews across products (Admin / Global) using GET /api/reviews
    */
   async getAll() {
+    const res = await axiosInstance.get('/reviews');
+    const parsed = res?.data || res;
     let rawList = [];
-    try {
-      const res = await axiosInstance.get('/reviews');
-      const parsed = res?.data || res;
-      if (Array.isArray(parsed)) {
-        rawList = parsed;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-        rawList = parsed.data;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.reviews)) {
-        rawList = parsed.reviews;
-      }
-    } catch (err) {
-      console.warn('Error fetching all reviews from /api/reviews:', err);
-    }
-
-    try {
-      const custom = localStorage.getItem('tala_rice_custom_reviews');
-      if (custom) {
-        const parsed = JSON.parse(custom);
-        if (Array.isArray(parsed)) {
-          rawList = [...parsed, ...rawList];
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    if (rawList.length === 0) {
-      rawList = defaultReviews;
+    if (Array.isArray(parsed)) {
+      rawList = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      rawList = parsed.data;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.reviews)) {
+      rawList = parsed.reviews;
     }
 
     return rawList.map(normalizeReview).filter(Boolean);
@@ -133,39 +90,15 @@ export const reviewsApi = {
     const cleanId = typeof productId === 'object' ? (productId._id || productId.id) : productId;
     if (!cleanId) return [];
 
+    const res = await axiosInstance.get(`/reviews?productId=${encodeURIComponent(cleanId)}`);
+    const parsed = res?.data || res;
     let rawList = [];
-    try {
-      const res = await axiosInstance.get(`/reviews?productId=${encodeURIComponent(cleanId)}`);
-      const parsed = res?.data || res;
-      if (Array.isArray(parsed)) {
-        rawList = parsed;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
-        rawList = parsed.data;
-      } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.reviews)) {
-        rawList = parsed.reviews;
-      }
-    } catch (err) {
-      console.warn('Error fetching reviews for product:', cleanId, err);
-    }
-
-    try {
-      const custom = localStorage.getItem('tala_rice_custom_reviews');
-      if (custom) {
-        const parsed = JSON.parse(custom);
-        if (Array.isArray(parsed)) {
-          const matching = parsed.filter((r) => r.productId === cleanId);
-          rawList = [...matching, ...rawList];
-        }
-      }
-    } catch {
-      // ignore
-    }
-
-    if (rawList.length === 0) {
-      const matchingDefaults = defaultReviews.filter(
-        (r) => r.productId === cleanId || cleanId === 'prod-kamfirouz-10kg'
-      );
-      rawList = matchingDefaults;
+    if (Array.isArray(parsed)) {
+      rawList = parsed;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.data)) {
+      rawList = parsed.data;
+    } else if (parsed && typeof parsed === 'object' && Array.isArray(parsed.reviews)) {
+      rawList = parsed.reviews;
     }
 
     return rawList.map(normalizeReview).filter(Boolean);
@@ -196,35 +129,14 @@ export const reviewsApi = {
       payload.author = userName.trim();
     }
 
-    try {
-      const res = await axiosInstance.post('/reviews', payload, { headers });
-      const raw = res?.data || res?.review || res;
-      const normalized = normalizeReview(raw);
-      if (normalized && (!normalized.userName || normalized.userName === 'کاربر سایت') && userName) {
-        normalized.userName = userName;
-        normalized.author = userName;
-      }
-      return normalized;
-    } catch (err) {
-      const localRev = normalizeReview({
-        id: `rev-${Date.now()}`,
-        _id: `rev-${Date.now()}`,
-        productId: String(cleanId),
-        rating: Number(rating || 5),
-        comment: String(comment || '').trim(),
-        userName: userName || 'کاربر گرامی',
-        createdAt: new Date().toISOString()
-      });
-      try {
-        const custom = localStorage.getItem('tala_rice_custom_reviews');
-        const list = custom ? JSON.parse(custom) : [];
-        list.unshift(localRev);
-        localStorage.setItem('tala_rice_custom_reviews', JSON.stringify(list));
-      } catch {
-        // ignore
-      }
-      return localRev;
+    const res = await axiosInstance.post('/reviews', payload, { headers });
+    const raw = res?.data || res?.review || res;
+    const normalized = normalizeReview(raw);
+    if (normalized && (!normalized.userName || normalized.userName === 'کاربر سایت') && userName) {
+      normalized.userName = userName;
+      normalized.author = userName;
     }
+    return normalized;
   },
 
   /**
