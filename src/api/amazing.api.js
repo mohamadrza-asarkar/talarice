@@ -159,14 +159,26 @@ export const amazingProductsApi = {
   },
 
   /**
-   * Delete amazing product (Admin)
+   * Remove amazing status for a product ID without deleting the product from DB
    */
-  async delete(id) {
-    return await client.delete(`/amazing-products/${id}`);
+  async remove(id) {
+    try {
+      return await this.toggle(id);
+    } catch {
+      try {
+        const formData = new FormData();
+        formData.append('isAmazing', 'false');
+        formData.append('discountPercent', '0');
+        const res = await client.put(`/products/${id}`, formData);
+        return res;
+      } catch {
+        return null;
+      }
+    }
   },
 
-  remove(id) {
-    return this.delete(id);
+  delete(id) {
+    return this.remove(id);
   }
 };
 

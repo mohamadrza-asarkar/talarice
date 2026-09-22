@@ -266,20 +266,18 @@ export default function Admin() {
 
   const handleRemoveDeal = async (id) => {
     try {
+      // 1. First attempt to untag isAmazing flag via products API
       try {
-        await productsApi.update(id, { isAmazing: false });
+        await productsApi.update(id, { isAmazing: false, discountPercent: 0 });
       } catch (err) {
-        console.warn('productsApi.update(isAmazing: false) failed:', err);
+        console.warn('productsApi.update untag failed:', err);
       }
 
+      // 2. Safely untag via toggle without invoking HTTP DELETE on backend
       try {
-        await amazingProductsApi.remove(id);
+        await amazingProductsApi.toggle(id);
       } catch (err) {
-        try {
-          await amazingProductsApi.toggle(id);
-        } catch (err2) {
-          console.warn('amazingProductsApi remove/toggle failed:', err2);
-        }
+        console.warn('amazingProductsApi.toggle failed:', err);
       }
 
       if (refreshProductsFromApi) {
@@ -288,9 +286,9 @@ export default function Admin() {
         setAmazingProducts((previous) => (Array.isArray(previous) ? previous : []).filter((product) => product.id !== id && product._id !== id));
       }
 
-      showToast('محصول از شگفت‌انگیز حذف شد.', 'success');
+      showToast('محصول از پیشنهاد شگفت‌انگیز خارج شد (محصول در فروشگاه باقی ماند).', 'success');
     } catch {
-      showToast('خطا در حذف از شگفت‌انگیز', 'error');
+      showToast('خطا در خروج محصول از شگفت‌انگیز', 'error');
     }
   };
 
