@@ -4,6 +4,41 @@
 import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 
+export function normalizeCart(raw) {
+  const data = unwrapDoc(raw?.data || raw);
+  const products = Array.isArray(data?.products)
+    ? data.products
+    : (Array.isArray(data?.items) ? data.items : []);
+
+  const items = products.map((p) => {
+    const prod = p.product || {};
+    const pid = p.productId || prod._id || prod.id || p._id || p.id;
+    return {
+      ...prod,
+      ...p,
+      id: pid,
+      _id: pid,
+      productId: pid,
+      name: p.name || prod.name || p.title || 'برنج طلا رایس',
+      price: Number(p.price || prod.price || 0),
+      image: p.image || prod.image || '',
+      quantity: Number(p.quantity || p.qty || 1)
+    };
+  });
+
+  const totalPrice = Number(
+    data?.totalPrice !== undefined
+      ? data.totalPrice
+      : items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  );
+
+  return {
+    items,
+    totalPrice,
+    totalItems: items.reduce((sum, item) => sum + item.quantity, 0)
+  };
+}
+
 export const cartApi = {
   /**
    * Get entire cart from server using axios.get with Token header
@@ -13,22 +48,7 @@ export const cartApi = {
       const token = getStoredToken();
       const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await axiosInstance.get('/cart', { headers });
-      const data = unwrapDoc(res?.data || res);
-      
-      // Handle the data shape returned by GET /api/cart:
-      // { userId, products: [{ productId, name, price, quantity, image }], totalPrice }
-      const products = Array.isArray(data?.products) ? data.products : (Array.isArray(data?.items) ? data.items : []);
-      const items = products.map(p => ({
-        ...p,
-        productId: p.productId || p.product?._id || p.product?.id,
-        quantity: Number(p.quantity || p.qty || 1)
-      }));
-
-      return {
-        items,
-        totalPrice: Number(data?.totalPrice || 0),
-        totalItems: items.reduce((sum, item) => sum + item.quantity, 0)
-      };
+      return normalizeCart(res);
     } catch {
       return { items: [], totalPrice: 0, totalItems: 0 };
     }
@@ -44,7 +64,7 @@ export const cartApi = {
       productId,
       quantity: Number(quantity)
     }, { headers });
-    return unwrapDoc(res?.data || res);
+    return normalizeCart(res);
   },
 
   /**
@@ -56,7 +76,7 @@ export const cartApi = {
     const res = await axiosInstance.put(`/cart/items/${productId}`, {
       quantity: Number(quantity)
     }, { headers });
-    return unwrapDoc(res?.data || res);
+    return normalizeCart(res);
   },
 
   /**
@@ -66,7 +86,7 @@ export const cartApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     const res = await axiosInstance.delete(`/cart/items/${productId}`, { headers });
-    return unwrapDoc(res?.data || res);
+    return normalizeCart(res);
   },
 
   /**
@@ -76,8 +96,9 @@ export const cartApi = {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
     const res = await axiosInstance.delete('/cart', { headers });
-    return unwrapDoc(res?.data || res);
+    return normalizeCart(res);
   }
 };
 
 export default cartApi;
+

@@ -7,6 +7,7 @@ import { amazingProductsApi } from '../api/amazing.api';
 import { ordersApi, normalizeOrder } from '../api/orders.api';
 import { slidesApi } from '../api/slides.api';
 import { storeApi } from '../api/store.api';
+import { cartApi } from '../api/cart.api';
 import { getStoredToken, setStoredToken } from '../api/client';
 
 const AppContext = createContext();
@@ -336,41 +337,122 @@ export function AppProvider({ children }) {
     triggerNotification('از حساب کاربری خارج شدید.', 'info');
   }, [triggerNotification]);
 
-  // Cart actions
-  const addToCart = useCallback((product, quantity = 1) => {
-    const targetId = product.id || product._id;
+  // Server Cart Synchronization
+  const syncCartWithServer = useCallback(async () => {
+    try {
+      const serverCart = await cartApi.getCart();
+      if (serverCart && Array.isArray(serverCart.items) && serverCart.items.length > 0) {
+        setCart(serverCart.items);
+        try {
+          localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(serverCart.items));
+        } catch {}
+      }
+    } catch (error) {
+      console.warn('Could not sync cart with server:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    syncCartWithServer();
+  }, [currentUser, syncCartWithServer]);
+
+  // Cart actions with Server Integration
+  const addToCart = useCallback(async (product, quantity = 1) => {
+    const targetId = product.id || product._id || product.productId;
+    let updatedCart = [];
+
     setCart((previous) => {
-      const existingIndex = previous.findIndex((item) => (item.id || item._id) === targetId);
+      const existingIndex = previous.findIndex((item) => (item.id || item._id || item.productId) === targetId);
       if (existingIndex > -1) {
-        const updated = [...previous];
-        const newQuantity = updated[existingIndex].quantity + quantity;
-        updated[existingIndex] = { ...updated[existingIndex], quantity: newQuantity };
+        updatedCart = [...previous];
+        const newQuantity = updatedCart[existingIndex].quantity + quantity;
+        updatedCart[existingIndex] = { ...updatedCart[existingIndex], quantity: newQuantity };
         triggerNotification('تعداد محصول در سبد خرید افزایش یافت.', 'success');
-        return updated;
       } else {
         triggerNotification('محصول به سبد خرید اضافه شد.', 'success');
-        return [...previous, { ...product, quantity }];
+        updatedCart = [...previous, { ...product, id: targetId, productId: targetId, quantity }];
       }
+      try {
+        localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(updatedCart));
+      } catch {}
+      return updatedCart;
     });
+
+    try {
+      const res = await cartApi.addItem(targetId, quantity);
+      if (res && Array.isArray(res.items) && res.items.length > 0) {
+        setCart(res.items);
+        try {
+          localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(res.items));
+        } catch {}
+      }
+    } catch (error) {
+      console.warn('Server cart addItem error:', error);
+    }
   }, [triggerNotification]);
 
-  const removeFromCart = useCallback((productId) => {
-    setCart((previous) => previous.filter((item) => (item.id || item._id) !== productId));
+  const removeFromCart = useCallback(async (productId) => {
+    setCart((previous) => {
+      const updated = previous.filter((item) => (item.id || item._id || item.productId) !== productId);
+      try {
+        localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
     triggerNotification('محصول از سبد خرید حذف شد.', 'info');
+
+    try {
+      const res = await cartApi.removeItem(productId);
+      if (res && Array.isArray(res.items)) {
+        setCart(res.items);
+        try {
+          localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(res.items));
+        } catch {}
+      }
+    } catch (error) {
+      console.warn('Server cart removeItem error:', error);
+    }
   }, [triggerNotification]);
 
-  const updateCartQuantity = useCallback((productId, quantity) => {
+  const updateCartQuantity = useCallback(async (productId, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      await removeFromCart(productId);
       return;
     }
-    setCart((previous) =>
-      previous.map((item) => ((item.id || item._id) === productId ? { ...item, quantity } : item))
-    );
+
+    setCart((previous) => {
+      const updated = previous.map((item) =>
+        (item.id || item._id || item.productId) === productId ? { ...item, quantity } : item
+      );
+      try {
+        localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+
+    try {
+      const res = await cartApi.updateQuantity(productId, quantity);
+      if (res && Array.isArray(res.items)) {
+        setCart(res.items);
+        try {
+          localStorage.setItem(STORAGE_KEYS.CART, JSON.stringify(res.items));
+        } catch {}
+      }
+    } catch (error) {
+      console.warn('Server cart updateQuantity error:', error);
+    }
   }, [removeFromCart]);
 
-  const clearCart = useCallback(() => {
+  const clearCart = useCallback(async () => {
     setCart([]);
+    try {
+      localStorage.removeItem(STORAGE_KEYS.CART);
+    } catch {}
+    try {
+      await cartApi.clearCart();
+    } catch (error) {
+      console.warn('Server cart clearCart error:', error);
+    }
   }, []);
 
   const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
@@ -429,6 +511,9 @@ export function AppProvider({ children }) {
     updateCartQuantity,
     updateQuantity: updateCartQuantity,
     clearCart,
+    syncCartWithServer,
+    refreshCart: syncCartWithServer,
+    fetchCart: syncCartWithServer,
     cartCount,
     cartTotal,
     cartSubtotal,
