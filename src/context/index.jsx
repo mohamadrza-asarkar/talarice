@@ -44,6 +44,8 @@ export function AppProvider({ children }) {
     }
   });
   const [orders, setOrders] = useState([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   // Catalog & Store State
   const [products, setProducts] = useState([]);
@@ -377,6 +379,10 @@ export function AppProvider({ children }) {
     return sum + price * (item.quantity || 1);
   }, 0);
 
+  const cartSubtotal = cartTotal;
+  const shippingFee = cartSubtotal > 2000000 || cartSubtotal === 0 ? 0 : 50000;
+  const finalTotal = cartSubtotal + shippingFee;
+
   // Order actions
   const createOrder = useCallback(async (orderData) => {
     try {
@@ -425,6 +431,15 @@ export function AppProvider({ children }) {
     clearCart,
     cartCount,
     cartTotal,
+    cartSubtotal,
+    shippingFee,
+    finalTotal,
+
+    // Checkout / Cart Modals
+    isCheckoutOpen,
+    setIsCheckoutOpen,
+    isCartOpen,
+    setIsCartOpen,
 
     // Orders & Catalog Data
     orders,
