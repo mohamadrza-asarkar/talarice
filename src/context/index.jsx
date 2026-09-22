@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ToastContainer from '../components/toast';
 import {
@@ -129,8 +129,14 @@ export function AppProvider({ children }) {
     }
   }, [cart]);
 
+  // Initial load gate to prevent duplicates
+  const initialLoadStarted = useRef(false);
+
   // Initial load
   useEffect(() => {
+    if (initialLoadStarted.current) return;
+    initialLoadStarted.current = true;
+
     let isMounted = true;
     const token = getStoredToken();
 

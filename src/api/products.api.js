@@ -334,10 +334,19 @@ export const productsApi = {
     formData.append('name', (productData.name || '').trim());
     formData.append('description', (productData.description || 'برنج اصیل معطر درجه یک شالیزار کامفیروز').trim());
     formData.append('price', String(productData.price || 0));
+    
+    // Support backend fields
     if (productData.originalPrice !== undefined) formData.append('originalPrice', String(productData.originalPrice));
     if (productData.discountPercent !== undefined) formData.append('discountPercent', String(productData.discountPercent));
     if (productData.isAmazing !== undefined) formData.append('isAmazing', productData.isAmazing ? 'true' : 'false');
-    formData.append('stock', String(productData.stock !== undefined ? productData.stock : 20));
+    if (productData.amazingExpiresAt !== undefined && productData.amazingExpiresAt !== null) {
+      formData.append('amazingExpiresAt', String(productData.amazingExpiresAt));
+    }
+    
+    const countVal = String(productData.countInStock !== undefined ? productData.countInStock : (productData.stock !== undefined ? productData.stock : 20));
+    formData.append('countInStock', countVal);
+    formData.append('stock', countVal);
+
     formData.append('category', (productData.category || 'kamfirouz').trim());
     formData.append('isAvailable', productData.isAvailable !== false ? 'true' : 'false');
     
@@ -391,7 +400,15 @@ export const productsApi = {
     if (productData.originalPrice !== undefined) formData.append('originalPrice', String(productData.originalPrice));
     if (productData.discountPercent !== undefined) formData.append('discountPercent', String(productData.discountPercent));
     if (productData.isAmazing !== undefined) formData.append('isAmazing', productData.isAmazing ? 'true' : 'false');
-    if (productData.stock !== undefined) formData.append('stock', String(productData.stock || 20));
+    if (productData.amazingExpiresAt !== undefined) {
+      formData.append('amazingExpiresAt', productData.amazingExpiresAt ? String(productData.amazingExpiresAt) : '');
+    }
+    
+    if (productData.countInStock !== undefined || productData.stock !== undefined) {
+      const countVal = String(productData.countInStock !== undefined ? productData.countInStock : productData.stock);
+      formData.append('countInStock', countVal);
+      formData.append('stock', countVal);
+    }
     if (productData.category !== undefined) formData.append('category', (productData.category || '').trim());
     if (productData.isAvailable !== undefined) formData.append('isAvailable', productData.isAvailable ? 'true' : 'false');
     if (productData.weight !== undefined) formData.append('weight', String(productData.weight));

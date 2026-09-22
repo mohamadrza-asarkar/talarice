@@ -12,6 +12,7 @@ const defaultProductForm = {
   stock: 30,
   description: '',
   isAmazing: false,
+  amazingExpiresAt: '',
   image: ''
 };
 
@@ -43,16 +44,25 @@ export function AdminProducts({
 
   const openEditModal = (product) => {
     setActiveProduct(product);
+    let initialExpires = '';
+    if (product.amazingExpiresAt) {
+      try {
+        initialExpires = new Date(product.amazingExpiresAt).toISOString().slice(0, 16);
+      } catch {
+        // ignore
+      }
+    }
     setForm({
       name: product.name || '',
       price: product.price || '',
-      originalPrice: product.originalPrice || product.price || '',
-      discount: product.discount || 0,
+      originalPrice: product.originalPrice || '',
+      discount: product.discountPercent || product.discount || 0,
       category: product.category || 'kamfirouz',
       weight: product.weight || '۱۰ کیلوگرم',
-      stock: product.stock ?? 30,
+      stock: product.countInStock ?? product.stock ?? 30,
       description: product.description || '',
       isAmazing: !!product.isAmazing,
+      amazingExpiresAt: initialExpires,
       image: product.image || ''
     });
     setModalMode('edit');
@@ -71,6 +81,8 @@ export function AdminProducts({
         const current = Number(key === 'price' ? value : updated.price);
         if (original > 0 && current > 0 && original > current) {
           updated.discount = Math.round(((original - current) / original) * 100);
+        } else {
+          updated.discount = 0;
         }
       }
       return updated;
@@ -89,15 +101,42 @@ export function AdminProducts({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!form.name.trim() || !form.price) return;
+    if (!form.name.trim()) {
+      alert('وارد کردن نام محصول اجباری است.');
+      return;
+    }
+    if (!form.price) {
+      alert('وارد کردن قیمت فروش محصول اجباری است.');
+      return;
+    }
+    if (!form.description.trim()) {
+      alert('وارد کردن توضیحات محصول اجباری است.');
+      return;
+    }
+    if (modalMode === 'add' && !form.image) {
+      alert('آپلود تصویر محصول برای ایجاد جدید الزامی است.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      const origPrice = form.originalPrice ? Number(form.originalPrice) : Number(form.price);
+      const disc = origPrice > Number(form.price) ? Math.round(((origPrice - Number(form.price)) / origPrice) * 100) : 0;
+      
       const payload = {
-        ...form,
+        name: form.name.trim(),
+        description: form.description.trim(),
         price: Number(form.price),
-        originalPrice: Number(form.originalPrice || form.price),
-        discount: Number(form.discount || 0),
-        stock: Number(form.stock || 30)
+        originalPrice: origPrice,
+        discountPercent: disc,
+        discount: disc,
+        isAmazing: !!form.isAmazing,
+        amazingExpiresAt: form.isAmazing && form.amazingExpiresAt ? new Date(form.amazingExpiresAt).toISOString() : null,
+        stock: Number(form.stock || 0),
+        countInStock: Number(form.stock || 0),
+        category: form.category,
+        weight: (form.weight || '۱۰ کیلوگرم').trim(),
+        image: form.image
       };
 
       if (modalMode === 'add' && onAddProduct) {
@@ -107,6 +146,8 @@ export function AdminProducts({
         await onUpdateProduct(productId, payload);
       }
       closeModal();
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsSubmitting(false);
     }
@@ -262,7 +303,9 @@ export function AdminProducts({
 
             <form onSubmit={handleSubmit} className={styles.formGrid}>
               <div className={styles.formGroup}>
-                <label className={styles.label}>نام محصول</label>
+                <label className={styles.label}>
+                  نام محصول <span style={{ color: '#ef4444' }}>*</span>
+                </label>
                 <input
                   type="text"
                   className={styles.input}
@@ -285,7 +328,9 @@ export function AdminProducts({
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>قیمت با تخفیف / فروش (تومان)</label>
+                  <label className={styles.label}>
+                    قیمت فروش / با تخفیف (تومان) <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     type="number"
                     className={styles.input}
@@ -303,19 +348,22 @@ export function AdminProducts({
                   <input
                     type="number"
                     className={styles.input}
-                    placeholder="مثال: ۱۰"
+                    placeholder="خودکار محاسبه می‌شود یا دستی وارد کنید"
                     value={form.discount}
                     onChange={(event) => handleFieldChange('discount', event.target.value)}
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>موجودی (کیسه)</label>
+                  <label className={styles.label}>
+                    موجودی (کیسه) <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
                   <input
                     type="number"
                     className={styles.input}
                     placeholder="مثال: ۵۰"
                     value={form.stock}
                     onChange={(event) => handleFieldChange('stock', event.target.value)}
+                    required
                   />
                 </div>
               </div>
@@ -347,18 +395,54 @@ export function AdminProducts({
                 </div>
               </div>
 
+              {/* Amazing product settings */}
+              <div className={styles.formGroup} style={{ padding: '8px 0', borderBottom: '1px solid #f3f4f6', marginBottom: '8px' }}>
+                <label className={styles.labelCheckbox} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={form.isAmazing}
+                    onChange={(event) => handleFieldChange('isAmazing', event.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontWeight: 600, fontSize: '0.95rem', color: '#1f2937' }}>این محصول جزو پیشنهادهای شگفت‌انگیز باشد</span>
+                </label>
+              </div>
+
+              {form.isAmazing && (
+                <div className={styles.formGroup} style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px', marginBottom: '12px' }}>
+                  <label className={styles.label}>
+                    تاریخ و زمان انقضای پیشنهاد شگفت‌انگیز <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <input
+                    type="datetime-local"
+                    className={styles.input}
+                    value={form.amazingExpiresAt}
+                    onChange={(event) => handleFieldChange('amazingExpiresAt', event.target.value)}
+                    required={form.isAmazing}
+                  />
+                  <span style={{ fontSize: '0.8rem', color: '#6b7280', marginTop: '4px', display: 'block' }}>
+                    پس از پایان این زمان، پیشنهاد شگفت‌انگیز محصول به صورت خودکار غیرفعال خواهد شد.
+                  </span>
+                </div>
+              )}
+
               <div className={styles.formGroup}>
-                <label className={styles.label}>توضیحات محصول</label>
+                <label className={styles.label}>
+                  توضیحات محصول <span style={{ color: '#ef4444' }}>*</span>
+                </label>
                 <textarea
                   className={styles.textarea}
                   placeholder="مشخصات عطر، پخت و ری‌دهی..."
                   value={form.description}
                   onChange={(event) => handleFieldChange('description', event.target.value)}
+                  required
                 />
               </div>
 
               <div className={styles.formGroup}>
-                <label className={styles.label}>تصویر محصول</label>
+                <label className={styles.label}>
+                  تصویر محصول {modalMode === 'add' && <span style={{ color: '#ef4444' }}>*</span>}
+                </label>
                 <div className={styles.rowUpload}>
                   {form.image && (
                     <img
@@ -371,6 +455,7 @@ export function AdminProducts({
                     type="file"
                     accept="image/*"
                     onChange={handleImageUpload}
+                    required={modalMode === 'add'}
                   />
                 </div>
               </div>
