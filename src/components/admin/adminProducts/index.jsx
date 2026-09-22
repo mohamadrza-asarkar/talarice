@@ -52,10 +52,11 @@ export function AdminProducts({
         // ignore
       }
     }
+    const initialOriginalPrice = (product.originalPrice && Number(product.originalPrice) > Number(product.price)) ? product.originalPrice : '';
     setForm({
       name: product.name || '',
       price: product.price || '',
-      originalPrice: product.originalPrice || '',
+      originalPrice: initialOriginalPrice,
       discount: product.discountPercent || product.discount || 0,
       category: product.category || 'kamfirouz',
       weight: product.weight || '۱۰ کیلوگرم',

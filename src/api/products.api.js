@@ -24,16 +24,30 @@ export function normalizeProduct(raw) {
   if (!originalPrice || originalPrice <= price) {
     if (discountPercent > 0) {
       originalPrice = Math.round(price / (1 - discountPercent / 100));
-    } else if (p.isAmazing || p.dealPrice || p.isDeal) {
-      originalPrice = Math.round(price * 1.15); // 15% higher crossed-out price
     } else {
       originalPrice = price;
     }
   }
 
-  const computedDiscount = discountPercent > 0 ? discountPercent : (originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0);
+  const computedDiscount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
 
-  const isAmazing = p.isAmazing !== undefined ? Boolean(p.isAmazing) : false;
+  let isAmazing = false;
+  if (p.isAmazing !== undefined && p.isAmazing !== null) {
+    if (typeof p.isAmazing === 'boolean') {
+      isAmazing = p.isAmazing;
+    } else if (typeof p.isAmazing === 'string') {
+      isAmazing = p.isAmazing.toLowerCase() === 'true';
+    }
+  }
+
+  let isAvailable = true;
+  if (p.isAvailable !== undefined && p.isAvailable !== null) {
+    if (typeof p.isAvailable === 'boolean') {
+      isAvailable = p.isAvailable;
+    } else if (typeof p.isAvailable === 'string') {
+      isAvailable = p.isAvailable.toLowerCase() === 'true';
+    }
+  }
 
   return {
     ...p,
@@ -48,7 +62,7 @@ export function normalizeProduct(raw) {
     dealPrice: p.dealPrice || price,
     isAmazing,
     amazingExpiresAt: p.amazingExpiresAt || null,
-    isAvailable: p.isAvailable !== false,
+    isAvailable,
     stock: p.countInStock !== undefined ? p.countInStock : (p.stock !== undefined ? p.stock : 20),
     countInStock: p.countInStock !== undefined ? p.countInStock : (p.stock !== undefined ? p.stock : 20),
     weight: p.weight || '۱۰ کیلوگرم',

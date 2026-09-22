@@ -68,6 +68,9 @@ export default function Admin() {
     try {
       const created = await productsApi.create(productData);
       setProducts((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+      if (created.isAmazing) {
+        setAmazingProducts((prev) => [created, ...(Array.isArray(prev) ? prev : [])]);
+      }
       showToast('محصول جدید با موفقیت اضافه شد.', 'success');
     } catch {
       showToast('خطا در افزودن محصول', 'error');
@@ -80,6 +83,19 @@ export default function Admin() {
       setProducts((previous) =>
         previous.map((product) => (product.id === id || product._id === id ? { ...product, ...updated } : product))
       );
+      if (updated.isAmazing) {
+        setAmazingProducts((previous) => {
+          const arr = Array.isArray(previous) ? previous : [];
+          const exists = arr.some((p) => p.id === id || p._id === id);
+          if (exists) {
+            return arr.map((p) => (p.id === id || p._id === id ? { ...p, ...updated } : p));
+          } else {
+            return [updated, ...arr];
+          }
+        });
+      } else {
+        setAmazingProducts((previous) => (Array.isArray(previous) ? previous : []).filter((p) => p.id !== id && p._id !== id));
+      }
       showToast('محصول با موفقیت ویرایش شد.', 'success');
     } catch {
       showToast('خطا در ویرایش محصول', 'error');
@@ -90,6 +106,7 @@ export default function Admin() {
     try {
       await productsApi.delete(id);
       setProducts((previous) => previous.filter((product) => product.id !== id && product._id !== id));
+      setAmazingProducts((previous) => (Array.isArray(previous) ? previous : []).filter((product) => product.id !== id && product._id !== id));
       showToast('محصول با موفقیت حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف محصول', 'error');
