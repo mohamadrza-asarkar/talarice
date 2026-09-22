@@ -17,19 +17,25 @@ export function normalizeProduct(raw) {
   const rawImage = p.image || p.imageUrl || p.fullImageUrl || '';
   const image = rawImage ? getImageUrl(rawImage) : '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   
-  const price = Number(p.price || p.originalPrice || 0);
+  const rawPrice = Number(p.price || 0);
+  const rawOriginal = Number(p.originalPrice || p.oldPrice || p.old_price || 0);
+  const rawDeal = Number(p.dealPrice || p.discountPrice || 0);
   const discountPercent = Number(p.discountPercent || p.dealDiscountPercent || p.discount || 0);
-  
-  let originalPrice = Number(p.originalPrice || p.oldPrice || p.old_price || 0);
+
+  let price = rawDeal > 0 ? rawDeal : rawPrice;
+  let originalPrice = rawOriginal > 0 ? rawOriginal : (rawDeal > 0 && rawPrice > rawDeal ? rawPrice : 0);
+
   if (!originalPrice || originalPrice <= price) {
-    if (discountPercent > 0) {
+    if (discountPercent > 0 && price > 0) {
       originalPrice = Math.round(price / (1 - discountPercent / 100));
     } else {
       originalPrice = price;
     }
   }
 
-  const computedDiscount = originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
+  const computedDiscount = (originalPrice > price && price > 0)
+    ? (discountPercent > 0 ? discountPercent : Math.round((1 - price / originalPrice) * 100))
+    : 0;
 
   let isAmazing = false;
   if (p.isAmazing !== undefined && p.isAmazing !== null) {

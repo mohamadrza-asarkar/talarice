@@ -103,8 +103,19 @@ export default function Product() {
     }
   };
 
-  const currentPrice = product.price || 0;
-  const currentOldPrice = product.oldPrice || null;
+  const currentPrice = Number(product.price || 0);
+  const rawOriginal = Number(product.originalPrice || product.oldPrice || product.old_price || 0);
+  const discountPercent = Number(product.discountPercent || product.discount || 0);
+
+  let currentOldPrice = rawOriginal > currentPrice ? rawOriginal : null;
+  if (!currentOldPrice && discountPercent > 0 && currentPrice > 0) {
+    currentOldPrice = Math.round(currentPrice / (1 - discountPercent / 100));
+  }
+
+  const computedDiscountPercent = discountPercent > 0
+    ? discountPercent
+    : (currentOldPrice && currentOldPrice > currentPrice ? Math.round((1 - currentPrice / currentOldPrice) * 100) : 0);
+
   const weightNum = parseInt(product.weight) || 10;
   const pricePerKg = Math.round(currentPrice / weightNum);
 
@@ -134,9 +145,9 @@ export default function Product() {
       <div className={styles.productHeroCard}>
         <div className={styles.productMainImageWrapper}>
           <img src={product.image} alt={product.name} className={styles.productMainImage} />
-          {product.discountPercent > 0 && (
+          {computedDiscountPercent > 0 && (
             <span className={styles.productDiscountBadge}>
-              {product.discountPercent.toLocaleString('fa-IR')}٪ تخفیف ویژه
+              {computedDiscountPercent.toLocaleString('fa-IR')}٪ تخفیف ویژه
             </span>
           )}
           <div className={styles.productOriginTag}>

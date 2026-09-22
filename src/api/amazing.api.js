@@ -70,6 +70,13 @@ export const amazingProductsApi = {
     if (data.originalPrice !== undefined) formData.append('originalPrice', String(data.originalPrice || 0));
     if (data.discountPercent !== undefined) formData.append('discountPercent', String(data.discountPercent || 0));
     if (data.dealPrice !== undefined) formData.append('dealPrice', String(data.dealPrice));
+    formData.append('isAmazing', 'true');
+    if (data.amazingDurationDays || data.dealDurationDays) {
+      formData.append('amazingDurationDays', String(data.amazingDurationDays || data.dealDurationDays));
+    }
+    if (data.amazingDurationHours || data.dealDurationHours) {
+      formData.append('amazingDurationHours', String(data.amazingDurationHours || data.dealDurationHours));
+    }
     
     let expiresAt = data.amazingExpiresAt || data.expiresAt;
     if (!expiresAt && data.dealDurationHours) {
@@ -113,6 +120,15 @@ export const amazingProductsApi = {
     }
 
     const res = await client.put(`/amazing-products/${id}`, formData);
+    const raw = res?.data || res?.product || res;
+    return normalizeAmazingProduct(raw);
+  },
+
+  /**
+   * Toggle amazing product status for a product ID (Admin)
+   */
+  async toggle(id) {
+    const res = await client.put(`/amazing-products/toggle/${id}`);
     const raw = res?.data || res?.product || res;
     return normalizeAmazingProduct(raw);
   },

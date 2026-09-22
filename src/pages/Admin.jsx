@@ -211,12 +211,54 @@ export default function Admin() {
   // Deal Actions
   const handleAddDeal = async (dealData) => {
     try {
-      await amazingProductsApi.add(dealData);
-      const selected = products.find((product) => product.id === dealData.productId || product._id === dealData.productId);
-      if (selected) {
-        setAmazingProducts((previous) => [...previous, { ...selected, ...dealData }]);
+      const pid = dealData.productId;
+      const hours = Number(dealData.dealDurationHours || dealData.amazingDurationHours || 24);
+      const days = Number(dealData.amazingDurationDays || Math.ceil(hours / 24) || 2);
+      const discount = Number(dealData.discountPercent || 15);
+
+      let success = false;
+
+      // Primary approach: update product flag via products API
+      try {
+        const updated = await productsApi.update(pid, {
+          isAmazing: true,
+          discountPercent: discount,
+          amazingDurationHours: hours,
+          amazingDurationDays: days
+        });
+        if (updated) success = true;
+      } catch (err) {
+        console.warn('productsApi.update failed for amazing:', err);
       }
-      showToast('محصول به شگفت‌انگیز اضافه شد.', 'success');
+
+      // Secondary approach: toggle via amazing API
+      try {
+        await amazingProductsApi.toggle(pid);
+        success = true;
+      } catch (err) {
+        // Fallback: create amazing deal via amazing API
+        try {
+          await amazingProductsApi.add({
+            ...dealData,
+            amazingDurationHours: hours,
+            amazingDurationDays: days
+          });
+          success = true;
+        } catch (err2) {
+          console.warn('amazingProductsApi.add failed:', err2);
+        }
+      }
+
+      if (refreshProductsFromApi) {
+        await refreshProductsFromApi();
+      } else {
+        const selected = products.find((product) => product.id === pid || product._id === pid);
+        if (selected) {
+          setAmazingProducts((previous) => [...(Array.isArray(previous) ? previous : []), { ...selected, ...dealData, isAmazing: true }]);
+        }
+      }
+
+      showToast('محصول با موفقیت به شگفت‌انگیز اضافه شد.', 'success');
     } catch {
       showToast('خطا در افزودن پیشنهاد شگفت‌انگیز', 'error');
     }
@@ -224,8 +266,28 @@ export default function Admin() {
 
   const handleRemoveDeal = async (id) => {
     try {
-      await amazingProductsApi.remove(id);
-      setAmazingProducts((previous) => previous.filter((product) => product.id !== id && product._id !== id));
+      try {
+        await productsApi.update(id, { isAmazing: false });
+      } catch (err) {
+        console.warn('productsApi.update(isAmazing: false) failed:', err);
+      }
+
+      try {
+        await amazingProductsApi.remove(id);
+      } catch (err) {
+        try {
+          await amazingProductsApi.toggle(id);
+        } catch (err2) {
+          console.warn('amazingProductsApi remove/toggle failed:', err2);
+        }
+      }
+
+      if (refreshProductsFromApi) {
+        await refreshProductsFromApi();
+      } else {
+        setAmazingProducts((previous) => (Array.isArray(previous) ? previous : []).filter((product) => product.id !== id && product._id !== id));
+      }
+
       showToast('محصول از شگفت‌انگیز حذف شد.', 'success');
     } catch {
       showToast('خطا در حذف از شگفت‌انگیز', 'error');

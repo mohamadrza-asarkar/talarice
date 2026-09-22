@@ -10,7 +10,24 @@ export function ProductCard({ product }) {
 
   if (!product) return null;
 
-  const currentPrice = product.price || 0;
+  const currentPrice = Number(product.price || 0);
+  const rawOriginal = Number(product.originalPrice || product.oldPrice || product.old_price || 0);
+  const discountPercent = Number(product.discountPercent || product.discount || 0);
+
+  let originalPrice = rawOriginal;
+  if (!originalPrice || originalPrice <= currentPrice) {
+    if (discountPercent > 0 && currentPrice > 0) {
+      originalPrice = Math.round(currentPrice / (1 - discountPercent / 100));
+    } else {
+      originalPrice = currentPrice;
+    }
+  }
+
+  const computedDiscount = discountPercent > 0
+    ? discountPercent
+    : (originalPrice > currentPrice ? Math.round((1 - currentPrice / originalPrice) * 100) : 0);
+
+  const hasDiscount = computedDiscount > 0 && originalPrice > currentPrice;
 
   const handleAdd = (e) => {
     e.preventDefault();
@@ -24,7 +41,7 @@ export function ProductCard({ product }) {
 
   return (
     <article className={styles.card}>
-      <Link to={`/product/${product.id}`} className={styles.contentWrapper}>
+      <Link to={`/product/${product.id || product._id}`} className={styles.contentWrapper}>
         <div className={styles.imageContainer}>
           <img
             src={product.image}
@@ -32,6 +49,11 @@ export function ProductCard({ product }) {
             className={styles.image}
             loading="lazy"
           />
+          {hasDiscount && (
+            <span className={styles.discountBadge}>
+              {computedDiscount.toLocaleString('fa-IR')}٪ تخفیف
+            </span>
+          )}
         </div>
 
         <div className={styles.infoArea}>
@@ -54,6 +76,11 @@ export function ProductCard({ product }) {
 
       <div className={styles.bottomSection}>
         <div className={styles.priceContainer}>
+          {hasDiscount && (
+            <del className={styles.oldPrice}>
+              {originalPrice.toLocaleString('fa-IR')} <small>تومان</small>
+            </del>
+          )}
           <strong className={styles.currentPrice}>
             {currentPrice.toLocaleString('fa-IR')} <small>تومان</small>
           </strong>
