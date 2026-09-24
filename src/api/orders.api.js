@@ -32,6 +32,16 @@ export function normalizeOrder(raw) {
     ''
   ).trim();
 
+  const cancelReason = String(
+    o.cancelReason ||
+    o.rejectionReason ||
+    o.rejectReason ||
+    o.rejectNote ||
+    o.reason ||
+    o.cancellationReason ||
+    ''
+  ).trim();
+
   const totalPrice = Number(
     o.totalPrice !== undefined
       ? o.totalPrice
@@ -47,6 +57,8 @@ export function normalizeOrder(raw) {
     trackingCode,
     postalTrackingCode: trackingCode,
     postTrackingCode: trackingCode,
+    cancelReason,
+    rejectionReason: cancelReason,
     status: rawStatus,
     state: rawStatus,
     totalPrice,
@@ -218,21 +230,25 @@ export const ordersApi = {
   },
 
   /**
-   * Admin: Update order overall shipment status
+   * Admin: Update order overall shipment status, tracking code, and rejection reason
    */
-  async updateStatus(id, status, postTrackingCode) {
+  async updateStatus(id, status, postTrackingCode, cancelReason) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     const targetStatus = typeof status === 'object' ? (status.status || status.state) : status;
     const targetTracking = typeof status === 'object' ? (status.postTrackingCode || status.trackingCode) : postTrackingCode;
+    const targetReason = typeof status === 'object' ? (status.cancelReason || status.rejectionReason) : cancelReason;
 
     const statusMap = {
       'در حال بررسی': 'pending',
+      'در حال پردازش': 'pending',
       'تایید شده': 'pending',
       'ارسال شده': 'shipped',
       'تحویل داده شده': 'delivered',
+      'تحویل شده': 'delivered',
       'لغو شده': 'cancelled',
+      'رد شده': 'cancelled',
       'processing': 'pending',
       'pending': 'pending',
       'shipped': 'shipped',
@@ -242,10 +258,25 @@ export const ordersApi = {
     
     const cleanStatus = statusMap[targetStatus] || targetStatus || 'pending';
 
-    const res = await axiosInstance.put(`/orders/${id}/status`, {
+    const payload = {
       status: cleanStatus,
-      postTrackingCode: targetTracking || ''
-    }, { headers });
+      postTrackingCode: targetTracking || '',
+      postalTrackingCode: targetTracking || '',
+      trackingCode: targetTracking || '',
+      cancelReason: targetReason || '',
+      rejectionReason: targetReason || ''
+    };
+
+    let res;
+    try {
+      res = await axiosInstance.put(`/orders/${id}/status`, payload, { headers });
+    } catch {
+      try {
+        res = await axiosInstance.put(`/orders/${id}`, payload, { headers });
+      } catch (err) {
+        throw new Error(err?.response?.data?.message || err?.message || 'خطا در به روزرسانی وضعیت سفارش');
+      }
+    }
 
     const raw = res?.data || res?.order || res;
     return normalizeOrder(raw);

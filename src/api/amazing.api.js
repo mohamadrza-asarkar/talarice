@@ -23,7 +23,9 @@ export function normalizeAmazingProduct(raw) {
     dealPrice: price,
     discountPercent,
     isAmazing: true,
-    amazingExpiresAt: p.amazingExpiresAt || p.expiresAt || null
+    amazingExpiresAt: p.amazingExpiresAt || p.expiresAt || p.dealExpiresAt || p.endTime || p.expireDate || null,
+    amazingDurationHours: p.amazingDurationHours || p.dealDurationHours || p.durationHours || null,
+    createdAt: p.createdAt || p.created_at || base.createdAt || null
   };
 }
 

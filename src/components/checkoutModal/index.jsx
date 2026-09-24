@@ -42,7 +42,7 @@ export function CheckoutModal() {
     postalCode: '',
     fullAddress: '',
     deliveryNote: '',
-    paymentMethod: 'gateway',
+    paymentMethod: 'card',
     receiptImage: ''
   });
   const [errors, setErrors] = useState({});
@@ -535,49 +535,30 @@ export function CheckoutModal() {
             <div className={styles.form}>
               <h4 className={styles.sectionTitle}>
                 <i className="fa-solid fa-credit-card" />
-                <span>انتخاب روش پرداخت و ثبت نهایی:</span>
+                <span>روش پرداخت و ثبت نهایی سفارش:</span>
               </h4>
 
               <div className={styles.paymentList}>
                 <label
-                  onClick={function () { setFormData({ ...formData, paymentMethod: 'gateway' }); }}
-                  className={`${styles.paymentOption} ${formData.paymentMethod === 'gateway' ? styles.paymentOptionActive : ''}`}
-                >
-                  <i className={`fa-solid fa-credit-card ${styles.paymentMethodIcon}`} />
-                  <div className={styles.paymentInfo}>
-                    <strong>درگاه پرداخت آنلاین شتاب</strong>
-                    <small>پرداخت امن بانکی با تمامی کارت‌های عضو شتاب</small>
-                  </div>
-                  <input
-                    type="radio"
-                    name="payment"
-                    checked={formData.paymentMethod === 'gateway'}
-                    onChange={function () {}}
-                  />
-                </label>
-
-                <label
-                  onClick={function () { setFormData({ ...formData, paymentMethod: 'card' }); }}
-                  className={`${styles.paymentOption} ${formData.paymentMethod === 'card' ? styles.paymentOptionActive : ''}`}
+                  className={`${styles.paymentOption} ${styles.paymentOptionActive}`}
                 >
                   <i className={`fa-solid fa-building-columns ${styles.paymentMethodIcon}`} />
                   <div className={styles.paymentInfo}>
                     <strong>کارت به کارت حساب طلا رایس</strong>
-                    <small>واریز به کارت و ثبت تصویر فیش پرداخت بانکی</small>
+                    <small>واریز مستقیم به حساب و ثبت تصویر فیش پرداخت بانکی</small>
                   </div>
                   <input
                     type="radio"
                     name="payment"
-                    checked={formData.paymentMethod === 'card'}
-                    onChange={function () {}}
+                    checked={true}
+                    readOnly
                   />
                 </label>
               </div>
 
               {/* Card to card bank details and receipt upload */}
-              {formData.paymentMethod === 'card' && (
-                <div className={styles.cardTransferBox}>
-                  <div className={styles.bankCardHeader}>
+              <div className={styles.cardTransferBox}>
+                <div className={styles.bankCardHeader}>
                     <i className="fa-solid fa-building-columns" />
                     <span>اطلاعات کارت جهت واریز وجه:</span>
                   </div>

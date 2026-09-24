@@ -9,7 +9,7 @@ import { normalizeOrder } from './orders.api';
 export const adminApi = {
   /**
    * Create a new user (Admin)
-   * POST /api/admin/users
+   * POST /api/admin/users with fallbacks to /api/users or /api/auth/register
    */
   async createUser(userData) {
     const name = (userData.name || '').trim();
@@ -28,15 +28,45 @@ export const adminApi = {
       throw new Error('کلمه عبور باید حداقل ۶ کاراکتر باشد.');
     }
 
-    const res = await client.post('/admin/users', {
+    const payload = {
       name,
       phone,
       email,
       password,
       role
-    });
+    };
+
+    let res;
+    try {
+      res = await client.post('/admin/users', payload);
+    } catch (err1) {
+      try {
+        res = await client.post('/users', payload);
+      } catch (err2) {
+        try {
+          res = await client.post('/auth/register', payload);
+        } catch (err3) {
+          const errMsg = err1?.response?.data?.message || err1?.message || err2?.message || err3?.message || 'خطا در ثبت کاربر';
+          throw new Error(errMsg);
+        }
+      }
+    }
+
     const raw = unwrapDoc(res?.data || res?.user || res);
-    return normalizeUser(raw);
+    const user = normalizeUser(raw);
+
+    // If role is admin and backend endpoint was register without role field, update role
+    if (user && role === 'admin' && user.role !== 'admin' && user.id) {
+      try {
+        await this.updateUserRole(user.id, 'admin');
+        user.role = 'admin';
+        user.isAdmin = true;
+      } catch {
+        // ignore
+      }
+    }
+
+    return user;
   },
 
   /**

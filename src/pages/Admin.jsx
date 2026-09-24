@@ -186,15 +186,25 @@ export default function Admin() {
   };
 
   // Order Actions
-  const handleUpdateOrderStatus = async (id, status) => {
+  const handleUpdateOrderStatus = async (id, status, postTrackingCode, cancelReason) => {
     try {
-      await ordersApi.updateStatus(id, status);
+      const updated = await ordersApi.updateStatus(id, status, postTrackingCode, cancelReason);
       setAdminOrders((previous) =>
-        previous.map((order) => (order.id === id || order._id === id ? { ...order, status } : order))
+        previous.map((order) =>
+          order.id === id || order._id === id
+            ? {
+                ...order,
+                ...updated,
+                status: status || updated?.status || order.status,
+                postTrackingCode: postTrackingCode !== undefined ? postTrackingCode : (updated?.postTrackingCode || order.postTrackingCode),
+                cancelReason: cancelReason !== undefined ? cancelReason : (updated?.cancelReason || order.cancelReason)
+              }
+            : order
+        )
       );
-      showToast('وضعیت سفارش تغییر کرد.', 'success');
-    } catch {
-      showToast('خطا در تغییر وضعیت سفارش', 'error');
+      showToast('وضعیت سفارش به روز شد.', 'success');
+    } catch (err) {
+      showToast(err?.message || 'خطا در تغییر وضعیت سفارش', 'error');
     }
   };
 
