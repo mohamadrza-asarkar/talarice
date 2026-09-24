@@ -42,6 +42,15 @@ export function normalizeOrder(raw) {
     ''
   ).trim();
 
+  const adminNote = String(
+    o.adminNote ||
+    o.adminMessage ||
+    o.message ||
+    o.note ||
+    cancelReason ||
+    ''
+  ).trim();
+
   const totalPrice = Number(
     o.totalPrice !== undefined
       ? o.totalPrice
@@ -59,6 +68,8 @@ export function normalizeOrder(raw) {
     postTrackingCode: trackingCode,
     cancelReason,
     rejectionReason: cancelReason,
+    adminNote,
+    adminMessage: adminNote,
     status: rawStatus,
     state: rawStatus,
     totalPrice,
@@ -232,13 +243,14 @@ export const ordersApi = {
   /**
    * Admin: Update order overall shipment status, tracking code, and rejection reason
    */
-  async updateStatus(id, status, postTrackingCode, cancelReason) {
+  async updateStatus(id, status, postTrackingCode, cancelReason, adminNote) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     const targetStatus = typeof status === 'object' ? (status.status || status.state) : status;
     const targetTracking = typeof status === 'object' ? (status.postTrackingCode || status.trackingCode) : postTrackingCode;
     const targetReason = typeof status === 'object' ? (status.cancelReason || status.rejectionReason) : cancelReason;
+    const targetNote = typeof status === 'object' ? (status.adminNote || status.adminMessage || status.note) : adminNote;
 
     const statusMap = {
       'در حال بررسی': 'pending',
@@ -264,7 +276,10 @@ export const ordersApi = {
       postalTrackingCode: targetTracking || '',
       trackingCode: targetTracking || '',
       cancelReason: targetReason || '',
-      rejectionReason: targetReason || ''
+      rejectionReason: targetReason || '',
+      adminNote: targetNote || targetReason || '',
+      adminMessage: targetNote || targetReason || '',
+      note: targetNote || targetReason || ''
     };
 
     let res;

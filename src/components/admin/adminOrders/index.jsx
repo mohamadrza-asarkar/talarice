@@ -21,6 +21,10 @@ export function AdminOrders({
   const [rejectModalOrder, setRejectModalOrder] = useState(null);
   const [rejectReasonInput, setRejectReasonInput] = useState('');
 
+  // Custom Admin Message Modal state
+  const [messageModalOrder, setMessageModalOrder] = useState(null);
+  const [messageInput, setMessageInput] = useState('');
+
   const queryText = searchQuery.trim().toLowerCase();
 
   const filteredOrders = adminOrders.filter((order) => {
@@ -57,7 +61,7 @@ export function AdminOrders({
     if (!trackingModalOrder) return;
     const orderId = trackingModalOrder.id || trackingModalOrder._id;
     if (onUpdateStatus) {
-      onUpdateStatus(orderId, trackingModalOrder.status || 'ارسال شده', trackingInput.trim());
+      onUpdateStatus(orderId, trackingModalOrder.status || 'ارسال شده', trackingInput.trim(), trackingModalOrder.cancelReason, trackingModalOrder.adminNote);
     }
     setTrackingModalOrder(null);
     setTrackingInput('');
@@ -72,10 +76,31 @@ export function AdminOrders({
     if (!rejectModalOrder) return;
     const orderId = rejectModalOrder.id || rejectModalOrder._id;
     if (onUpdateStatus) {
-      onUpdateStatus(orderId, 'لغو شده', rejectModalOrder.postTrackingCode, rejectReasonInput.trim());
+      onUpdateStatus(orderId, 'لغو شده', rejectModalOrder.postTrackingCode, rejectReasonInput.trim(), rejectReasonInput.trim());
     }
     setRejectModalOrder(null);
     setRejectReasonInput('');
+  };
+
+  const openMessageModal = (order) => {
+    setMessageModalOrder(order);
+    setMessageInput(order.adminNote || order.adminMessage || order.cancelReason || '');
+  };
+
+  const handleSaveMessage = () => {
+    if (!messageModalOrder) return;
+    const orderId = messageModalOrder.id || messageModalOrder._id;
+    if (onUpdateStatus) {
+      onUpdateStatus(
+        orderId,
+        messageModalOrder.status || 'در حال پردازش',
+        messageModalOrder.postTrackingCode,
+        messageModalOrder.cancelReason,
+        messageInput.trim()
+      );
+    }
+    setMessageModalOrder(null);
+    setMessageInput('');
   };
 
   const handleStatusSelectChange = (order, newStatus) => {
@@ -87,7 +112,7 @@ export function AdminOrders({
       setTrackingInput(order.postTrackingCode || '');
     } else {
       if (onUpdateStatus) {
-        onUpdateStatus(orderId, newStatus, order.postTrackingCode, order.cancelReason);
+        onUpdateStatus(orderId, newStatus, order.postTrackingCode, order.cancelReason, order.adminNote);
       }
     }
   };
@@ -97,7 +122,7 @@ export function AdminOrders({
       <div className={styles.toolbar}>
         <div className={styles.titleArea}>
           <h2 className={styles.title}>فهرست سفارشات مشتریان</h2>
-          <p className={styles.subtitle}>تغییر وضعیت، ثبت کد رهگیری پستی، دلیل رد سفارش و بررسی فیش‌ها</p>
+          <p className={styles.subtitle}>تغییر وضعیت، ثبت کد رهگیری پستی، ارسال پیام اختصاصی به مشتری، علت رد و بررسی فیش‌ها</p>
         </div>
         <button
           type="button"
@@ -143,6 +168,7 @@ export function AdminOrders({
             const items = Array.isArray(order.items) ? order.items : [];
             const amount = Number(order.finalAmount || order.totalPrice || 0);
             const isCancelled = order.status === 'لغو شده' || order.status === 'cancelled';
+            const noteText = order.adminNote || order.adminMessage || order.cancelReason;
 
             return (
               <div key={orderId} className={styles.itemRow}>
@@ -171,10 +197,10 @@ export function AdminOrders({
                     </p>
                   )}
 
-                  {isCancelled && order.cancelReason && (
-                    <p className={styles.itemMeta} style={{ color: '#e11d48', fontWeight: 600 }}>
-                      <i className="fa-solid fa-circle-exclamation" style={{ marginLeft: '4px' }} />
-                      <span>دلیل رد/لغو سفارش: {order.cancelReason}</span>
+                  {noteText && (
+                    <p className={styles.itemMeta} style={{ color: isCancelled ? '#e11d48' : '#0d9488', fontWeight: 600 }}>
+                      <i className="fa-solid fa-comment-dots" style={{ marginLeft: '4px' }} />
+                      <span>پیام/توضیحات مدیر: {noteText}</span>
                     </p>
                   )}
 
@@ -197,6 +223,16 @@ export function AdminOrders({
                       <span>فیش واریز</span>
                     </button>
                   )}
+
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => openMessageModal(order)}
+                    title="ارسال پیام یا توضیحات برای مشتری"
+                  >
+                    <i className="fa-solid fa-comment-medical" />
+                    <span>ارسال پیام</span>
+                  </button>
 
                   <button
                     type="button"
@@ -234,7 +270,53 @@ export function AdminOrders({
         )}
       </div>
 
-      {/* Modal 1: Postal Tracking Code */}
+      {/* Modal 1: Custom Admin Message */}
+      {messageModalOrder && (
+        <div className={styles.modalBackdrop}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3 className={styles.modalTitle}>ارسال پیام / توضیحات به مشتری</h3>
+              <button
+                type="button"
+                className={styles.closeBtn}
+                onClick={() => setMessageModalOrder(null)}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                متن پیام یا توضیحات مربوط به سفارش مشتری ({messageModalOrder.customerName || messageModalOrder.name}):
+              </label>
+              <textarea
+                className={styles.input}
+                rows={4}
+                placeholder="مثال: سفارش شما بسته‌بندی شده و آماده تحویل به پست پیشتاز می‌باشد..."
+                value={messageInput}
+                onChange={(e) => setMessageInput(e.target.value)}
+              />
+            </div>
+            <div className={styles.modalFooter}>
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => setMessageModalOrder(null)}
+              >
+                انصراف
+              </button>
+              <button
+                type="button"
+                className={styles.primaryBtn}
+                onClick={handleSaveMessage}
+              >
+                ارسال و ذخیره پیام
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal 2: Postal Tracking Code */}
       {trackingModalOrder && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
@@ -279,7 +361,7 @@ export function AdminOrders({
         </div>
       )}
 
-      {/* Modal 2: Order Rejection Reason */}
+      {/* Modal 3: Order Rejection Reason */}
       {rejectModalOrder && (
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>

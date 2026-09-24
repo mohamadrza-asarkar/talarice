@@ -186,9 +186,9 @@ export default function Admin() {
   };
 
   // Order Actions
-  const handleUpdateOrderStatus = async (id, status, postTrackingCode, cancelReason) => {
+  const handleUpdateOrderStatus = async (id, status, postTrackingCode, cancelReason, adminNote) => {
     try {
-      const updated = await ordersApi.updateStatus(id, status, postTrackingCode, cancelReason);
+      const updated = await ordersApi.updateStatus(id, status, postTrackingCode, cancelReason, adminNote);
       setAdminOrders((previous) =>
         previous.map((order) =>
           order.id === id || order._id === id
@@ -197,12 +197,13 @@ export default function Admin() {
                 ...updated,
                 status: status || updated?.status || order.status,
                 postTrackingCode: postTrackingCode !== undefined ? postTrackingCode : (updated?.postTrackingCode || order.postTrackingCode),
-                cancelReason: cancelReason !== undefined ? cancelReason : (updated?.cancelReason || order.cancelReason)
+                cancelReason: cancelReason !== undefined ? cancelReason : (updated?.cancelReason || order.cancelReason),
+                adminNote: adminNote !== undefined ? adminNote : (updated?.adminNote || order.adminNote)
               }
             : order
         )
       );
-      showToast('وضعیت سفارش به روز شد.', 'success');
+      showToast('وضعیت و پیام سفارش به‌روزرسانی شد.', 'success');
     } catch (err) {
       showToast(err?.message || 'خطا در تغییر وضعیت سفارش', 'error');
     }
@@ -227,8 +228,7 @@ export default function Admin() {
         return;
       }
 
-      // Single direct API request to toggle/enable amazing product
-      await amazingProductsApi.toggle(pid);
+      await amazingProductsApi.create(dealData);
 
       if (refreshProductsFromApi) {
         await refreshProductsFromApi();
@@ -236,7 +236,31 @@ export default function Admin() {
 
       showToast('محصول با موفقیت به پیشنهاد شگفت‌انگیز اضافه شد.', 'success');
     } catch {
-      showToast('خطا در افزودن پیشنهاد شگفت‌انگیز', 'error');
+      try {
+        await amazingProductsApi.toggle(pid);
+        if (refreshProductsFromApi) await refreshProductsFromApi();
+        showToast('محصول با موفقیت به پیشنهاد شگفت‌انگیز اضافه شد.', 'success');
+      } catch {
+        showToast('خطا در افزودن پیشنهاد شگفت‌انگیز', 'error');
+      }
+    }
+  };
+
+  const handleUpdateDeal = async (id, dealData) => {
+    try {
+      await amazingProductsApi.update(id, dealData);
+      if (refreshProductsFromApi) {
+        await refreshProductsFromApi();
+      }
+      showToast('پیشنهاد شگفت‌انگیز با موفقیت ویرایش شد.', 'success');
+    } catch {
+      try {
+        await productsApi.update(id, { isAmazing: true, ...dealData });
+        if (refreshProductsFromApi) await refreshProductsFromApi();
+        showToast('پیشنهاد شگفت‌انگیز با موفقیت ویرایش شد.', 'success');
+      } catch {
+        showToast('خطا در ویرایش پیشنهاد شگفت‌انگیز', 'error');
+      }
     }
   };
 
@@ -396,6 +420,7 @@ export default function Admin() {
           amazingProducts={amazingProducts}
           allProducts={products}
           onAddDeal={handleAddDeal}
+          onUpdateDeal={handleUpdateDeal}
           onRemoveDeal={handleRemoveDeal}
         />
       )}

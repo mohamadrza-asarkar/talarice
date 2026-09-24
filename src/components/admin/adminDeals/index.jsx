@@ -13,9 +13,11 @@ export function AdminDeals({
   amazingProducts = [],
   allProducts = [],
   onAddDeal,
+  onUpdateDeal,
   onRemoveDeal
 }) {
   const [showModal, setShowModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [form, setForm] = useState(defaultDealForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -34,8 +36,9 @@ export function AdminDeals({
 
   const handleDiscountChange = (discountValue) => {
     const discount = Number(discountValue);
-    const selected = allProducts.find((product) => (product.id || product._id) === form.productId);
-    const regularPrice = Number(selected?.price || 0);
+    const targetPid = editingProduct ? (editingProduct.id || editingProduct._id) : form.productId;
+    const selected = allProducts.find((product) => (product.id || product._id) === targetPid) || editingProduct;
+    const regularPrice = Number(selected?.originalPrice || selected?.price || 0);
     const computedDeal = regularPrice > 0 && discount >= 0 ? Math.round(regularPrice * (1 - discount / 100)) : '';
 
     setForm((previous) => ({
@@ -45,15 +48,40 @@ export function AdminDeals({
     }));
   };
 
+  const openAddModal = () => {
+    setEditingProduct(null);
+    setForm(defaultDealForm);
+    setShowModal(true);
+  };
+
+  const openEditModal = (prod) => {
+    const pid = prod.id || prod._id;
+    const regularPrice = Number(prod.originalPrice || prod.price || 0);
+    const discount = Number(prod.discountPercent || 15);
+    const currentDealPrice = Number(prod.dealPrice || (regularPrice > 0 ? Math.round(regularPrice * (1 - discount / 100)) : prod.price));
+
+    setEditingProduct(prod);
+    setForm({
+      productId: pid,
+      discountPercent: discount,
+      dealPrice: currentDealPrice,
+      dealDurationHours: prod.amazingDurationHours || 24
+    });
+    setShowModal(true);
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (!form.productId) return;
     setIsSubmitting(true);
     try {
-      if (onAddDeal) {
+      if (editingProduct && onUpdateDeal) {
+        await onUpdateDeal(form.productId, form);
+      } else if (onAddDeal) {
         await onAddDeal(form);
       }
       setForm(defaultDealForm);
+      setEditingProduct(null);
       setShowModal(false);
     } finally {
       setIsSubmitting(false);
@@ -70,7 +98,7 @@ export function AdminDeals({
         <button
           type="button"
           className={styles.primaryBtn}
-          onClick={() => setShowModal(true)}
+          onClick={openAddModal}
         >
           <i className="fa-solid fa-plus" />
           <span>افزودن محصول شگفت‌انگیز</span>
@@ -86,7 +114,7 @@ export function AdminDeals({
         ) : (
           amazingProducts.map((product) => {
             const productId = product.id || product._id;
-            const regularPrice = Number(product.price || 0);
+            const regularPrice = Number(product.originalPrice || product.price || 0);
             const dealPrice = Number(product.dealPrice || Math.round(regularPrice * (1 - (product.discountPercent || 15) / 100)));
             return (
               <div key={productId} className={styles.itemRow}>
@@ -118,6 +146,16 @@ export function AdminDeals({
                 <div className={styles.itemActions}>
                   <button
                     type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => openEditModal(product)}
+                    title="ویرایش قیمت و درصد تخفیف شگفت‌انگیز"
+                  >
+                    <i className="fa-solid fa-pen-to-square" />
+                    <span>ویرایش</span>
+                  </button>
+
+                  <button
+                    type="button"
                     className={styles.dangerBtn}
                     onClick={() => onRemoveDeal && onRemoveDeal(productId)}
                   >
@@ -135,40 +173,47 @@ export function AdminDeals({
         <div className={styles.modalBackdrop}>
           <div className={styles.modalContent}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>افزودن به پیشنهادهای شگفت‌انگیز</h3>
+              <h3 className={styles.modalTitle}>
+                {editingProduct ? `ویرایش پیشنهاد شگفت‌انگیز (${editingProduct.name})` : 'افزودن به پیشنهادهای شگفت‌انگیز'}
+              </h3>
               <button
                 type="button"
                 className={styles.closeBtn}
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false);
+                  setEditingProduct(null);
+                }}
               >
                 <i className="fa-solid fa-xmark" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className={styles.formGrid}>
-              <div className={styles.formGroup}>
-                <label className={styles.label}>انتخاب محصول</label>
-                <select
-                  className={styles.select}
-                  value={form.productId}
-                  onChange={(event) => handleProductSelect(event.target.value)}
-                  required
-                >
-                  <option value="">-- یک محصول انتخاب کنید --</option>
-                  {allProducts.map((product) => {
-                    const productId = product.id || product._id;
-                    return (
-                      <option key={productId} value={productId}>
-                        {product.name} ({Number(product.price || 0).toLocaleString('fa-IR')} تومان)
-                      </option>
-                    );
-                  })}
-                </select>
-              </div>
+              {!editingProduct && (
+                <div className={styles.formGroup}>
+                  <label className={styles.label}>انتخاب محصول</label>
+                  <select
+                    className={styles.select}
+                    value={form.productId}
+                    onChange={(event) => handleProductSelect(event.target.value)}
+                    required
+                  >
+                    <option value="">-- یک محصول انتخاب کنید --</option>
+                    {allProducts.map((product) => {
+                      const productId = product.id || product._id;
+                      return (
+                        <option key={productId} value={productId}>
+                          {product.name} ({Number(product.price || 0).toLocaleString('fa-IR')} تومان)
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              )}
 
               <div className={`${styles.formGrid} ${styles.formGrid2}`}>
                 <div className={styles.formGroup}>
-                  <label className={styles.label}>درصد تخفیف</label>
+                  <label className={styles.label}>درصد تخفیف (٪)</label>
                   <input
                     type="number"
                     className={styles.input}
@@ -205,7 +250,10 @@ export function AdminDeals({
                 <button
                   type="button"
                   className={styles.secondaryBtn}
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    setEditingProduct(null);
+                  }}
                 >
                   انصراف
                 </button>
@@ -214,7 +262,7 @@ export function AdminDeals({
                   className={styles.primaryBtn}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? 'در حال ثبت...' : 'ثبت در شگفت‌انگیز'}
+                  {isSubmitting ? 'در حال ثبت...' : (editingProduct ? 'ذخیره تغییرات' : 'ثبت در شگفت‌انگیز')}
                 </button>
               </div>
             </form>

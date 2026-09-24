@@ -399,6 +399,30 @@ export default function Profile() {
                       )}
                     </div>
 
+                    {/* پیام/توضیحات مدیریت به کاربر */}
+                    {(order.adminNote || order.adminMessage || order.cancelReason) && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '0.65rem',
+                        backgroundColor: (order.status === 'لغو شده' || order.status === 'cancelled') ? '#fff1f2' : '#f0fdf4',
+                        border: (order.status === 'لغو شده' || order.status === 'cancelled') ? '1px solid #fecdd3' : '1px solid #bbf7d0',
+                        color: (order.status === 'لغو شده' || order.status === 'cancelled') ? '#be123c' : '#166534',
+                        padding: '0.75rem 0.9rem',
+                        borderRadius: '12px',
+                        fontSize: '0.85rem',
+                        lineHeight: '1.6'
+                      }}>
+                        <i className="fa-solid fa-comment-dots" style={{ marginTop: '0.2rem', fontSize: '1.1rem', flexShrink: 0 }} />
+                        <div>
+                          <strong style={{ display: 'block', marginBottom: '0.15rem', fontSize: '0.875rem' }}>
+                            پیام مدیریت فروشگاه:
+                          </strong>
+                          <span>{order.adminNote || order.adminMessage || order.cancelReason}</span>
+                        </div>
+                      </div>
+                    )}
+
                     <div className={styles.orderBottomRow}>
                       <div className={styles.orderTotalAmount}>
                         <span>مبلغ کل:</span>
@@ -482,6 +506,29 @@ export default function Profile() {
                 <p style={{ fontSize: '0.875rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
                   مرسوله شما با بسته‌بندی نخی ویژه طلا رایس جهت حفظ عطر و تازگی، توسط پست پیشتاز ارسال شده است.
                 </p>
+                {(trackedOrder.adminNote || trackedOrder.adminMessage || trackedOrder.cancelReason) && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.65rem',
+                    backgroundColor: (trackedOrder.status === 'لغو شده' || trackedOrder.status === 'cancelled') ? '#fff1f2' : '#f0fdf4',
+                    border: (trackedOrder.status === 'لغو شده' || trackedOrder.status === 'cancelled') ? '1px solid #fecdd3' : '1px solid #bbf7d0',
+                    color: (trackedOrder.status === 'لغو شده' || trackedOrder.status === 'cancelled') ? '#be123c' : '#166534',
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    fontSize: '0.85rem',
+                    lineHeight: '1.6',
+                    marginTop: '0.5rem'
+                  }}>
+                    <i className="fa-solid fa-comment-dots" style={{ marginTop: '0.2rem', fontSize: '1.1rem', flexShrink: 0 }} />
+                    <div>
+                      <strong style={{ display: 'block', marginBottom: '0.15rem', fontSize: '0.875rem' }}>
+                        پیام مدیریت فروشگاه:
+                      </strong>
+                      <span>{trackedOrder.adminNote || trackedOrder.adminMessage || trackedOrder.cancelReason}</span>
+                    </div>
+                  </div>
+                )}
                 {trackedOrder.trackingCode && (
                   <div className={styles.trackingCodeBox} style={{ alignSelf: 'flex-start' }}>
                     <span>کد رهگیری ملی پست:</span>
