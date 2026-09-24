@@ -6,6 +6,9 @@ import styles from '../assets/styles/cartPage.module.css';
 export default function CartPage() {
   const navigate = useNavigate();
   const {
+    isAuthenticated,
+    isLoadingAuth,
+    showToast,
     cart,
     removeFromCart,
     updateQuantity,
@@ -15,6 +18,28 @@ export default function CartPage() {
     finalTotal,
     setIsCheckoutOpen
   } = useApp();
+
+  React.useEffect(() => {
+    if (!isLoadingAuth && !isAuthenticated) {
+      showToast('برای مشاهده و استفاده از سبد خرید، لطفاً ابتدا وارد حساب کاربری شوید.', 'info');
+      navigate('/login', { state: { from: { pathname: '/cart' } }, replace: true });
+    }
+  }, [isAuthenticated, isLoadingAuth, navigate, showToast]);
+
+  if (isLoadingAuth) {
+    return (
+      <main className={styles.cartPage}>
+        <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+          <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: '2rem', marginBottom: '1rem', color: '#d97706' }} />
+          <p>در حال بررسی وضعیت حساب کاربری...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleOpenCheckout = () => {
     setIsCheckoutOpen(true);

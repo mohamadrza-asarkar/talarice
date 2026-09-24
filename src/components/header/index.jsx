@@ -24,7 +24,7 @@ export function Header() {
           )}
 
           <Link
-            to={isAuthenticated ? '/profile' : '/auth'}
+            to={isAuthenticated ? '/profile' : '/login'}
             className={styles.userBtn}
             title={isAuthenticated ? `پنل کاربری ${currentUser?.name || ''}` : 'ورود به حساب کاربری'}
           >

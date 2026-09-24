@@ -150,24 +150,24 @@ export async function request(endpoint, options = {}) {
         if (isAuthPublicRoute) {
           errorMsg = errorMsg || 'شماره موبایل یا رمز عبور وارد شده اشتباه است.';
         } else {
-          errorMsg = errorMsg || 'نشست کاربری شما منقضی شده است یا نیاز به دسترسی مدیر دارید (خطای ۴۰۱). لطفاً مجدداً وارد شوید.';
+          errorMsg = errorMsg || 'نشست کاربری شما پایان یافته است. لطفاً دوباره وارد حساب کاربری خود شوید.';
           setStoredToken(null);
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new CustomEvent('auth:unauthorized', { detail: { endpoint, status: 401 } }));
           }
         }
       } else if (response.status === 403) {
-        errorMsg = errorMsg || 'دسترسی به این بخش نیازمند مجوز مدیریت سامانه است (خطای ۴۰۳).';
+        errorMsg = errorMsg || 'دسترسی به این بخش نیازمند مجوز مدیریت سامانه است.';
       } else if (response.status === 400) {
         errorMsg = errorMsg || 'اطلاعات ارسالی نامعتبر یا شماره موبایل تکراری است.';
       } else if (response.status === 422) {
-        errorMsg = errorMsg || 'فرمت اطلاعات ورودی نامعتبر است. لطفاً شماره موبایل (۱۱ رقم با ۰۹) و رمز عبور (حداقل ۶ کاراکتر) را بررسی کنید.';
+        errorMsg = errorMsg || 'فرمت اطلاعات ورودی نامعتبر است. لطفاً شماره موبایل و رمز عبور را بررسی کنید.';
       } else if (response.status === 404) {
-        errorMsg = errorMsg || 'اطلاعات یا آیتم مورد نظر در سرور یافت نشد (خطای ۴۰۴).';
+        errorMsg = errorMsg || 'اطلاعات مورد نظر در سرور یافت نشد.';
       } else if (response.status >= 500) {
         errorMsg = 'سرور با خطای موقت مواجه شد. لطفاً لحظاتی بعد مجدداً تلاش نمایید.';
       } else if (!errorMsg) {
-        errorMsg = `خطای سرور (کد ${response.status})`;
+        errorMsg = 'مشکلی در برقراری ارتباط با سرور رخ داده است.';
       }
 
       const error = new Error(errorMsg);

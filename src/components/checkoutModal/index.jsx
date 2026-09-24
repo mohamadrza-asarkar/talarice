@@ -611,7 +611,6 @@ export function CheckoutModal() {
                     )}
                   </div>
                 </div>
-              )}
 
               <div className={styles.totalsBox}>
                 <div className={styles.totalsRow}>

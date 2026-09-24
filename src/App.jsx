@@ -20,6 +20,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/login" element={<Auth />} />
       </Route>
 
       <Route element={<SimpleLayout />}>

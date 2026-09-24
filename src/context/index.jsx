@@ -231,7 +231,7 @@ export function AppProvider({ children }) {
   useEffect(() => {
     const handleUnauthorized = () => {
       setCurrentUser(null);
-      triggerNotification('نشست کاربری شما منقضی شده است یا نیاز به ورود با دسترسی مدیر دارید (خطای ۴۰۱).', 'error');
+      triggerNotification('نشست کاربری شما پایان یافته است. لطفاً دوباره وارد حساب کاربری شوید.', 'info');
     };
 
     window.addEventListener('auth:unauthorized', handleUnauthorized);
@@ -358,6 +358,12 @@ export function AppProvider({ children }) {
 
   // Cart actions with Server Integration
   const addToCart = useCallback(async (product, quantity = 1) => {
+    if (!getStoredToken()) {
+      triggerNotification('برای افزودن محصول به سبد خرید، لطفاً ابتدا وارد حساب کاربری خود شوید.', 'info');
+      navigate('/login', { state: { from: { pathname: '/cart' } } });
+      return;
+    }
+
     const targetId = product.id || product._id || product.productId;
     let updatedCart = [];
 

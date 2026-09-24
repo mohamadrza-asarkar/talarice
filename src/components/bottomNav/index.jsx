@@ -39,7 +39,7 @@ export function BottomNav() {
         </NavLink>
       )}
 
-      <NavLink to={isAuthenticated ? '/profile' : '/auth'} className={getLinkClass}>
+      <NavLink to={isAuthenticated ? '/profile' : '/login'} className={getLinkClass}>
         <i className="fa-solid fa-user" style={{ fontSize: '1.1rem' }} />
         <span>{isAuthenticated ? 'پنل کاربری' : 'ورود'}</span>
       </NavLink>
