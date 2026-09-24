@@ -461,7 +461,10 @@ export function AppProvider({ children }) {
     }
   }, []);
 
-  const cartCount = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+  const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.isAdmin === true));
+  const isAuthenticated = Boolean(currentUser && getStoredToken());
+
+  const cartCount = isAuthenticated ? cart.reduce((sum, item) => sum + (item.quantity || 1), 0) : 0;
   const cartTotal = cart.reduce((sum, item) => {
     const price = Number(item.dealPrice || item.price || 0);
     return sum + price * (item.quantity || 1);
@@ -491,9 +494,6 @@ export function AppProvider({ children }) {
       return { success: false, message: error.message };
     }
   }, [cart, cartTotal, clearCart, triggerNotification]);
-
-  const isAdmin = Boolean(currentUser && (currentUser.role === 'admin' || currentUser.isAdmin === true));
-  const isAuthenticated = Boolean(currentUser && getStoredToken());
 
   const value = {
     // Auth

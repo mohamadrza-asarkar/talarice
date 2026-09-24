@@ -1,10 +1,11 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import styles from './style.module.css';
 
 export function BottomNav() {
-  const { cartCount, isAuthenticated, isAdmin } = useApp();
+  const { cartCount, isAuthenticated, isAdmin, showToast } = useApp();
+  const navigate = useNavigate();
 
   function getLinkClass({ isActive }) {
     return `${styles.navButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
@@ -13,6 +14,14 @@ export function BottomNav() {
   function getAdminLinkClass({ isActive }) {
     return `${styles.navButton} ${styles.adminNavButton} ${isActive ? styles.navButtonSelected : styles.navButtonUnselected}`;
   }
+
+  const handleCartClick = (event) => {
+    if (!isAuthenticated) {
+      event.preventDefault();
+      showToast('جهت مشاهده سبد خرید و ثبت سفارش، لطفاً ابتدا وارد حساب کاربری خود شوید.', 'info');
+      navigate('/login', { state: { from: { pathname: '/cart' } } });
+    }
+  };
 
   return (
     <nav className={styles.bottomNav} aria-label="ناوبری اصلی">
@@ -26,9 +35,9 @@ export function BottomNav() {
         <span>محصولات</span>
       </NavLink>
 
-      <NavLink to="/cart" className={getLinkClass}>
+      <NavLink to="/cart" onClick={handleCartClick} className={getLinkClass}>
         <i className="fa-solid fa-bag-shopping" style={{ fontSize: '1.1rem' }} />
-        {cartCount > 0 && <span className={styles.badge}>{cartCount.toLocaleString('fa-IR')}</span>}
+        {isAuthenticated && cartCount > 0 && <span className={styles.badge}>{cartCount.toLocaleString('fa-IR')}</span>}
         <span>سبد خرید</span>
       </NavLink>
 
