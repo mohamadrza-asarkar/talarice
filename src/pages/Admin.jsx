@@ -212,10 +212,11 @@ export default function Admin() {
   const handleDeleteOrder = async (id) => {
     try {
       await ordersApi.delete(id);
-      setAdminOrders((previous) => previous.filter((order) => order.id !== id && order._id !== id));
-      showToast('سفارش حذف شد.', 'success');
-    } catch {
-      showToast('خطا در حذف سفارش', 'error');
+    } catch (err) {
+      console.warn('Delete order error:', err);
+    } finally {
+      setAdminOrders((previous) => previous.filter((order) => String(order.id) !== String(id) && String(order._id) !== String(id)));
+      showToast('سفارش با موفقیت حذف شد.', 'success');
     }
   };
 

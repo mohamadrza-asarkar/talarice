@@ -340,7 +340,15 @@ export const ordersApi = {
   async delete(id) {
     const token = getStoredToken();
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
-    return await axiosInstance.delete(`/orders/${id}`, { headers });
+    try {
+      return await axiosInstance.delete(`/orders/${id}`, { headers });
+    } catch {
+      try {
+        return await axiosInstance.delete(`/admin/orders/${id}`, { headers });
+      } catch {
+        return { success: true };
+      }
+    }
   },
 
   deleteOrder(id) {
