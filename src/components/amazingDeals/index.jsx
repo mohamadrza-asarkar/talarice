@@ -26,25 +26,23 @@ export function AmazingDeals() {
     const expStr = product.amazingExpiresAt || product.expiresAt || product.dealExpiresAt || product.endTime || product.expireDate;
     if (expStr) {
       const parsed = new Date(expStr).getTime();
-      if (!isNaN(parsed)) {
+      if (!isNaN(parsed) && parsed > Date.now()) {
         expTime = parsed;
       }
     }
 
-    // Fallback if expiration string not direct: check duration hours + creation time
-    if (!expTime && (product.amazingDurationHours || product.dealDurationHours)) {
+    // Check duration hours
+    const hours = Number(product.amazingDurationHours || product.dealDurationHours || product.durationHours || 0);
+    if (!expTime && hours > 0) {
       const createdMs = product.createdAt ? new Date(product.createdAt).getTime() : Date.now();
-      const hours = Number(product.amazingDurationHours || product.dealDurationHours || 24);
-      if (!isNaN(createdMs) && hours > 0) {
-        expTime = createdMs + hours * 3600 * 1000;
-      }
+      const targetFromCreated = createdMs + hours * 3600 * 1000;
+      expTime = targetFromCreated > Date.now() ? targetFromCreated : Date.now() + hours * 3600 * 1000;
     }
 
-    // Fallback if no server expiration defined: calculate end of today (23:59:59)
+    // Default if no server expiration defined: use hours or default 24h from now
     if (!expTime) {
-      const now = new Date();
-      const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).getTime();
-      expTime = endOfDay > now.getTime() ? endOfDay : now.getTime() + 24 * 3600 * 1000;
+      const defaultHours = hours > 0 ? hours : 24;
+      expTime = Date.now() + defaultHours * 3600 * 1000;
     }
 
     const calcRemainingSeconds = () => {

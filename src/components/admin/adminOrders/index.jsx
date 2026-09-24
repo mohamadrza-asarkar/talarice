@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { formatOrderStatus } from '../../../api/orders.api';
 import styles from '../admin.module.css';
 
 export function AdminOrders({
@@ -40,14 +41,13 @@ export function AdminOrders({
       customer.toLowerCase().includes(queryText) ||
       phone.includes(queryText);
 
-    const statusText = order.status || '';
+    const statusText = formatOrderStatus(order.status);
     const matchStatus =
       statusFilter === 'all' ||
-      statusText === statusFilter ||
-      (statusFilter === 'processing' && (statusText === 'در حال پردازش' || statusText === 'pending')) ||
-      (statusFilter === 'shipped' && (statusText === 'ارسال شده' || statusText === 'shipped')) ||
-      (statusFilter === 'delivered' && (statusText === 'تحویل شده' || statusText === 'delivered')) ||
-      (statusFilter === 'cancelled' && (statusText === 'لغو شده' || statusText === 'cancelled'));
+      (statusFilter === 'processing' && statusText === 'در حال پردازش') ||
+      (statusFilter === 'shipped' && statusText === 'ارسال شده') ||
+      (statusFilter === 'delivered' && statusText === 'تحویل داده شده') ||
+      (statusFilter === 'cancelled' && statusText === 'لغو شده');
 
     return matchSearch && matchStatus;
   });
@@ -167,7 +167,10 @@ export function AdminOrders({
             const orderId = order.id || order._id;
             const items = Array.isArray(order.items) ? order.items : [];
             const amount = Number(order.finalAmount || order.totalPrice || 0);
-            const isCancelled = order.status === 'لغو شده' || order.status === 'cancelled';
+            const currentStatus = formatOrderStatus(order.status);
+            const isCancelled = currentStatus === 'لغو شده';
+            const isShipped = currentStatus === 'ارسال شده';
+            const isDelivered = currentStatus === 'تحویل داده شده';
             const noteText = order.adminNote || order.adminMessage || order.cancelReason;
 
             return (
@@ -177,8 +180,8 @@ export function AdminOrders({
                     <h3 className={styles.itemName}>
                       {order.customerName || order.name || 'مشتری بدون نام'}
                     </h3>
-                    <span className={`${styles.badge} ${isCancelled ? styles.badgeDanger : styles.badgeWarning}`}>
-                      {order.status || 'در حال پردازش'}
+                    <span className={`${styles.badge} ${isCancelled ? styles.badgeDanger : (isShipped || isDelivered ? styles.badgeSuccess : styles.badgeWarning)}`}>
+                      {currentStatus}
                     </span>
                   </div>
 
@@ -246,12 +249,12 @@ export function AdminOrders({
 
                   <select
                     className={styles.select}
-                    value={order.status || 'در حال پردازش'}
+                    value={currentStatus}
                     onChange={(event) => handleStatusSelectChange(order, event.target.value)}
                   >
                     <option value="در حال پردازش">در حال پردازش</option>
                     <option value="ارسال شده">ارسال شده</option>
-                    <option value="تحویل شده">تحویل شده</option>
+                    <option value="تحویل داده شده">تحویل داده شده</option>
                     <option value="لغو شده">لغو شده / رد شده</option>
                   </select>
 

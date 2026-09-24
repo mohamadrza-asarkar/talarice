@@ -16,6 +16,13 @@ export function normalizeAmazingProduct(raw) {
   const discountPercent = Number(p.discountPercent || p.discount || base.discountPercent || 15);
   const price = Number(p.price || p.dealPrice || (originalPrice > 0 ? Math.round(originalPrice * (1 - discountPercent / 100)) : base.price));
 
+  const durationHours = Number(p.amazingDurationHours || p.dealDurationHours || p.durationHours || 0);
+  let amazingExpiresAt = p.amazingExpiresAt || p.expiresAt || p.dealExpiresAt || p.endTime || p.expireDate || null;
+  if (!amazingExpiresAt && durationHours > 0) {
+    const createdMs = p.createdAt ? new Date(p.createdAt).getTime() : Date.now();
+    amazingExpiresAt = new Date(createdMs + durationHours * 3600 * 1000).toISOString();
+  }
+
   return {
     ...base,
     originalPrice,
@@ -23,8 +30,9 @@ export function normalizeAmazingProduct(raw) {
     dealPrice: price,
     discountPercent,
     isAmazing: true,
-    amazingExpiresAt: p.amazingExpiresAt || p.expiresAt || p.dealExpiresAt || p.endTime || p.expireDate || null,
-    amazingDurationHours: p.amazingDurationHours || p.dealDurationHours || p.durationHours || null,
+    amazingExpiresAt,
+    amazingDurationHours: durationHours || null,
+    dealDurationHours: durationHours || null,
     createdAt: p.createdAt || p.created_at || base.createdAt || null
   };
 }
@@ -135,8 +143,21 @@ export const amazingProductsApi = {
     if (updateData.name !== undefined) formData.append('name', (updateData.name || '').trim());
     if (updateData.originalPrice !== undefined) formData.append('originalPrice', String(updateData.originalPrice || 0));
     if (updateData.discountPercent !== undefined) formData.append('discountPercent', String(updateData.discountPercent || 0));
-    if (updateData.amazingExpiresAt !== undefined) {
-      formData.append('amazingExpiresAt', updateData.amazingExpiresAt ? String(updateData.amazingExpiresAt) : '');
+    if (updateData.dealPrice !== undefined) formData.append('dealPrice', String(updateData.dealPrice));
+
+    const hours = Number(updateData.amazingDurationHours || updateData.dealDurationHours || updateData.durationHours || 0);
+    if (hours > 0) {
+      formData.append('amazingDurationHours', String(hours));
+      formData.append('dealDurationHours', String(hours));
+      if (!updateData.amazingExpiresAt && !updateData.expiresAt) {
+        updateData.amazingExpiresAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
+      }
+    }
+
+    const expiresAt = updateData.amazingExpiresAt || updateData.expiresAt;
+    if (expiresAt !== undefined) {
+      formData.append('amazingExpiresAt', expiresAt ? String(expiresAt) : '');
+      formData.append('expiresAt', expiresAt ? String(expiresAt) : '');
     }
 
     if (updateData.imageBase64 || updateData.image) {

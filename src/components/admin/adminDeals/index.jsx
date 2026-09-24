@@ -75,10 +75,21 @@ export function AdminDeals({
     if (!form.productId) return;
     setIsSubmitting(true);
     try {
+      const hours = Number(form.dealDurationHours || 24);
+      const computedExpiresAt = new Date(Date.now() + hours * 3600 * 1000).toISOString();
+      const payload = {
+        ...form,
+        amazingDurationHours: hours,
+        dealDurationHours: hours,
+        durationHours: hours,
+        amazingExpiresAt: computedExpiresAt,
+        expiresAt: computedExpiresAt
+      };
+
       if (editingProduct && onUpdateDeal) {
-        await onUpdateDeal(form.productId, form);
+        await onUpdateDeal(form.productId, payload);
       } else if (onAddDeal) {
-        await onAddDeal(form);
+        await onAddDeal(payload);
       }
       setForm(defaultDealForm);
       setEditingProduct(null);

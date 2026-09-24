@@ -152,31 +152,37 @@ export default function Profile() {
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
-      case 'completed':
-      case 'تحویل شده':
-        return (
-          <span className={`${styles.orderStatusBadge} ${styles.statusCompleted}`}>
-            <i className="fa-solid fa-circle-check" />
-            تحویل شده
-          </span>
-        );
-      case 'shipped':
-      case 'ارسال شده':
-        return (
-          <span className={`${styles.orderStatusBadge} ${styles.statusShipped}`}>
-            <i className="fa-solid fa-truck-fast" />
-            ارسال شده (پست پیشتاز)
-          </span>
-        );
-      default:
-        return (
-          <span className={`${styles.orderStatusBadge} ${styles.statusPending}`}>
-            <i className="fa-solid fa-clock" />
-            در حال پردازش در شالیزار
-          </span>
-        );
+    const s = String(status || '').trim().toLowerCase();
+    if (s === 'completed' || s === 'delivered' || s === 'تحویل شده' || s === 'تحویل داده شده') {
+      return (
+        <span className={`${styles.orderStatusBadge} ${styles.statusCompleted}`}>
+          <i className="fa-solid fa-circle-check" />
+          تحویل داده شده
+        </span>
+      );
     }
+    if (s === 'shipped' || s === 'sent' || s === 'ارسال شده') {
+      return (
+        <span className={`${styles.orderStatusBadge} ${styles.statusShipped}`}>
+          <i className="fa-solid fa-truck-fast" />
+          ارسال شده (پست پیشتاز)
+        </span>
+      );
+    }
+    if (s === 'cancelled' || s === 'canceled' || s === 'rejected' || s === 'لغو شده' || s === 'رد شده') {
+      return (
+        <span className={`${styles.orderStatusBadge}`} style={{ backgroundColor: '#fff1f2', color: '#be123c', border: '1px solid #fecdd3' }}>
+          <i className="fa-solid fa-circle-xmark" />
+          لغو شده / رد شده
+        </span>
+      );
+    }
+    return (
+      <span className={`${styles.orderStatusBadge} ${styles.statusPending}`}>
+        <i className="fa-solid fa-clock" />
+        در حال پردازش
+      </span>
+    );
   };
 
   const activeOrdersCount = userOrders.filter(

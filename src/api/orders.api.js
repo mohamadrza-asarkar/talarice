@@ -2,6 +2,24 @@ import axiosInstance, { getStoredToken } from './axios';
 import { unwrapDoc } from './auth.api';
 import { imageToBlob } from './products.api';
 
+export function formatOrderStatus(status) {
+  if (!status || typeof status !== 'string') return 'در حال پردازش';
+  const s = status.trim().toLowerCase();
+  if (s === 'pending' || s === 'processing' || s === 'in_progress' || s === 'در حال بررسی' || s === 'در حال پردازش' || s === 'تایید شده') {
+    return 'در حال پردازش';
+  }
+  if (s === 'shipped' || s === 'sent' || s === 'ارسال شده' || s === 'ارسال‌ شده') {
+    return 'ارسال شده';
+  }
+  if (s === 'delivered' || s === 'completed' || s === 'تحویل شده' || s === 'تحویل داده شده') {
+    return 'تحویل داده شده';
+  }
+  if (s === 'cancelled' || s === 'canceled' || s === 'rejected' || s === 'لغو شده' || s === 'رد شده') {
+    return 'لغو شده';
+  }
+  return status;
+}
+
 export function normalizeOrder(raw) {
   if (!raw) return null;
   const o = unwrapDoc(raw);
@@ -24,6 +42,7 @@ export function normalizeOrder(raw) {
     : [];
 
   const rawStatus = String(o.status || o.state || 'pending').trim();
+  const normalizedStatus = formatOrderStatus(rawStatus);
   const trackingCode = String(
     o.postTrackingCode ||
     o.postalTrackingCode ||
@@ -70,8 +89,9 @@ export function normalizeOrder(raw) {
     rejectionReason: cancelReason,
     adminNote,
     adminMessage: adminNote,
-    status: rawStatus,
-    state: rawStatus,
+    status: normalizedStatus,
+    state: normalizedStatus,
+    rawStatus: rawStatus,
     totalPrice,
     finalAmount: totalPrice,
     items,
