@@ -1,9 +1,24 @@
 // -------------------------------------------------------------
-// Base API URL - Change this single URL to sync all APIs
+// Base API URL - Change this single URL or set VITE_API_BASE_URL / VITE_BACKEND_URL in .env
 // -------------------------------------------------------------
+const normalizeUrl = (url) => {
+  if (!url || typeof url !== 'string') return '';
+  let trimmed = url.trim();
+  if (!trimmed) return '';
+  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://') && !trimmed.startsWith('/')) {
+    trimmed = `http://${trimmed}`;
+  }
+  return trimmed.replace(/\/$/, '');
+};
+
 const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
+  if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+    const norm = normalizeUrl(import.meta.env.VITE_API_BASE_URL);
+    return norm.endsWith('/api') ? norm : `${norm}/api`;
+  }
+  if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
+    const norm = normalizeUrl(import.meta.env.VITE_BACKEND_URL);
+    return norm.endsWith('/api') ? norm : `${norm}/api`;
   }
   // If hosted on non-localhost, default to relative '/api' endpoint to match deployment domain routing
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
@@ -25,9 +40,23 @@ export function getImageUrl(imgPath) {
   if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     return trimmed;
   }
-  const baseUrl = API_BASE_URL.replace(/\/api\/?$/, '');
+
+  // Calculate base server origin (without /api)
+  let serverOrigin = '';
+  if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
+    serverOrigin = normalizeUrl(import.meta.env.VITE_BACKEND_URL).replace(/\/api\/?$/, '');
+  } else if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+    serverOrigin = normalizeUrl(import.meta.env.VITE_API_BASE_URL).replace(/\/api\/?$/, '');
+  } else {
+    serverOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
+  }
+
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  return `${baseUrl}${cleanPath}`;
+  if (serverOrigin && (serverOrigin.startsWith('http://') || serverOrigin.startsWith('https://'))) {
+    return `${serverOrigin}${cleanPath}`;
+  }
+
+  return cleanPath;
 }
 
 export const TOKEN_STORAGE_KEY = 'tala_rice_token';
