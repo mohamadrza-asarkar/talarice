@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import { truncateAtWord } from '../../utils/textUtils';
+import { getImageUrl } from '../../api/client';
 import styles from './style.module.css';
 
 export function ProductCard({ product }) {
@@ -44,7 +45,7 @@ export function ProductCard({ product }) {
       <Link to={`/product/${product.id || product._id}`} className={styles.contentWrapper}>
         <div className={styles.imageContainer}>
           <img
-            src={product.image}
+            src={getImageUrl(product.image)}
             alt={product.name}
             className={styles.image}
             loading="lazy"

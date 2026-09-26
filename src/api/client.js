@@ -1,5 +1,5 @@
 // -------------------------------------------------------------
-// Base API URL - Change this single URL or set VITE_API_BASE_URL / VITE_BACKEND_URL in .env
+// Base API URL & Backend Origin Resolution
 // -------------------------------------------------------------
 const normalizeUrl = (url) => {
   if (!url || typeof url !== 'string') return '';
@@ -11,49 +11,66 @@ const normalizeUrl = (url) => {
   return trimmed.replace(/\/$/, '');
 };
 
+export function getBackendOrigin() {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
+      return normalizeUrl(import.meta.env.VITE_BACKEND_URL).replace(/\/api\/?$/, '');
+    }
+    if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+      return normalizeUrl(import.meta.env.VITE_API_BASE_URL).replace(/\/api\/?$/, '');
+    }
+  }
+  return 'http://localhost:5000';
+}
+
 const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
-    const norm = normalizeUrl(import.meta.env.VITE_API_BASE_URL);
-    return norm.endsWith('/api') ? norm : `${norm}/api`;
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+      const norm = normalizeUrl(import.meta.env.VITE_API_BASE_URL);
+      return norm.endsWith('/api') ? norm : `${norm}/api`;
+    }
+    if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
+      const norm = normalizeUrl(import.meta.env.VITE_BACKEND_URL);
+      return norm.endsWith('/api') ? norm : `${norm}/api`;
+    }
   }
-  if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
-    const norm = normalizeUrl(import.meta.env.VITE_BACKEND_URL);
-    return norm.endsWith('/api') ? norm : `${norm}/api`;
-  }
-  // If hosted on non-localhost, default to relative '/api' endpoint to match deployment domain routing
-  if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return '/api';
-  }
-  return 'http://localhost:5000/api';
+  const origin = getBackendOrigin();
+  return origin.endsWith('/api') ? origin : `${origin}/api`;
 };
 
 export const API_BASE_URL = getApiBaseUrl();
 
 export function getImageUrl(imgPath) {
+  const DEFAULT_FALLBACK = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
   if (!imgPath || typeof imgPath !== 'string') {
-    return '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+    return DEFAULT_FALLBACK;
   }
   const trimmed = imgPath.trim();
   if (!trimmed) {
-    return '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+    return DEFAULT_FALLBACK;
   }
-  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:') || trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+
+  // Full HTTP/HTTPS URLs, Data URIs, Blob URIs - return unchanged
+  if (
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('http://') ||
+    trimmed.startsWith('https://')
+  ) {
     return trimmed;
   }
 
-  // Calculate base server origin (without /api)
-  let serverOrigin = '';
-  if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
-    serverOrigin = normalizeUrl(import.meta.env.VITE_BACKEND_URL).replace(/\/api\/?$/, '');
-  } else if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
-    serverOrigin = normalizeUrl(import.meta.env.VITE_API_BASE_URL).replace(/\/api\/?$/, '');
-  } else {
-    serverOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
+  // Frontend bundled assets
+  if (trimmed.startsWith('/src/') || trimmed.startsWith('src/')) {
+    return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   }
 
+  // For any backend upload path (e.g., /uploads/..., uploads/..., /images/..., etc.)
+  const origin = getBackendOrigin();
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-  if (serverOrigin && (serverOrigin.startsWith('http://') || serverOrigin.startsWith('https://'))) {
-    return `${serverOrigin}${cleanPath}`;
+
+  if (origin && (origin.startsWith('http://') || origin.startsWith('https://'))) {
+    return `${origin}${cleanPath}`;
   }
 
   return cleanPath;

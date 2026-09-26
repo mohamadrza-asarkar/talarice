@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context';
+import { getImageUrl } from '../api/client';
 import styles from '../assets/styles/cartPage.module.css';
 
 export default function CartPage() {
@@ -101,7 +102,7 @@ export default function CartPage() {
             return (
               <article key={item.id} className={styles.itemCard}>
                 <div className={styles.itemTopRow}>
-                  <img src={item.image} alt={item.name} className={styles.itemImg} />
+                  <img src={getImageUrl(item.image)} alt={item.name} className={styles.itemImg} />
                   <div className={styles.itemDetails}>
                     <h3 className={styles.itemName}>{item.name}</h3>
                     <span className={styles.itemMeta}>بسته‌بندی پارچه‌ای دوخت صنعتی ممتاز</span>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
 import { truncateAtWord, toFaDigits } from '../../utils/textUtils';
+import { getImageUrl } from '../../api/client';
 import styles from './style.module.css';
 
 export function AmazingDeals() {
@@ -125,7 +126,7 @@ export function AmazingDeals() {
 
       <Link to={`/product/${product.id || product._id}`} className={styles.horizontalCard}>
         <div className={styles.imageCol}>
-          <img src={product.image} alt={product.name} className={styles.productImage} />
+          <img src={getImageUrl(product.image)} alt={product.name} className={styles.productImage} />
           {discountPercent > 0 && (
             <span className={styles.discountBadge}>
               {toFaDigits(discountPercent)}٪ تخفیف

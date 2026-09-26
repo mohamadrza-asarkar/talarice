@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useApp } from '../context';
 import { productsApi } from '../api/products.api';
 import { reviewsApi } from '../api/reviews.api';
+import { getImageUrl } from '../api/client';
 import styles from '../assets/styles/pages.module.css';
 
 export default function Product() {
@@ -144,7 +145,7 @@ export default function Product() {
       {/* تصویر اصلی محصول و جلوه بصری */}
       <div className={styles.productHeroCard}>
         <div className={styles.productMainImageWrapper}>
-          <img src={product.image} alt={product.name} className={styles.productMainImage} />
+          <img src={getImageUrl(product.image)} alt={product.name} className={styles.productMainImage} />
           {computedDiscountPercent > 0 && (
             <span className={styles.productDiscountBadge}>
               {computedDiscountPercent.toLocaleString('fa-IR')}٪ تخفیف ویژه
