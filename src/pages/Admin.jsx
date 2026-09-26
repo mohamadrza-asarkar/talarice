@@ -15,6 +15,7 @@ import { AdminUsers } from '../components/admin/adminUsers';
 import { AdminSlides } from '../components/admin/adminSlides';
 import { AdminDeals } from '../components/admin/adminDeals';
 import { AdminReviews } from '../components/admin/adminReviews';
+import { AdminServerConfig } from '../components/admin/adminServerConfig';
 import styles from '../components/admin/admin.module.css';
 
 export default function Admin() {
@@ -366,7 +367,20 @@ export default function Admin() {
           <i className="fa-solid fa-comment-dots" />
           <span>نظرات</span>
         </button>
+        <button
+          type="button"
+          className={`${styles.tabBtn} ${activeTab === 'serverConfig' ? styles.tabBtnActive : ''}`}
+          onClick={() => setActiveTab('serverConfig')}
+        >
+          <i className="fa-solid fa-network-wired" />
+          <span>تنظیم سرور</span>
+        </button>
       </nav>
+
+      {/* Active Tab View */}
+      {activeTab === 'serverConfig' && (
+        <AdminServerConfig showToast={showToast} />
+      )}
 
       {/* Active Tab View */}
       {activeTab === 'overview' && (

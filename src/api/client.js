@@ -11,32 +11,91 @@ const normalizeUrl = (url) => {
   return trimmed.replace(/\/$/, '');
 };
 
+export function getBackendUrlOverride() {
+  try {
+    return typeof window !== 'undefined' ? localStorage.getItem('tala_backend_url') || '' : '';
+  } catch {
+    return '';
+  }
+}
+
+export function setBackendUrlOverride(url) {
+  try {
+    if (typeof window !== 'undefined') {
+      if (url && url.trim()) {
+        const normalized = normalizeUrl(url.trim());
+        localStorage.setItem('tala_backend_url', normalized);
+        return normalized;
+      } else {
+        localStorage.removeItem('tala_backend_url');
+        return '';
+      }
+    }
+  } catch (err) {
+    console.warn('Could not set backend URL override:', err);
+  }
+  return '';
+}
+
+export function clearBackendUrlOverride() {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('tala_backend_url');
+    }
+  } catch {}
+}
+
 export function getBackendOrigin() {
+  // 1. Check dynamic override in localStorage
+  const override = getBackendUrlOverride();
+  if (override) {
+    return normalizeUrl(override).replace(/\/api\/?$/, '');
+  }
+
+  // 2. Check window.__BACKEND_URL__
+  if (typeof window !== 'undefined' && window.__BACKEND_URL__) {
+    return normalizeUrl(window.__BACKEND_URL__).replace(/\/api\/?$/, '');
+  }
+
+  // 3. Check environment variables from build/config
+  let envBackend = '';
   if (typeof import.meta !== 'undefined' && import.meta.env) {
     if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
-      return normalizeUrl(import.meta.env.VITE_BACKEND_URL).replace(/\/api\/?$/, '');
-    }
-    if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
-      return normalizeUrl(import.meta.env.VITE_API_BASE_URL).replace(/\/api\/?$/, '');
+      envBackend = import.meta.env.VITE_BACKEND_URL.trim();
+    } else if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+      envBackend = import.meta.env.VITE_API_BASE_URL.trim();
     }
   }
+
+  if (envBackend) {
+    const normalized = normalizeUrl(envBackend).replace(/\/api\/?$/, '');
+    
+    // CRITICAL: If env points to localhost/127.0.0.1 BUT window is on a remote domain/tunnel:
+    if (typeof window !== 'undefined' && window.location && window.location.hostname) {
+      const host = window.location.hostname;
+      const isWindowLocalhost = host === 'localhost' || host === '127.0.0.1';
+      const isEnvLocalhost = normalized.includes('localhost') || normalized.includes('127.0.0.1');
+
+      if (!isWindowLocalhost && isEnvLocalhost) {
+        // Automatically switch to current public tunnel origin!
+        return window.location.origin;
+      }
+    }
+    return normalized;
+  }
+
+  // 4. Default fallback when no env variable is defined
+  if (typeof window !== 'undefined' && window.location && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return window.location.origin;
+  }
+
   return 'http://localhost:5000';
 }
 
-const getApiBaseUrl = () => {
-  if (typeof import.meta !== 'undefined' && import.meta.env) {
-    if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
-      const norm = normalizeUrl(import.meta.env.VITE_API_BASE_URL);
-      return norm.endsWith('/api') ? norm : `${norm}/api`;
-    }
-    if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
-      const norm = normalizeUrl(import.meta.env.VITE_BACKEND_URL);
-      return norm.endsWith('/api') ? norm : `${norm}/api`;
-    }
-  }
+export function getApiBaseUrl() {
   const origin = getBackendOrigin();
   return origin.endsWith('/api') ? origin : `${origin}/api`;
-};
+}
 
 export const API_BASE_URL = getApiBaseUrl();
 
@@ -103,9 +162,10 @@ export function setStoredToken(token) {
  * Modern native fetch wrapper with automatic token injection & error handling
  */
 export async function request(endpoint, options = {}) {
+  const currentBaseUrl = getApiBaseUrl();
   let url = endpoint.startsWith('http')
     ? endpoint
-    : `${API_BASE_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+    : `${currentBaseUrl.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
 
   // Automatically serialize options.params if provided (Axios compatibility)
   if (options.params && typeof options.params === 'object') {
