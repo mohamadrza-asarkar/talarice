@@ -1,138 +1,59 @@
 // -------------------------------------------------------------
-// Base API URL & Backend Origin Resolution
+// Direct Environment URL Configuration (.env)
 // -------------------------------------------------------------
-const normalizeUrl = (url) => {
-  if (!url || typeof url !== 'string') return '';
-  let trimmed = url.trim();
-  if (!trimmed) return '';
-  if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://') && !trimmed.startsWith('/')) {
-    trimmed = `http://${trimmed}`;
-  }
-  return trimmed.replace(/\/$/, '');
-};
+const trimSlash = (str) => (str ? str.trim().replace(/\/+$/, '') : '');
 
-export function getBackendUrlOverride() {
-  try {
-    return typeof window !== 'undefined' ? localStorage.getItem('tala_backend_url') || '' : '';
-  } catch {
-    return '';
-  }
-}
-
-export function setBackendUrlOverride(url) {
-  try {
-    if (typeof window !== 'undefined') {
-      if (url && url.trim()) {
-        const normalized = normalizeUrl(url.trim());
-        localStorage.setItem('tala_backend_url', normalized);
-        return normalized;
-      } else {
-        localStorage.removeItem('tala_backend_url');
-        return '';
-      }
-    }
-  } catch (err) {
-    console.warn('Could not set backend URL override:', err);
-  }
-  return '';
-}
-
-export function clearBackendUrlOverride() {
-  try {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('tala_backend_url');
-    }
-  } catch {}
-}
-
-export function getBackendOrigin() {
-  // 1. Check dynamic override in localStorage
-  const override = getBackendUrlOverride();
-  if (override) {
-    return normalizeUrl(override).replace(/\/api\/?$/, '');
-  }
-
-  // 2. Check window.__BACKEND_URL__
-  if (typeof window !== 'undefined' && window.__BACKEND_URL__) {
-    return normalizeUrl(window.__BACKEND_URL__).replace(/\/api\/?$/, '');
-  }
-
-  // 3. Check environment variables from build/config
-  let envBackend = '';
+const getRawBackend = () => {
   if (typeof import.meta !== 'undefined' && import.meta.env) {
     if (import.meta.env.VITE_BACKEND_URL && import.meta.env.VITE_BACKEND_URL.trim()) {
-      envBackend = import.meta.env.VITE_BACKEND_URL.trim();
-    } else if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
-      envBackend = import.meta.env.VITE_API_BASE_URL.trim();
+      return import.meta.env.VITE_BACKEND_URL.trim();
+    }
+    if (import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) {
+      return import.meta.env.VITE_API_BASE_URL.trim();
     }
   }
-
-  if (envBackend) {
-    const normalized = normalizeUrl(envBackend).replace(/\/api\/?$/, '');
-    
-    // CRITICAL: If env points to localhost/127.0.0.1 BUT window is on a remote domain/tunnel:
-    if (typeof window !== 'undefined' && window.location && window.location.hostname) {
-      const host = window.location.hostname;
-      const isWindowLocalhost = host === 'localhost' || host === '127.0.0.1';
-      const isEnvLocalhost = normalized.includes('localhost') || normalized.includes('127.0.0.1');
-
-      if (!isWindowLocalhost && isEnvLocalhost) {
-        // Automatically switch to current public tunnel origin!
-        return window.location.origin;
-      }
-    }
-    return normalized;
-  }
-
-  // 4. Default fallback when no env variable is defined
-  if (typeof window !== 'undefined' && window.location && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return window.location.origin;
-  }
-
   return 'http://localhost:5000';
+};
+
+const rawUrl = getRawBackend();
+const normalizedBackend = rawUrl.startsWith('http://') || rawUrl.startsWith('https://') ? rawUrl : `http://${rawUrl}`;
+
+export const BACKEND_ORIGIN = trimSlash(normalizedBackend).replace(/\/api$/, '');
+export const API_BASE_URL = `${BACKEND_ORIGIN}/api`;
+
+export function getBackendOrigin() {
+  return BACKEND_ORIGIN;
 }
 
 export function getApiBaseUrl() {
-  const origin = getBackendOrigin();
-  return origin.endsWith('/api') ? origin : `${origin}/api`;
+  return API_BASE_URL;
 }
-
-export const API_BASE_URL = getApiBaseUrl();
 
 export function getImageUrl(imgPath) {
   const DEFAULT_FALLBACK = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
-  if (!imgPath || typeof imgPath !== 'string') {
-    return DEFAULT_FALLBACK;
-  }
-  const trimmed = imgPath.trim();
-  if (!trimmed) {
-    return DEFAULT_FALLBACK;
-  }
+  if (!imgPath || typeof imgPath !== 'string') return DEFAULT_FALLBACK;
 
-  // Full HTTP/HTTPS URLs, Data URIs, Blob URIs - return unchanged
+  const trimmed = imgPath.trim();
+  if (!trimmed) return DEFAULT_FALLBACK;
+
+  // Already a full HTTP/HTTPS URL, Data URI, or Blob
   if (
-    trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:') ||
     trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://')
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
   ) {
     return trimmed;
   }
 
-  // Frontend bundled assets
+  // Local Vite bundled asset
   if (trimmed.startsWith('/src/') || trimmed.startsWith('src/')) {
     return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   }
 
-  // For any backend upload path (e.g., /uploads/..., uploads/..., /images/..., etc.)
-  const origin = getBackendOrigin();
+  // Prepend BACKEND_ORIGIN to relative paths (e.g. /uploads/...)
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
-
-  if (origin && (origin.startsWith('http://') || origin.startsWith('https://'))) {
-    return `${origin}${cleanPath}`;
-  }
-
-  return cleanPath;
+  return `${BACKEND_ORIGIN}${cleanPath}`;
 }
 
 export const TOKEN_STORAGE_KEY = 'tala_rice_token';
@@ -195,6 +116,9 @@ export async function request(endpoint, options = {}) {
 
   const headers = {
     'Accept': 'application/json',
+    'X-Tunnel-Skip-Anti-Phishing-Page': 'true',
+    'ngrok-skip-browser-warning': 'true',
+    'Bypass-Tunnel-Remainder': 'true',
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token && !isAuthPublicRoute && !options.skipAuth ? { 'Authorization': `Bearer ${token}` } : {}),
     ...customHeaders
