@@ -1,3 +1,7 @@
+import riceSack1 from '../assets/images/white_rice_sack_1_1786553727373.jpg';
+import riceSack2 from '../assets/images/white_rice_sack_2_1786553744148.jpg';
+import riceSack3 from '../assets/images/white_rice_sack_3_1786553768867.jpg';
+
 // -------------------------------------------------------------
 // Direct Environment URL Configuration (.env)
 // -------------------------------------------------------------
@@ -30,9 +34,9 @@ export function getApiBaseUrl() {
 }
 
 const LOCAL_RICE_IMAGES = [
-  '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
-  '/src/assets/images/white_rice_sack_2_1786553744148.jpg',
-  '/src/assets/images/white_rice_sack_3_1786553768867.jpg'
+  riceSack1,
+  riceSack2,
+  riceSack3
 ];
 
 export function getLocalFallbackImage(index = 0) {
@@ -42,7 +46,7 @@ export function getLocalFallbackImage(index = 0) {
 export function handleImageError(e, index = 0) {
   if (e && e.target) {
     const fallback = getLocalFallbackImage(index);
-    if (e.target.src !== window.location.origin + fallback && !e.target.src.endsWith(fallback)) {
+    if (e.target.src !== fallback && !e.target.src.endsWith(fallback)) {
       e.target.onerror = null;
       e.target.src = fallback;
     }
