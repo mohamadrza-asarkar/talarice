@@ -29,8 +29,28 @@ export function getApiBaseUrl() {
   return API_BASE_URL;
 }
 
-export function getImageUrl(imgPath) {
-  const DEFAULT_FALLBACK = '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
+const LOCAL_RICE_IMAGES = [
+  '/src/assets/images/white_rice_sack_1_1786553727373.jpg',
+  '/src/assets/images/white_rice_sack_2_1786553744148.jpg',
+  '/src/assets/images/white_rice_sack_3_1786553768867.jpg'
+];
+
+export function getLocalFallbackImage(index = 0) {
+  return LOCAL_RICE_IMAGES[Math.abs(index) % LOCAL_RICE_IMAGES.length];
+}
+
+export function handleImageError(e, index = 0) {
+  if (e && e.target) {
+    const fallback = getLocalFallbackImage(index);
+    if (e.target.src !== window.location.origin + fallback && !e.target.src.endsWith(fallback)) {
+      e.target.onerror = null;
+      e.target.src = fallback;
+    }
+  }
+}
+
+export function getImageUrl(imgPath, fallbackIndex = 0) {
+  const DEFAULT_FALLBACK = getLocalFallbackImage(fallbackIndex);
   if (!imgPath || typeof imgPath !== 'string') return DEFAULT_FALLBACK;
 
   const trimmed = imgPath.trim();
@@ -42,7 +62,12 @@ export function getImageUrl(imgPath) {
   }
 
   // Local Vite bundled asset
-  if (trimmed.startsWith('/src/') || trimmed.startsWith('src/')) {
+  if (
+    trimmed.startsWith('/src/') ||
+    trimmed.startsWith('src/') ||
+    trimmed.startsWith('/assets/') ||
+    trimmed.startsWith('assets/')
+  ) {
     return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   }
 
@@ -66,7 +91,7 @@ export function getImageUrl(imgPath) {
         const parsed = new URL(trimmed);
         return `${BACKEND_ORIGIN}${parsed.pathname}${parsed.search}`;
       } catch {
-        // fallback to trimmed
+        // fallback
       }
     }
     return trimmed;

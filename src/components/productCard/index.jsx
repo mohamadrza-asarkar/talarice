@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApp } from '../../context';
 import { truncateAtWord } from '../../utils/textUtils';
-import { getImageUrl } from '../../api/client';
+import { getImageUrl, handleImageError } from '../../api/client';
 import styles from './style.module.css';
 
 export function ProductCard({ product }) {
@@ -49,6 +49,7 @@ export function ProductCard({ product }) {
             alt={product.name}
             className={styles.image}
             loading="lazy"
+            onError={handleImageError}
           />
           {hasDiscount && (
             <span className={styles.discountBadge}>

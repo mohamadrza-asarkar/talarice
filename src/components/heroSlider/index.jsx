@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context';
-import { getImageUrl } from '../../api/client';
+import { getImageUrl, handleImageError } from '../../api/client';
 import styles from './style.module.css';
 
 export function HeroSlider() {
@@ -102,10 +102,11 @@ export function HeroSlider() {
     >
       <img
         key={currentSlide}
-        src={getImageUrl(slide?.image)}
+        src={getImageUrl(slide?.image, currentSlide)}
         alt={slide?.title || 'اسلاید'}
         className={styles.bgImage}
         draggable={false}
+        onError={(e) => handleImageError(e, currentSlide)}
       />
 
       <div className={styles.content}>
