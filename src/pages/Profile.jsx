@@ -214,7 +214,7 @@ export default function Profile() {
                 ) : (
                   <span className={styles.roleBadgeCustomer}>
                     <i className="fa-solid fa-shield-halved" />
-                    مشتری وفادار طلا رایس
+                    مشتری وفادار فروشگاه
                   </span>
                 )}
               </div>
@@ -365,7 +365,7 @@ export default function Profile() {
                 <div className={styles.emptyStateIcon}>
                   <i className="fa-solid fa-bag-shopping" style={{ fontSize: '1.75rem' }} />
                 </div>
-                <p>شما هنوز سفارشی در طلا رایس ثبت نکرده‌اید.</p>
+                <p>شما هنوز سفارشی در این سامانه ثبت نکرده‌اید.</p>
                 <Link to="/products" className={styles.primaryBtn}>
                   مشاهده کاتالوگ برنج اصیل
                 </Link>
@@ -510,7 +510,7 @@ export default function Profile() {
                   {getStatusBadge(trackedOrder.status)}
                 </div>
                 <p style={{ fontSize: '0.875rem', color: '#475569', lineHeight: 1.6, margin: 0 }}>
-                  مرسوله شما با بسته‌بندی نخی ویژه طلا رایس جهت حفظ عطر و تازگی، توسط پست پیشتاز ارسال شده است.
+                  مرسوله شما با بسته‌بندی نخی ویژه جهت حفظ عطر و تازگی، توسط پست پیشتاز ارسال شده است.
                 </p>
                 {(trackedOrder.adminNote || trackedOrder.adminMessage || trackedOrder.cancelReason) && (
                   <div style={{
@@ -687,7 +687,7 @@ export default function Profile() {
             <div className={styles.sectionHeader}>
               <h2 className={styles.sectionTitle}>
                 <i className="fa-solid fa-headset" />
-                ارتباط با واحد مشتریان طلا رایس
+                ارتباط با واحد پشتیبانی مشتریان
               </h2>
             </div>
 

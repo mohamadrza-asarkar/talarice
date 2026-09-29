@@ -295,7 +295,7 @@ export default function Admin() {
     <div className={styles.container}>
       <header className={styles.header}>
         <div className={styles.titleArea}>
-          <h1 className={styles.title}>داشبورد مدیریت طلا رایس</h1>
+          <h1 className={styles.title}>داشبورد مدیریت فروشگاه برنج اعلا</h1>
           <p className={styles.subtitle}>کنترل کامل موجودی، سفارشات، کاربران و جشنواره‌ها</p>
         </div>
         <button

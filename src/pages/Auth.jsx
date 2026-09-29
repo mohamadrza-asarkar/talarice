@@ -85,11 +85,11 @@ export default function Auth() {
 
   return (
     <main className={styles.authContainer}>
-      {/* برندینگ طلا رایس */}
+      {/* برندینگ سامانه فروشگاهی برنج اعلا */}
       <header className={styles.brandHeader}>
-        <img src={logoImg} alt="لوگوی طلا رایس" className={styles.brandLogo} />
-        <h1 className={styles.brandTitle}>فروشگاه طلا رایس</h1>
-        <p className={styles.brandSubtitle}>ورود به سامانه مشتریان و پیگیری سفارش‌ها</p>
+        <img src={logoImg} alt="لوگوی فروشگاه برنج اعلا" className={styles.brandLogo} />
+        <h1 className={styles.brandTitle}>سامانه فروش برنج اعلا</h1>
+        <p className={styles.brandSubtitle}>ورود به حساب کاربری و پیگیری سفارش‌ها</p>
       </header>
 
       {/* کارت فرم */}
