@@ -36,13 +36,8 @@ export function getImageUrl(imgPath) {
   const trimmed = imgPath.trim();
   if (!trimmed) return DEFAULT_FALLBACK;
 
-  // Already a full HTTP/HTTPS URL, Data URI, or Blob
-  if (
-    trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://') ||
-    trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:')
-  ) {
+  // Data URIs and Blob URIs
+  if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
     return trimmed;
   }
 
@@ -51,12 +46,38 @@ export function getImageUrl(imgPath) {
     return trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   }
 
-  // Prepend BACKEND_ORIGIN to relative paths (e.g. /uploads/...)
+  // Any uploaded file path containing /uploads/
+  const uploadsIndex = trimmed.indexOf('/uploads/');
+  if (uploadsIndex !== -1) {
+    const relativeUploadPath = trimmed.slice(uploadsIndex);
+    return `${BACKEND_ORIGIN}${relativeUploadPath}`;
+  }
+
+  // Path starting with uploads/
+  if (trimmed.startsWith('uploads/')) {
+    return `${BACKEND_ORIGIN}/${trimmed}`;
+  }
+
+  // External full HTTP/HTTPS URLs
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    // If backend stored localhost/127.0.0.1 in DB, replace origin with BACKEND_ORIGIN
+    if (trimmed.includes('localhost') || trimmed.includes('127.0.0.1')) {
+      try {
+        const parsed = new URL(trimmed);
+        return `${BACKEND_ORIGIN}${parsed.pathname}${parsed.search}`;
+      } catch {
+        // fallback to trimmed
+      }
+    }
+    return trimmed;
+  }
+
+  // Any other relative path
   const cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
   return `${BACKEND_ORIGIN}${cleanPath}`;
 }
 
-export const TOKEN_STORAGE_KEY = 'tala_rice_token';
+export const TOKEN_STORAGE_KEY = 'aala_rice_token';
 
 
 export function getStoredToken() {

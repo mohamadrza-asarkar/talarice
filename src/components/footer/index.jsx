@@ -76,7 +76,7 @@ export function Footer() {
 
           <p className={styles.addressLine}>
             <i className="fa-solid fa-location-dot" />
-            <span>فارس، مرودشت، بخش کامفیروز، دفتر مرکزی طلا رایس</span>
+            <span>فارس، مرودشت، بخش کامفیروز، دفتر مرکزی بازرگانی برنج اعلا</span>
           </p>
         </address>
 
@@ -98,7 +98,7 @@ export function Footer() {
         </nav>
 
         <small className={styles.copyright}>
-          تمامی حقوق مادی و معنوی برای طلا رایس (Tala Rice) محفوظ است.
+          سامانه فروشگاهی برنج اعلا — طراحی اختصاصی و آماده فروش و واگذاری کامل امتیاز وب‌سایت.
         </small>
       </footer>
     </div>

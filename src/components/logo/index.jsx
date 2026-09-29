@@ -7,14 +7,14 @@ export function Logo({ size, showText = true, variant = 'light' }) {
     <div className={`${styles.logoContainer} ${variant === 'dark' ? styles.darkVariant : styles.lightVariant}`}>
       <img
         src={logoImg}
-        alt="لوگوی طلا رایس"
+        alt="لوگوی سامانه فروش برنج اعلا"
         className={styles.logoImage}
         style={size ? { width: size.width, height: size.height } : null}
       />
       {showText && (
         <div className={styles.logoTextGroup}>
-          <span className={styles.brandTitle}>طلا رایس</span>
-          <span className={styles.brandTagline}>برنج ممتاز کامفیروز</span>
+          <span className={styles.brandTitle}>برنج اعلا</span>
+          <span className={styles.brandTagline}>سامانه تخصصی فروش برنج</span>
         </div>
       )}
     </div>

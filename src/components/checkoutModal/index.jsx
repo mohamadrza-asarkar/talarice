@@ -544,7 +544,7 @@ export function CheckoutModal() {
                 >
                   <i className={`fa-solid fa-building-columns ${styles.paymentMethodIcon}`} />
                   <div className={styles.paymentInfo}>
-                    <strong>کارت به کارت حساب طلا رایس</strong>
+                    <strong>کارت به کارت حساب بانکی فروشگاه</strong>
                     <small>واریز مستقیم به حساب و ثبت تصویر فیش پرداخت بانکی</small>
                   </div>
                   <input

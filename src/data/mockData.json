@@ -1,0 +1,160 @@
+{
+  "storeInfo": {
+    "name": "سامانه فروشگاهی برنجستان اعلا",
+    "englishName": "Aala Rice Marketplace",
+    "description": "پلتفرم توسعه‌یافته اختصاصی فروش آنلاین برنج اصیل ایرانی و کشاورزی مستقیم از شالیزار",
+    "phone": "۰۹۱۲۳۴۵۶۷۸۹",
+    "supportPhone": "۰۲۱-۸۸۸۸۹۹۹۹",
+    "email": "info@rice-marketplace.ir",
+    "address": "استان فارس، منطقه کامفیروز، دفتر مرکزی بازرگانی برنج اعلا",
+    "instagram": "@aala_rice_shop",
+    "telegram": "@aala_rice_support"
+  },
+  "websiteSaleDetails": {
+    "isForSale": true,
+    "title": "آگهی مزایده و واگذاری امتیاز کامل وب‌سایت و سامانه فروشگاهی",
+    "badge": "فرصت ویژه سرمایه‌گذاری و راه‌اندازی کسب‌وکار آنلاین",
+    "priceText": "قیمت پایه مزایده / توافقی با مالک",
+    "description": "تمامی کدنویسی‌های فرانت‌اند و بک‌اند، پنل مدیریت پیشرفته، سیستم انبارداری، مدیریت پیشنهادات شگفت‌انگیز، احراز هویت پیامکی، و طراحی واکنش‌گرا آماده واگذاری یک‌جا می‌باشد.",
+    "features": [
+      "طراحی مدرن و اختصاصی و کاملاً واکنش‌گرا (موبایل و تبلت و دسکتاپ)",
+      "پنل مدیریت کامل شامل مدیریت محصولات، سفارشات، نظرات و اسلایدرها",
+      "سیستم پیشنهادات شگفت‌انگیز همراه با تایمر معکوس واقعی",
+      "سبد خرید هوشمند و فرایند تسویه‌حساب پیشرفته همراه با آپلود فیش بانکی",
+      "سیستم احراز هویت کاربران و مدیریت پروفایل و آدرس‌های ارسال",
+      "سئوی استاندارد، Schema.org و آماده اتصال به تمامی درگاه‌های پرداخت"
+    ],
+    "contactInfo": {
+      "phone": "۰۹۱۲۳۴۵۶۷۸۹",
+      "telegram": "@website_admin_sale",
+      "callToAction": "جهت دریافت قیمت پیشنهاد یا شرکت در مزایده خرید سامانه تماس بگیرید"
+    }
+  },
+  "products": [
+    {
+      "id": "prod-1",
+      "_id": "prod-1",
+      "name": "برنج اصیل کامفیروزی فارس (کیسه ۱۰ کیلوگرمی)",
+      "price": 1250000,
+      "originalPrice": 1450000,
+      "discountPercent": 14,
+      "category": "kamfirooz",
+      "categoryName": "کامفیروز اصیل",
+      "weight": "۱۰ کیلوگرم",
+      "rating": 4.9,
+      "inStock": true,
+      "stockQuantity": 150,
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "description": "برنج معطر و دست‌چین شالیزارهای کامفیروز فارس با پخت عالی، قد کشیدن فوق‌العاده و ری بالا همراه با عطر طارم طبیعی."
+    },
+    {
+      "id": "prod-2",
+      "_id": "prod-2",
+      "name": "برنج طارم هاشمی درجه یک گیلان (کیسه ۱۰ کیلوگرمی)",
+      "price": 1380000,
+      "originalPrice": 1550000,
+      "discountPercent": 11,
+      "category": "hashemi",
+      "categoryName": "طارم هاشمی",
+      "weight": "۱۰ کیلوگرم",
+      "rating": 5.0,
+      "inStock": true,
+      "stockQuantity": 120,
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "description": "برنج طارم معطر شمال، سورت‌شده با دستگاه‌های لیزری، بدون هیچ‌گونه خرد یا ناخالصی."
+    },
+    {
+      "id": "prod-3",
+      "_id": "prod-3",
+      "name": "برنج دودی سنتی هیزمی شمال (کیسه ۱۰ کیلوگرمی)",
+      "price": 1420000,
+      "originalPrice": 1600000,
+      "discountPercent": 11,
+      "category": "smoked",
+      "categoryName": "برنج دودی",
+      "weight": "۱۰ کیلوگرم",
+      "rating": 4.8,
+      "inStock": true,
+      "stockQuantity": 80,
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "description": "دودی شده با چوب درختان جنگلی به روش سنتی با عطر نوستالژیک و مجلسی."
+    },
+    {
+      "id": "prod-4",
+      "_id": "prod-4",
+      "name": "نیم‌دانه معطر کامفیروزی ممتاز (کیسه ۱۰ کیلوگرمی)",
+      "price": 680000,
+      "originalPrice": 780000,
+      "discountPercent": 13,
+      "category": "broken",
+      "categoryName": "نیم دانه",
+      "weight": "۱۰ کیلوگرم",
+      "rating": 4.7,
+      "inStock": true,
+      "stockQuantity": 200,
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "description": "مناسب برای پخت شله‌زرد، سوپ، شیربرنج و مصرف روزانه خانوار با همان عطر کامل برنج کامفیروز."
+    }
+  ],
+  "heroSlides": [
+    {
+      "id": "slide-1",
+      "_id": "slide-1",
+      "title": "سامانه فروش آنلاین برنج اعلا و محصولات کشاورزی",
+      "subtitle": "طراحی اختصاصی و آماده واگذاری کامل",
+      "description": "فروشگاه کامل با تمامی امکانات خرید آنلاین، تسویه‌حساب پیشرفته و پنل مدیریت سفارشات",
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "ctaText": "مشاهده محصولات کاتالوگ",
+      "category": "kamfirooz"
+    },
+    {
+      "id": "slide-2",
+      "_id": "slide-2",
+      "title": "تضمین پخت عالی و عطر طبیعی شالیزار",
+      "subtitle": "خرید مستقیم بدون واسطه",
+      "description": "دست‌چین شده از برترین شالیزارهای کامفیروز و شمال ایران با ارسال سریع به تمام نقاط کشور",
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "ctaText": "بررسی پیشنهادهای شگفت‌انگیز",
+      "category": "hashemi"
+    }
+  ],
+  "amazingProducts": [
+    {
+      "id": "prod-1",
+      "_id": "prod-1",
+      "name": "پیشنهاد ویژه: برنج اصیل کامفیروزی ۱۰ کیلویی",
+      "price": 1250000,
+      "originalPrice": 1450000,
+      "discountPercent": 14,
+      "dealPrice": 1250000,
+      "category": "kamfirooz",
+      "categoryName": "کامفیروز اصیل",
+      "weight": "۱۰ کیلوگرم",
+      "image": "/src/assets/images/white_rice_sack_1_1786553727373.jpg",
+      "amazingDurationHours": 24,
+      "amazingExpiresAt": "2026-10-01T23:59:59.000Z"
+    }
+  ],
+  "customerReviews": [
+    {
+      "id": "rev-1",
+      "_id": "rev-1",
+      "userName": "رضا محمدی",
+      "userCity": "شیراز",
+      "rating": 5,
+      "comment": "کیفیت برنج فوق‌العاده بود. ری عالی داشت و عطرش موقع پخت کل خونه رو گرفت. سرعت ارسال هم عالی بود.",
+      "productName": "برنج اصیل کامفیروزی فارس",
+      "createdAt": "2026-09-25T10:00:00.000Z"
+    },
+    {
+      "id": "rev-2",
+      "_id": "rev-2",
+      "userName": "سارا کاظمی",
+      "userCity": "تهران",
+      "rating": 5,
+      "comment": "طراحی سایت بسیار راحت و روان بود. خرید سریع انجام شد و فیش بانکی رو آپلود کردم و خیلی زود برام ارسال کردن.",
+      "productName": "برنج طارم هاشمی درجه یک",
+      "createdAt": "2026-09-26T14:30:00.000Z"
+    }
+  ]
+}

@@ -9,12 +9,13 @@ import { slidesApi } from '../api/slides.api';
 import { storeApi } from '../api/store.api';
 import { cartApi } from '../api/cart.api';
 import { getStoredToken, setStoredToken } from '../api/client';
+import mockData from '../data/mockData.json';
 
 const AppContext = createContext();
 
 const STORAGE_KEYS = {
-  USER_ID: 'tala_rice_user_id',
-  CART: 'tala_rice_cart_cache'
+  USER_ID: 'aala_rice_user_id',
+  CART: 'aala_rice_cart_cache'
 };
 
 export function AppProvider({ children }) {
@@ -193,24 +194,34 @@ export function AppProvider({ children }) {
         ]);
 
         if (isMounted) {
-          if (productResponse.status === 'fulfilled' && productResponse.value) {
-            setProducts(Array.isArray(productResponse.value) ? productResponse.value : (productResponse.value.products || []));
-          }
-          if (slideResponse.status === 'fulfilled' && slideResponse.value) {
-            setSlides(Array.isArray(slideResponse.value) ? slideResponse.value : []);
-          }
-          if (infoResponse.status === 'fulfilled' && infoResponse.value) {
+          const fetchedProducts = productResponse.status === 'fulfilled' && productResponse.value
+            ? (Array.isArray(productResponse.value) ? productResponse.value : (productResponse.value.products || []))
+            : [];
+          setProducts(fetchedProducts.length > 0 ? fetchedProducts : mockData.products);
+
+          const fetchedSlides = slideResponse.status === 'fulfilled' && slideResponse.value
+            ? (Array.isArray(slideResponse.value) ? slideResponse.value : [])
+            : [];
+          setSlides(fetchedSlides.length > 0 ? fetchedSlides : mockData.heroSlides);
+
+          if (infoResponse.status === 'fulfilled' && infoResponse.value && Object.keys(infoResponse.value).length > 0) {
             setStoreInfo(infoResponse.value);
+          } else {
+            setStoreInfo(mockData.storeInfo);
           }
+
           if (storyResponse.status === 'fulfilled' && storyResponse.value) {
             setBrandStory(storyResponse.value);
           }
+
           if (trustResponse.status === 'fulfilled' && trustResponse.value) {
             setTrustItems(trustResponse.value);
           }
-          if (amazingResponse.status === 'fulfilled' && amazingResponse.value) {
-            setAmazingProducts(Array.isArray(amazingResponse.value) ? amazingResponse.value : []);
-          }
+
+          const fetchedAmazing = amazingResponse.status === 'fulfilled' && amazingResponse.value
+            ? (Array.isArray(amazingResponse.value) ? amazingResponse.value : [])
+            : [];
+          setAmazingProducts(fetchedAmazing.length > 0 ? fetchedAmazing : mockData.amazingProducts);
         }
       } catch (fetchError) {
         console.debug('Failed to load catalog/store data:', fetchError);
@@ -546,6 +557,7 @@ export function AppProvider({ children }) {
     storeInfo,
     brandStory,
     trustItems,
+    websiteSaleDetails: mockData.websiteSaleDetails,
     isLoadingData,
     isLoadingApi: isLoadingData,
     apiError,

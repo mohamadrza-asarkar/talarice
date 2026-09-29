@@ -1,6 +1,6 @@
 {
-  "name": "فروشگاه طلا رایس",
-  "description": "خرید مستقیم برنج اصیل کامفیروزی از شالیزار - طلا رایس",
+  "name": "سامانه فروشگاهی برنج اعلا (آماده واگذاری)",
+  "description": "پلتفرم توسعه‌یافته اختصاصی فروش آنلاین برنج ایرانی و محصولات کشاورزی - آماده فروش و واگذاری کامل",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
