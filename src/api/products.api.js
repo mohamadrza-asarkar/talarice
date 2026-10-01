@@ -11,49 +11,18 @@ export function normalizeProduct(raw) {
   const p = unwrapDoc(raw);
   if (!p || typeof p !== 'object') return null;
 
-  const backendId = p._id || p.id || '';
-  const id = String(backendId || `prod-${Date.now()}`);
-
+  const id = String(p._id || p.id || `prod-${Date.now()}`);
   const rawImage = p.image || p.imageUrl || p.fullImageUrl || '';
   const image = rawImage ? getImageUrl(rawImage) : '/src/assets/images/white_rice_sack_1_1786553727373.jpg';
-  
-  const rawPrice = Number(p.price || 0);
-  const rawOriginal = Number(p.originalPrice || p.oldPrice || p.old_price || 0);
-  const rawDeal = Number(p.dealPrice || p.discountPrice || 0);
-  const discountPercent = Number(p.discountPercent || p.dealDiscountPercent || p.discount || 0);
 
-  let price = rawDeal > 0 ? rawDeal : rawPrice;
-  let originalPrice = rawOriginal > 0 ? rawOriginal : (rawDeal > 0 && rawPrice > rawDeal ? rawPrice : 0);
-
-  if (!originalPrice || originalPrice <= price) {
-    if (discountPercent > 0 && price > 0) {
-      originalPrice = Math.round(price / (1 - discountPercent / 100));
-    } else {
-      originalPrice = price;
-    }
-  }
-
-  const computedDiscount = (originalPrice > price && price > 0)
+  const price = Number(p.dealPrice > 0 ? p.dealPrice : (p.price || 0));
+  const originalPrice = Number(p.originalPrice || p.oldPrice || price);
+  const discountPercent = Number(p.discountPercent || p.discount || 0);
+  const computedDiscount = originalPrice > price && price > 0
     ? (discountPercent > 0 ? discountPercent : Math.round((1 - price / originalPrice) * 100))
     : 0;
 
-  let isAmazing = false;
-  if (p.isAmazing !== undefined && p.isAmazing !== null) {
-    if (typeof p.isAmazing === 'boolean') {
-      isAmazing = p.isAmazing;
-    } else if (typeof p.isAmazing === 'string') {
-      isAmazing = p.isAmazing.toLowerCase() === 'true';
-    }
-  }
-
-  let isAvailable = true;
-  if (p.isAvailable !== undefined && p.isAvailable !== null) {
-    if (typeof p.isAvailable === 'boolean') {
-      isAvailable = p.isAvailable;
-    } else if (typeof p.isAvailable === 'string') {
-      isAvailable = p.isAvailable.toLowerCase() === 'true';
-    }
-  }
+  const stock = Number(p.countInStock ?? p.stock ?? 20);
 
   return {
     ...p,
@@ -66,15 +35,15 @@ export function normalizeProduct(raw) {
     oldPrice: originalPrice,
     discountPercent: computedDiscount,
     dealPrice: p.dealPrice || price,
-    isAmazing,
+    isAmazing: Boolean(p.isAmazing),
     amazingExpiresAt: p.amazingExpiresAt || null,
-    isAvailable,
-    stock: p.countInStock !== undefined ? p.countInStock : (p.stock !== undefined ? p.stock : 20),
-    countInStock: p.countInStock !== undefined ? p.countInStock : (p.stock !== undefined ? p.stock : 20),
+    isAvailable: p.isAvailable !== false,
+    stock,
+    countInStock: stock,
     weight: p.weight || '۱۰ کیلوگرم',
     category: p.category || 'kamfirouz',
-    rating: p.rating || 4.9,
-    reviewsCount: p.reviews?.length || p.reviewsCount || 12,
+    rating: Number(p.rating || 4.9),
+    reviewsCount: Number(p.reviewsCount || p.reviews?.length || 12),
     image,
     imageUrl: image,
     fullImageUrl: image

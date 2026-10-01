@@ -24,9 +24,9 @@ export function AppProvider({ children }) {
   // Authentication State
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const storedToken = localStorage.getItem('tala_rice_token');
+      const storedToken = localStorage.getItem('aala_rice_token');
       if (storedToken) {
-        const cachedUser = localStorage.getItem('tala_rice_user');
+        const cachedUser = localStorage.getItem('aala_rice_user');
         return cachedUser ? JSON.parse(cachedUser) : null;
       }
       return null;
@@ -165,7 +165,7 @@ export function AppProvider({ children }) {
           if (error.status === 401 || error.status === 403) {
             setStoredToken(null);
             try {
-              localStorage.removeItem('tala_rice_user');
+              localStorage.removeItem('aala_rice_user');
               localStorage.removeItem(STORAGE_KEYS.USER_ID);
             } catch {
               // ignore

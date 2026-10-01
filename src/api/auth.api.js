@@ -219,7 +219,7 @@ export const authApi = {
   logout() {
     setStoredToken(null);
     try {
-      localStorage.removeItem('tala_rice_user');
+      localStorage.removeItem('aala_rice_user');
     } catch {
       // ignore
     }
